@@ -1,4 +1,4 @@
-package roles;
+package ru.sooslick.outlaw.roles;
 
 import org.bukkit.entity.Player;
 
@@ -17,4 +17,6 @@ public abstract class AbstractPlayer {
     protected void setPlayer(Player p) {
         player = p;
     }
+
+    //todo refactor getLocation()
 }

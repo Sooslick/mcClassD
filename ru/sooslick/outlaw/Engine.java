@@ -1,10 +1,12 @@
+package ru.sooslick.outlaw;
+
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import roles.Hunter;
-import roles.Outlaw;
+import ru.sooslick.outlaw.roles.Hunter;
+import ru.sooslick.outlaw.roles.Outlaw;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -116,6 +118,8 @@ public class Engine extends JavaPlugin {
                 alertTimeout = 0;
                 gameTimer = 0;
                 killCounter = 0;
+                for (Player p : Bukkit.getOnlinePlayers())
+                    p.setGameMode(GameMode.SPECTATOR);
                 Bukkit.broadcastMessage("ready to next game");
                 break;
             case PRESTART:
@@ -191,4 +195,12 @@ public class Engine extends JavaPlugin {
             }
         }
     }
+
+    //todo
+    //  join / dc events
+    //  test + feedback
+    //  refactor code
+    //  cfg impl
+    //  more commands + stats
+    //  impl escape gamemode
 }

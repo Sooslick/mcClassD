@@ -1,3 +1,5 @@
+package ru.sooslick.outlaw;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;

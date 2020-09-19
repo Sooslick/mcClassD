@@ -1,3 +1,5 @@
+package ru.sooslick.outlaw;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -40,8 +42,10 @@ public class CommandListener implements CommandExecutor {
     }
 
     private void printInfo(CommandSender s) {
+        s.sendMessage("commands:");
+        s.sendMessage("/outlaw votestart");
+        s.sendMessage("/outlaw suggest");
         //todo check gamestate
         //todo check instanceof
-        //send msg
     }
 }
