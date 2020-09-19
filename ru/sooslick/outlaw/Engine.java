@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -39,7 +40,7 @@ public class Engine extends JavaPlugin {
     private Runnable votestartTimerImpl = () -> {
         votestartTimer--;
         if (votestartTimer % 10 == 0) {
-            Bukkit.broadcastMessage(votestartTimer + " seconds to start");
+            Bukkit.broadcastMessage("§c" + votestartTimer + " seconds to start");
         }
         if (votestartTimer <= 0) {
             changeGameState(GameState.GAME);
@@ -68,15 +69,16 @@ public class Engine extends JavaPlugin {
 
     public void voteStart(Player p) {
         if (state == GameState.GAME) {
-            p.sendMessage("Cannot votestart while game is started");
+            p.sendMessage("§cCannot votestart while game is started");
             return;
         }
         String name = p.getName();
         if (votestarters.contains(name)) {
-            p.sendMessage("Cannot votestart twice");
+            p.sendMessage("§cCannot votestart twice");
             return;
         }
         votestarters.add(name);
+        Bukkit.broadcastMessage("§e" + name + " voted to start game");
         if (votestarters.size() >= minVotestarters && state == GameState.IDLE) {
             changeGameState(GameState.PRESTART);
             return;
@@ -85,15 +87,16 @@ public class Engine extends JavaPlugin {
 
     public void suggest(Player p) {
         if (state == GameState.GAME) {
-            p.sendMessage("Cannot suggest while game is started");
+            p.sendMessage("§cCannot suggest while game is started");
             return;
         }
         String name = p.getName();
         if (volunteers.contains(name)) {
-            p.sendMessage("Cannot suggest twice");
+            p.sendMessage("§cCannot suggest twice");
             return;
         }
         volunteers.add(name);
+        Bukkit.broadcastMessage("§e" + name + " suggest yourself as Victim");
     }
 
     public GameState getGameState() {
@@ -122,11 +125,11 @@ public class Engine extends JavaPlugin {
                 sender.sendMessage("Spawn distance: " + spawnDistance);
                 break;
             case GAME:
-                sender.sendMessage("Outlaw: " + outlaw.getName());
+                sender.sendMessage("Victim: " + outlaw.getName());
                 sb = new StringBuilder("Hunters: ");
                 for(Hunter h : hunters)
                     sb.append(h.getName()).append(" ");
-                sender.sendMessage("Hunters: " + sb.toString());
+                sender.sendMessage(sb.toString());
                 sender.sendMessage("Game time: " + gameTimer);
                 sender.sendMessage("Kill counter: " + killCounter);
                 sender.sendMessage("Alert timeout: " + alertTimeout);
@@ -154,11 +157,12 @@ public class Engine extends JavaPlugin {
                 killCounter = 0;
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
-                Bukkit.broadcastMessage("ready to next game");
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");      //todo check?
+                Bukkit.broadcastMessage("§eReady to next game");
                 break;
             case PRESTART:
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
-                Bukkit.broadcastMessage("Game launch soon");
+                Bukkit.broadcastMessage("§eGame launch soon");
                 break;
             case GAME:
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
@@ -171,7 +175,7 @@ public class Engine extends JavaPlugin {
                 } else {
                     selectedPlayer = Bukkit.getPlayer(Util.getRandomOf(volunteers));
                 }
-                Bukkit.broadcastMessage("Outlaw: " + selectedPlayer.getName());
+                Bukkit.broadcastMessage("§eSelected Victim: §c" + selectedPlayer.getName());
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
@@ -194,12 +198,12 @@ public class Engine extends JavaPlugin {
 
                 //debug: check distance btw runner and hunters
                 if (hunters.size() > 0) {
-                    Bukkit.broadcastMessage("Spawn handicap: " + Util.distance(outlaw.getPlayer().getLocation(), hunters.get(0).getPlayer().getLocation()));
+                    Bukkit.broadcastMessage("§eSpawn handicap: " + Util.distance(outlaw.getPlayer().getLocation(), hunters.get(0).getPlayer().getLocation()));
                 }
 
                 //run game
                 gameTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, gameProcessor, 1, 20);
-                Bukkit.broadcastMessage("Game started. Run!");
+                Bukkit.broadcastMessage("§eGame started. Run!");
                 break;
             default:
                 log.warning("Game state is not implemented: " + state.toString());
@@ -219,8 +223,15 @@ public class Engine extends JavaPlugin {
 
     private void updateCompass() {
         Location l = outlaw.getPlayer().getLocation();
+        World w = l.getWorld();
         for(Hunter h : hunters) {
-            h.getPlayer().setCompassTarget(l);
+            Player p = h.getPlayer();
+            if (p.getWorld().equals(w))
+                p.setCompassTarget(l);
+            else if (p.getWorld().getEnvironment().equals(World.Environment.NORMAL))
+                p.setCompassTarget(outlaw.getLastWorldPos());
+            else if (p.getWorld().getEnvironment().equals(World.Environment.NETHER))
+                p.setCompassTarget(outlaw.getLastNetherPos());
         }
     }
 
@@ -230,7 +241,7 @@ public class Engine extends JavaPlugin {
         for (Hunter h : hunters) {
             if (Util.distance(h.getPlayer().getLocation(), outlawLocation) < alertThreshold) {
                 alertTimeout = 60;                                  //todo magic const to cfg
-                outlawPlayer.sendMessage("Hunters near");
+                outlawPlayer.sendMessage("§cHunters near");
                 break;
             }
         }
@@ -243,4 +254,5 @@ public class Engine extends JavaPlugin {
     //  cfg impl
     //  more commands + stats
     //  impl escape gamemode
+    //  compass cross-world rework
 }

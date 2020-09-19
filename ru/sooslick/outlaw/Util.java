@@ -22,9 +22,9 @@ public class Util {
     static {
         logger = Bukkit.getLogger();
         Material[] dgrs = {Material.FIRE, Material.TNT, Material.CACTUS, Material.VINE, Material.LADDER,
-                Material.IRON_TRAPDOOR, Material.TRIPWIRE, Material.TRIPWIRE_HOOK,
+                Material.IRON_TRAPDOOR, Material.TRIPWIRE, Material.TRIPWIRE_HOOK, Material.COBWEB, Material.CAMPFIRE,
                 Material.SAND, Material.GRAVEL};
-        //todo: add campfire, kystik, pistons, trapdoors, pressure plates, magmablock, ...
+        //todo: add kystik, pistons, trapdoors, pressure plates, magmablock, ...
         DANGERS = new ArrayList<>(Arrays.asList(dgrs));
     }
 
@@ -34,7 +34,8 @@ public class Util {
 
     public static Location getRandomLocation(int bound) {
         //todo: world?
-        return new Location(Bukkit.getWorlds().get(0), random.nextInt(bound), 64, random.nextInt(bound));
+        int dbound = bound*2;
+        return new Location(Bukkit.getWorlds().get(0), random.nextInt(dbound)-bound, 64, random.nextInt(dbound)-bound);
     }
 
     public static Location getSafeRandomLocation(int bound) {
