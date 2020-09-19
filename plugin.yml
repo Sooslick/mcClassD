@@ -1,14 +1,9 @@
-name: BHop
-version: dev 0.1
-description: bhop
+name: Class D
+version: 0.1
+description: hunterz
 author: sooslick
-main: ru.sooslick.bhop.Engine
+main: ru.sooslick.outlaw.Engine
 commands:
-  bhop:
-    description: some bhop commands
-    aliases: bh
-    permission: bhop.*
-    usage: /bhop <commands>
-permissions:
-  bhop.*:
-    description: a
+  outlaw:
+    description: some outlaw commands
+    usage: /outlaw <commands>
