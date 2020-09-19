@@ -1,0 +1,14 @@
+name: BHop
+version: dev 0.1
+description: bhop
+author: sooslick
+main: ru.sooslick.bhop.Engine
+commands:
+  bhop:
+    description: some bhop commands
+    aliases: bh
+    permission: bhop.*
+    usage: /bhop <commands>
+permissions:
+  bhop.*:
+    description: a
