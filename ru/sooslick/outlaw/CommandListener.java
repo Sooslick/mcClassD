@@ -10,6 +10,7 @@ public class CommandListener implements CommandExecutor {
     private final String COMMAND_VOTE = "votestart";
     private final String COMMAND_VOTE_ALIAS = "v";
     private final String COMMAND_SUGGEST = "suggest";
+    private final String COMMAND_DEBUG = "debug";
 
     Engine engine;
 
@@ -20,6 +21,7 @@ public class CommandListener implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
             printInfo(sender);
+            return true;
         }
         switch (args[0]) {
             case COMMAND_VOTE:
@@ -34,6 +36,9 @@ public class CommandListener implements CommandExecutor {
                     engine.suggest((Player) sender);
                 else
                     printInfo(sender);
+                break;
+            case COMMAND_DEBUG:
+                engine.sendDebugInfo(sender);
                 break;
             default:
                 printInfo(sender);

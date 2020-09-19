@@ -3,6 +3,7 @@ package ru.sooslick.outlaw;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.sooslick.outlaw.roles.Hunter;
@@ -101,6 +102,37 @@ public class Engine extends JavaPlugin {
         return outlaw;
     }
 
+    public void sendDebugInfo(CommandSender sender) {
+        sender.sendMessage("Current game state: " + state.toString());
+        switch (state) {
+            case IDLE:
+            case PRESTART:
+                StringBuilder sb = new StringBuilder("Votestarters: ");
+                for(String s : votestarters)
+                    sb.append(s).append(" ");
+                sender.sendMessage(sb.toString());
+                sb = new StringBuilder("Suggesters: ");
+                for(String s : volunteers)
+                    sb.append(s).append(" ");
+                sender.sendMessage(sb.toString());
+                sender.sendMessage("Prestart timer: " + votestartTimer);
+                sender.sendMessage("Start zone: " + spawnRadius);
+                sender.sendMessage("Spawn distance: " + spawnDistance);
+                break;
+            case GAME:
+                sender.sendMessage("Outlaw: " + outlaw.getName());
+                sb = new StringBuilder("Hunters: ");
+                for(Hunter h : hunters)
+                    sb.append(h.getName()).append(" ");
+                sender.sendMessage("Hunters: " + sb.toString());
+                sender.sendMessage("Game time: " + gameTimer);
+                sender.sendMessage("Kill counter: " + killCounter);
+                sender.sendMessage("Alert timeout: " + alertTimeout);
+                sender.sendMessage("Alert threshold: " + alertThreshold);
+                break;
+        }
+    }
+
     protected void changeGameState(GameState state) {
         this.state = state;
         log.info("Outlaw game state changed. New state: " + state.toString());
@@ -111,7 +143,7 @@ public class Engine extends JavaPlugin {
                 volunteers = new ArrayList<>();
                 hunters = new ArrayList<>();
                 votestartTimer = 60;        //todo get values from cfg
-                minVotestarters = 3;        //cfg
+                minVotestarters = 1;        //cfg
                 spawnDistance = 228;        //cfg
                 spawnRadius = 228;          //cfg
                 alertThreshold = 66;        //cfg + todo: default thresold timer
@@ -127,6 +159,7 @@ public class Engine extends JavaPlugin {
                 Bukkit.broadcastMessage("Game launch soon");
                 break;
             case GAME:
+                Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
 
@@ -136,6 +169,7 @@ public class Engine extends JavaPlugin {
                 } else {
                     selectedPlayer = Bukkit.getPlayer(Util.getRandomOf(volunteers));
                 }
+                Bukkit.broadcastMessage("Outlaw: " + selectedPlayer.getName());
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
