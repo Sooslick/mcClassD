@@ -3,8 +3,10 @@ package ru.sooslick.outlaw;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
@@ -178,6 +180,7 @@ public class Engine extends JavaPlugin {
 
                 //process others
                 Location hunterLocation = Util.getSafeDistanceLocation(outlawLocation, spawnDistance);
+                Bukkit.getWorlds().get(0).setSpawnLocation(hunterLocation);
                 for (Player p : onlinePlayers) {
                     //skip outlaw
                     if (p.equals(selectedPlayer))
@@ -186,6 +189,12 @@ public class Engine extends JavaPlugin {
                     Hunter h = new Hunter(p);
                     hunters.add(h);
                     preparePlayer(p, hunterLocation);
+                    p.getInventory().addItem(new ItemStack(Material.COMPASS));
+                }
+
+                //debug: check distance btw runner and hunters
+                if (hunters.size() > 0) {
+                    Bukkit.broadcastMessage("Spawn handicap: " + Util.distance(outlaw.getPlayer().getLocation(), hunters.get(0).getPlayer().getLocation()));
                 }
 
                 //run game
@@ -218,11 +227,8 @@ public class Engine extends JavaPlugin {
     private void alertOutlaw() {
         Player outlawPlayer = outlaw.getPlayer();
         Location outlawLocation = outlawPlayer.getLocation();
-        for(Hunter h : hunters) {
-            Location l = h.getPlayer().getLocation();
-            int x = l.getBlockX() - outlawLocation.getBlockX();
-            int z = l.getBlockZ() - outlawLocation.getBlockZ();
-            if (Math.sqrt(x*x + z*z) < alertThreshold) {
+        for (Hunter h : hunters) {
+            if (Util.distance(h.getPlayer().getLocation(), outlawLocation) < alertThreshold) {
                 alertTimeout = 60;                                  //todo magic const to cfg
                 outlawPlayer.sendMessage("Hunters near");
                 break;

@@ -11,13 +11,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Logger;
 
 public class Util {
 
     private static Random random = new Random();
     public static final List<Material> DANGERS;
+    private static Logger logger;
 
     static {
+        logger = Bukkit.getLogger();
         Material[] dgrs = {Material.FIRE, Material.TNT, Material.CACTUS, Material.VINE, Material.LADDER,
                 Material.IRON_TRAPDOOR, Material.TRIPWIRE, Material.TRIPWIRE_HOOK,
                 Material.SAND, Material.GRAVEL};
@@ -38,10 +41,14 @@ public class Util {
         World w = Bukkit.getWorlds().get(0);
         for (int i=0; i<10; i++) {      //10 attempts to get safe loc
             Location l = getRandomLocation(bound);
-            if (isSafeLocation(l))
-                return w.getHighestBlockAt(l).getLocation().add(0,1,0);
+            if (isSafeLocation(l)) {
+                logger.info("getSafeRandomLocation - success");
+                return w.getHighestBlockAt(l).getLocation().add(0, 1, 0);
+            } else
+                logger.info("getSafeRandomLocation - fail");
         }
         //todo: adequate safe loc?
+        logger.info("getSafeRandomLocation - default");
         return Bukkit.getWorlds().get(0).getSpawnLocation();
     }
 
@@ -49,7 +56,7 @@ public class Util {
         double angle = Math.random() * Math.PI * 2;
         double x = Math.cos(angle) * dist;
         double z = Math.sin(angle) * dist;
-        return src.add(x, 0, z);
+        return new Location(src.getWorld(), src.getBlockX() + x, src.getBlockY(), src.getBlockZ() + z);
     }
 
     public static Location getSafeDistanceLocation(Location src, int dist) {
@@ -57,11 +64,15 @@ public class Util {
         Location l = src;               // init var with src value due to compile error
         for (int i=0; i<10; i++) {      //10 attempts to get safe loc
             l = getDistanceLocation(src, dist);
-            if (isSafeLocation(l))
-                return w.getHighestBlockAt(l).getLocation().add(0,1,0);
+            if (isSafeLocation(l)) {
+                logger.info("getSafeDistanceLocation - success");
+                return w.getHighestBlockAt(l).getLocation().add(0, 1, 0);
+            } else
+                logger.info("getSafeDistanceLocation - fail");
         }
         //todo: adequate safe loc? Returns NOT SAFE location!
-        return l;
+        logger.info("getSafeDistanceLocation - default");
+        return w.getHighestBlockAt(l).getLocation().add(0,1,0);
     }
 
     public static boolean isSafeLocation(Location l) {
@@ -74,5 +85,11 @@ public class Util {
         if (DANGERS.contains(b.getType())) return false;
         //todo check nearby blocks
         return true;
+    }
+
+    public static double distance(Location l1, Location l2) {
+        int x = l1.getBlockX() - l2.getBlockX();
+        int z = l1.getBlockZ() - l2.getBlockZ();
+        return Math.sqrt(x*x + z*z);
     }
 }
