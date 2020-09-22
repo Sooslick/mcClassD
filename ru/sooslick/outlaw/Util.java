@@ -22,7 +22,7 @@ public class Util {
     static {
         logger = Bukkit.getLogger();
         Material[] dgrs = {Material.FIRE, Material.TNT, Material.CACTUS, Material.VINE, Material.LADDER,
-                Material.IRON_TRAPDOOR, Material.TRIPWIRE, Material.TRIPWIRE_HOOK, Material.COBWEB, Material.CAMPFIRE,
+                Material.IRON_TRAPDOOR, Material.TRIPWIRE, Material.TRIPWIRE_HOOK,
                 Material.SAND, Material.GRAVEL};
         //todo: add kystik, pistons, trapdoors, pressure plates, magmablock, ...
         DANGERS = new ArrayList<>(Arrays.asList(dgrs));

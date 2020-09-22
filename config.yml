@@ -1,0 +1,17 @@
+#General parameters
+minVotestarters: 1
+votestartTimer: 60
+spawnRadius: 300
+spawnDistance: 240
+alertRadius: 50
+alertTimeout: 60
+#gamemode
+enableEscapeGamemode: false
+#escape gamemode parameters
+playzoneSize: 1000
+wallThickness: 16
+spotSize: 10
+groundSpotDensity: 3
+airSpotDensity: 2
+undergroundSpotDensity: 5
+enableObsidianDrop: false;

@@ -23,34 +23,30 @@ public class Engine extends JavaPlugin {
     private Outlaw outlaw;
     private List<String> volunteers;
     private List<String> votestarters;
-    private int minVotestarters;
-    private int votestartTimer;
+    private int votestartCountdown;
     private int votestartTimerId;
     private int gameTimerId;
-    private int spawnDistance;
-    private int spawnRadius;
     private int gameTimer;
     private int killCounter;
-    private int alertTimeout;
-    private int alertThreshold;
+    private int alertTimeoutTimer;
     private GameState state;
     private CommandListener cmdListener;
     private Logger log;
 
     private Runnable votestartTimerImpl = () -> {
-        votestartTimer--;
-        if (votestartTimer % 10 == 0) {
-            Bukkit.broadcastMessage("§c" + votestartTimer + " seconds to start");
+        votestartCountdown--;
+        if (votestartCountdown % 10 == 0) {
+            Bukkit.broadcastMessage("§c" + votestartCountdown + " seconds to start");
         }
-        if (votestartTimer <= 0) {
+        if (votestartCountdown <= 0) {
             changeGameState(GameState.GAME);
         }
     };
 
     private Runnable gameProcessor = () -> {
         gameTimer++;
-        if (alertTimeout > 0)
-            alertTimeout--;
+        if (alertTimeoutTimer > 0)
+            alertTimeoutTimer--;
         else
             alertOutlaw();
         updateCompass();
@@ -60,6 +56,14 @@ public class Engine extends JavaPlugin {
     public void onEnable() {
         log = Bukkit.getLogger();
         log.info("Init Class D Plugin");
+        if (!(getDataFolder().exists())) {
+            if (getDataFolder().mkdir()) {
+                log.info("Created plugin data folder");
+                saveDefaultConfig();
+            } else {
+                log.warning("§eCannot create plugin data folder. Default config will be loaded.\n Do you have correct rights?");
+            }
+        }
         changeGameState(GameState.IDLE);
         cmdListener = new CommandListener(this);
         getCommand("outlaw").setExecutor(cmdListener);
@@ -79,7 +83,7 @@ public class Engine extends JavaPlugin {
         }
         votestarters.add(name);
         Bukkit.broadcastMessage("§e" + name + " voted to start game");
-        if (votestarters.size() >= minVotestarters && state == GameState.IDLE) {
+        if (votestarters.size() >= Cfg.minVotestarters && state == GameState.IDLE) {
             changeGameState(GameState.PRESTART);
             return;
         }
@@ -120,9 +124,9 @@ public class Engine extends JavaPlugin {
                 for(String s : volunteers)
                     sb.append(s).append(" ");
                 sender.sendMessage(sb.toString());
-                sender.sendMessage("Prestart timer: " + votestartTimer);
-                sender.sendMessage("Start zone: " + spawnRadius);
-                sender.sendMessage("Spawn distance: " + spawnDistance);
+                sender.sendMessage("Prestart timer: " + votestartCountdown);
+                sender.sendMessage("Start zone: " + Cfg.spawnRadius);
+                sender.sendMessage("Spawn distance: " + Cfg.spawnDistance);
                 break;
             case GAME:
                 sender.sendMessage("Victim: " + outlaw.getName());
@@ -132,8 +136,8 @@ public class Engine extends JavaPlugin {
                 sender.sendMessage(sb.toString());
                 sender.sendMessage("Game time: " + gameTimer);
                 sender.sendMessage("Kill counter: " + killCounter);
-                sender.sendMessage("Alert timeout: " + alertTimeout);
-                sender.sendMessage("Alert threshold: " + alertThreshold);
+                sender.sendMessage("Alert timeout: " + alertTimeoutTimer);
+                sender.sendMessage("Alert radius: " + Cfg.alertRadius);
                 break;
         }
     }
@@ -143,26 +147,23 @@ public class Engine extends JavaPlugin {
         log.info("Outlaw game state changed. New state: " + state.toString());
         switch (state) {
             case IDLE:
-                Bukkit.getScheduler().cancelTask(gameTimerId);      //todo if timer !exists???
+                Bukkit.getScheduler().cancelTask(gameTimerId);
+                Cfg.readConfig(getConfig());
                 votestarters = new ArrayList<>();
                 volunteers = new ArrayList<>();
                 hunters = new ArrayList<>();
-                votestartTimer = 60;        //todo get values from cfg
-                minVotestarters = 1;        //cfg
-                spawnDistance = 228;        //cfg
-                spawnRadius = 228;          //cfg
-                alertThreshold = 66;        //cfg + todo: default thresold timer
-                alertTimeout = 0;
+                votestartCountdown = Cfg.votestartTimer;
+                alertTimeoutTimer = 0;
                 gameTimer = 0;
                 killCounter = 0;
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");      //todo check?
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");
                 Bukkit.broadcastMessage("§eReady to next game");
                 break;
             case PRESTART:
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
-                Bukkit.broadcastMessage("§eGame launch soon");
+                Bukkit.broadcastMessage(Cfg.votestartTimer + " seconds to launch");
                 break;
             case GAME:
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
@@ -179,11 +180,11 @@ public class Engine extends JavaPlugin {
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
-                Location outlawLocation = Util.getSafeRandomLocation(spawnRadius);
+                Location outlawLocation = Util.getSafeRandomLocation(Cfg.spawnRadius);
                 preparePlayer(selectedPlayer, outlawLocation);
 
                 //process others
-                Location hunterLocation = Util.getSafeDistanceLocation(outlawLocation, spawnDistance);
+                Location hunterLocation = Util.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
                 Bukkit.getWorlds().get(0).setSpawnLocation(hunterLocation);
                 for (Player p : onlinePlayers) {
                     //skip outlaw
@@ -239,8 +240,8 @@ public class Engine extends JavaPlugin {
         Player outlawPlayer = outlaw.getPlayer();
         Location outlawLocation = outlawPlayer.getLocation();
         for (Hunter h : hunters) {
-            if (Util.distance(h.getPlayer().getLocation(), outlawLocation) < alertThreshold) {
-                alertTimeout = 60;                                  //todo magic const to cfg
+            if (Util.distance(h.getPlayer().getLocation(), outlawLocation) < Cfg.alertRadius) {
+                alertTimeoutTimer = Cfg.alertTimeout;
                 outlawPlayer.sendMessage("§cHunters near");
                 break;
             }
@@ -251,8 +252,8 @@ public class Engine extends JavaPlugin {
     //  join / dc events
     //  test + feedback
     //  refactor code
-    //  cfg impl
     //  more commands + stats
     //  impl escape gamemode
-    //  compass cross-world rework
+
+    //todo Desmond feature: use netherite for spots instead obsidian
 }
