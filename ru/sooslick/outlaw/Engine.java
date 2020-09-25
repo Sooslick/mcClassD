@@ -29,11 +29,15 @@ public class Engine extends JavaPlugin {
     private int gameTimer;
     private int killCounter;
     private int alertTimeoutTimer;
+    private boolean hunterAlert;
+    private int halfSize;
+    private int escapeArea;
     private GameState state;
     private CommandListener cmdListener;
+    private EventListener eventListener;
     private Logger log;
 
-    private Runnable votestartTimerImpl = () -> {
+    private final Runnable votestartTimerImpl = () -> {
         votestartCountdown--;
         if (votestartCountdown % 10 == 0) {
             Bukkit.broadcastMessage("§c" + votestartCountdown + " seconds to start");
@@ -50,6 +54,11 @@ public class Engine extends JavaPlugin {
         else
             alertOutlaw();
         updateCompass();
+        if (Cfg.enableEscapeGamemode) {
+            if (!hunterAlert)
+                alertHunter();
+            checkEscape();
+        }
     };
 
     @Override
@@ -67,7 +76,8 @@ public class Engine extends JavaPlugin {
         changeGameState(GameState.IDLE);
         cmdListener = new CommandListener(this);
         getCommand("outlaw").setExecutor(cmdListener);
-        getServer().getPluginManager().registerEvents(new EventListener(this), this);
+        eventListener = new EventListener(this);
+        getServer().getPluginManager().registerEvents(eventListener, this);
         log.info("Init Class D Plugin - success");
     }
 
@@ -156,16 +166,24 @@ public class Engine extends JavaPlugin {
                 alertTimeoutTimer = 0;
                 gameTimer = 0;
                 killCounter = 0;
+                hunterAlert = false;
+                halfSize = Cfg.playzoneSize / 2;
+                escapeArea = halfSize + Cfg.wallThickness + 2;
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");
-                Bukkit.broadcastMessage("§eReady to next game");
+                if (Cfg.enableEscapeGamemode) {
+                    Wall.generate(this);
+                } else {
+                    Bukkit.broadcastMessage("§eReady to next game");
+                }
                 break;
             case PRESTART:
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
                 Bukkit.broadcastMessage(Cfg.votestartTimer + " seconds to launch");
                 break;
             case GAME:
+                eventListener.reset();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
@@ -195,6 +213,12 @@ public class Engine extends JavaPlugin {
                     hunters.add(h);
                     preparePlayer(p, hunterLocation);
                     p.getInventory().addItem(new ItemStack(Material.COMPASS));
+                }
+
+                if (Cfg.enableEscapeGamemode) {
+                    Bukkit.broadcastMessage("§eVictim's target: §cESCAPE");
+                } else {
+                    Bukkit.broadcastMessage("§eVictim's target: §cKILL DRAGON");
                 }
 
                 //debug: check distance btw runner and hunters
@@ -240,6 +264,8 @@ public class Engine extends JavaPlugin {
         Player outlawPlayer = outlaw.getPlayer();
         Location outlawLocation = outlawPlayer.getLocation();
         for (Hunter h : hunters) {
+            if (!h.getPlayer().getWorld().equals(outlawLocation.getWorld()))
+                continue;
             if (Util.distance(h.getPlayer().getLocation(), outlawLocation) < Cfg.alertRadius) {
                 alertTimeoutTimer = Cfg.alertTimeout;
                 outlawPlayer.sendMessage("§cHunters near");
@@ -248,12 +274,35 @@ public class Engine extends JavaPlugin {
         }
     }
 
+    private void alertHunter() {
+        Location l = outlaw.getPlayer().getLocation();
+        if (isOutside(l)) {
+            hunterAlert = true;
+            Bukkit.broadcastMessage("§cVictim is breaking through the Wall");
+        }
+    }
+
+    private void checkEscape() {
+        Location l = outlaw.getPlayer().getLocation();
+        if ((Math.abs(l.getX()) > escapeArea) || (Math.abs(l.getZ()) > escapeArea)) {
+            Bukkit.broadcastMessage("§eVictim escaped!");
+            changeGameState(GameState.IDLE);
+        }
+    }
+
+    public boolean isOutside(Location l) {
+        return ((Math.abs(l.getX()) > halfSize+1) || (Math.abs(l.getZ()) > halfSize+1));
+    }
+
+        //todo refactor wall methods from Engine
+
     //todo
     //  join / dc events
     //  test + feedback
     //  refactor code
     //  more commands + stats
-    //  impl escape gamemode
+    //  generate barriers to prevent escape via jump over the wall
+    //  impl cfg param: disable wall rebuild
 
-    //todo Desmond feature: use netherite for spots instead obsidian
+    //todo Desmond feature: use netherite for spots instead of obsidian
 }

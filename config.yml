@@ -14,4 +14,4 @@ spotSize: 10
 groundSpotDensity: 3
 airSpotDensity: 2
 undergroundSpotDensity: 5
-enableObsidianDrop: false;
+allowBuildWall: false

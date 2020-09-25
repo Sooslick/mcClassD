@@ -3,8 +3,6 @@ package ru.sooslick.outlaw;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 
-import java.util.logging.Logger;
-
 public class Cfg {
 
     public static int minVotestarters;
@@ -20,7 +18,7 @@ public class Cfg {
     public static int groundSpotDensity;
     public static int airSpotDensity;
     public static int undergroundSpotDensity;
-    public static boolean enableObsidianDrop;
+    public static boolean allowBuildWall;
 
     private static final String SET = "Set game parameter ";
 
@@ -62,7 +60,7 @@ public class Cfg {
             Bukkit.broadcastMessage(SET + "enableEscapeGamemode = " + b);
             enableEscapeGamemode = b;
         }
-        temp = f.getInt("playzoneSize", 1000);
+        temp = f.getInt("playzoneSize", 1000);  //todo validate: must be wider than spawn radius+distance
         if (playzoneSize != temp) {
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "playzoneSize = " + temp);
             playzoneSize = temp;
@@ -92,10 +90,10 @@ public class Cfg {
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "undergroundSpotDensity = " + temp);
             undergroundSpotDensity = temp;
         }
-        b = f.getBoolean("enableObsidianDrop", false);
-        if (enableObsidianDrop != b) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "enableObsidianDrop = " + b);
-            enableObsidianDrop = b;
+        b = f.getBoolean("allowBuildWall", false);
+        if (allowBuildWall != b) {
+            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "allowBuildWall = " + b);
+            allowBuildWall = b;
         }
     }
 

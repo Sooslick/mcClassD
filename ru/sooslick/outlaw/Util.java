@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 
 public class Util {
 
-    private static Random random = new Random();
+    public static Random random = new Random();
     public static final List<Material> DANGERS;
     private static Logger logger;
 
