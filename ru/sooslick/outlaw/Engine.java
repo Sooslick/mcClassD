@@ -158,6 +158,7 @@ public class Engine extends JavaPlugin {
         switch (state) {
             case IDLE:
                 Bukkit.getScheduler().cancelTask(gameTimerId);
+                reloadConfig();
                 Cfg.readConfig(getConfig());
                 votestarters = new ArrayList<>();
                 volunteers = new ArrayList<>();

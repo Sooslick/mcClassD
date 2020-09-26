@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -22,7 +23,7 @@ public class EventListener implements Listener {
 
     private Engine engine;
 
-    private boolean firstBlockAlert;
+    private boolean firstBlockAlerted;
 
     public EventListener(Engine engine) {
         this.engine = engine;
@@ -92,14 +93,14 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
-        if (!firstBlockAlert)
+        if (firstBlockAlerted)
             return;
         Player p = e.getPlayer();
         if (!p.equals(engine.getOutlaw().getPlayer()))
             return;
         Location l = e.getBlock().getLocation();
         if ((Math.abs(l.getBlockX()) >= Wall.startPosY) || (Math.abs(l.getBlockZ()) >= Wall.startPosY)) {
-            firstBlockAlert = true;
+            firstBlockAlerted = true;
             Bukkit.broadcastMessage("§cVictim is trying to break the Wall");       //todo refactor broadcast to broadcaster class
         }
     }
@@ -109,20 +110,30 @@ public class EventListener implements Listener {
         if (!Cfg.enableEscapeGamemode)
             return;
 
-        Location l = e.getBlockPlaced().getLocation();
-        if (l.getBlockY() < 240)
-            return;
+        Block b = e.getBlockPlaced();
+        Location l = b.getLocation();
+        if (!Cfg.allowBuildWall) {
+            if (b.getType().equals(Material.OBSIDIAN)) {
+                if ((Math.abs(l.getBlockX()) >= Wall.startPosY-1) || (Math.abs(l.getBlockZ()) >= Wall.startPosY-1)) {
+                    e.setCancelled(true);
+                    e.getPlayer().sendMessage("Obsidian is denied here");
+                }
+            }
+        }
 
-        //generate weird barrier for wall gamemode to prevent escape over the wall
-        World w = l.getWorld();
-        w.getBlockAt(l.getBlockX(), 255, l.getBlockZ()).setType(Material.BARRIER);
-        w.getBlockAt(l.getBlockX()-1, 255, l.getBlockZ()).setType(Material.BARRIER);
-        w.getBlockAt(l.getBlockX(), 255, l.getBlockZ()-1).setType(Material.BARRIER);
-        w.getBlockAt(l.getBlockX()+1, 255, l.getBlockZ()).setType(Material.BARRIER);
-        w.getBlockAt(l.getBlockX(), 255, l.getBlockZ()+1).setType(Material.BARRIER);
+        if (l.getBlockY() > 240) {
+            //generate weird barrier for wall gamemode to prevent escape over the wall
+            World w = l.getWorld();
+            w.getBlockAt(l.getBlockX(), 255, l.getBlockZ()).setType(Material.BARRIER);
+            w.getBlockAt(l.getBlockX() - 1, 255, l.getBlockZ()).setType(Material.BARRIER);
+            w.getBlockAt(l.getBlockX(), 255, l.getBlockZ() - 1).setType(Material.BARRIER);
+            w.getBlockAt(l.getBlockX() + 1, 255, l.getBlockZ()).setType(Material.BARRIER);
+            w.getBlockAt(l.getBlockX(), 255, l.getBlockZ() + 1).setType(Material.BARRIER);
+            //todo: piston exploit
+        }
     }
 
     public void reset() {
-        firstBlockAlert = false;
+        firstBlockAlerted = false;
     }
 }

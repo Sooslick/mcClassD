@@ -86,7 +86,7 @@ public class Wall {
                             spotPositions.remove(0);
                             Block b = w.getBlockAt(baseX, 0, halfSize);
                             w.loadChunk(b.getChunk());
-                            int baseH = w.getHighestBlockYAt(b.getLocation());
+                            int baseH = w.getHighestBlockYAt(b.getLocation()) + 2;
                             for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //x
                                 for (int j = startPosY; j < endPosY; j++)                               //z
                                     for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
@@ -118,7 +118,7 @@ public class Wall {
                             spotPositions.remove(0);
                             Block b = w.getBlockAt(baseX, 0, halfSize);
                             w.loadChunk(b.getChunk());
-                            int baseH = w.getHighestBlockYAt(b.getLocation());
+                            int baseH = w.getHighestBlockYAt(b.getLocation()) + 2;
                             for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //z
                                 for (int j = startPosY; j < endPosY; j++)                               //x
                                     for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
@@ -150,7 +150,7 @@ public class Wall {
                             spotPositions.remove(0);
                             Block b = w.getBlockAt(baseX, 0, halfSize);
                             w.loadChunk(b.getChunk());
-                            int baseH = w.getHighestBlockYAt(b.getLocation());
+                            int baseH = w.getHighestBlockYAt(b.getLocation()) + 2;
                             for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //x
                                 for (int j = -startPosY; j > -endPosY; j--)                               //z
                                     for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
@@ -182,7 +182,7 @@ public class Wall {
                             spotPositions.remove(0);
                             Block b = w.getBlockAt(baseX, 0, halfSize);
                             w.loadChunk(b.getChunk());
-                            int baseH = w.getHighestBlockYAt(b.getLocation());
+                            int baseH = w.getHighestBlockYAt(b.getLocation()) + 2;
                             for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //z
                                 for (int j = -startPosY; j > -endPosY; j--)                                //x
                                     for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
