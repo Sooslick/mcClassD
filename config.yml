@@ -1,3 +1,4 @@
+debugMode: false
 #General parameters
 minVotestarters: 1
 votestartTimer: 60

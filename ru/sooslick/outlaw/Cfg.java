@@ -5,6 +5,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public class Cfg {
 
+    public static boolean debugMode;
     public static int minVotestarters;
     public static int votestartTimer;
     public static int spawnRadius;
@@ -23,6 +24,7 @@ public class Cfg {
     private static final String SET = "Set game parameter ";
 
     public static void readConfig(FileConfiguration f) {
+        debugMode = f.getBoolean("debugMode", false);
         int temp;
         boolean b;
         temp = f.getInt("minVotestarters", 1);

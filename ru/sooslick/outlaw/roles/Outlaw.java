@@ -1,17 +1,23 @@
 package ru.sooslick.outlaw.roles;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 public class Outlaw extends AbstractPlayer {
 
     Location lastWorldPos;
     Location lastNetherPos;
+    LivingEntity placeholder;
+    boolean offline;
 
     public Outlaw(Player p) {
         player = p;
         lastWorldPos = p.getLocation();     //todo: rework, add null check to updateCompass method
         lastNetherPos = p.getLocation();
+        placeholder = null;                 //todo refactor: single field for player and placeholder
+        offline = false;
     }
 
     public void setLastWorldPos(Location l) {
@@ -28,6 +34,23 @@ public class Outlaw extends AbstractPlayer {
 
     public Location getLastNetherPos() {
         return lastNetherPos;
+    }
+
+    public void goOffline(LivingEntity e) {
+        offline = true;
+        placeholder = e;
+        Bukkit.broadcastMessage("§cVictim left the game, but there is §eVictim Chicken§c. Kill it!");
+    }
+
+    public void goOnline() {
+        placeholder.remove();       //todo test. Do this line despawn event?
+        offline = false;
+        placeholder = null;
+        Bukkit.broadcastMessage("§cVictim returns back to the game.");
+    }
+
+    public LivingEntity getRepresentative() {
+        return offline ? placeholder : player;
     }
 
     //todo refactor notify mech

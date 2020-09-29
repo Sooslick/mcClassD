@@ -1,6 +1,6 @@
 name: ClassD
-version: 0.2.1
-description: hunterz
+version: 0.2.2
+description: Manhunt
 author: sooslick
 main: ru.sooslick.outlaw.Engine
 commands:

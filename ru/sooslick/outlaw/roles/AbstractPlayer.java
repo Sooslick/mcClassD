@@ -14,7 +14,7 @@ public abstract class AbstractPlayer {
         return player;
     }
 
-    protected void setPlayer(Player p) {
+    public void setPlayer(Player p) {
         player = p;
     }
 

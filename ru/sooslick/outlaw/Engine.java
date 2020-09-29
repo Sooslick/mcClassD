@@ -5,10 +5,12 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 
@@ -121,35 +123,8 @@ public class Engine extends JavaPlugin {
         return outlaw;
     }
 
-    public void sendDebugInfo(CommandSender sender) {
-        sender.sendMessage("Current game state: " + state.toString());
-        switch (state) {
-            case IDLE:
-            case PRESTART:
-                StringBuilder sb = new StringBuilder("Votestarters: ");
-                for(String s : votestarters)
-                    sb.append(s).append(" ");
-                sender.sendMessage(sb.toString());
-                sb = new StringBuilder("Suggesters: ");
-                for(String s : volunteers)
-                    sb.append(s).append(" ");
-                sender.sendMessage(sb.toString());
-                sender.sendMessage("Prestart timer: " + votestartCountdown);
-                sender.sendMessage("Start zone: " + Cfg.spawnRadius);
-                sender.sendMessage("Spawn distance: " + Cfg.spawnDistance);
-                break;
-            case GAME:
-                sender.sendMessage("Victim: " + outlaw.getName());
-                sb = new StringBuilder("Hunters: ");
-                for(Hunter h : hunters)
-                    sb.append(h.getName()).append(" ");
-                sender.sendMessage(sb.toString());
-                sender.sendMessage("Game time: " + gameTimer);
-                sender.sendMessage("Kill counter: " + killCounter);
-                sender.sendMessage("Alert timeout: " + alertTimeoutTimer);
-                sender.sendMessage("Alert radius: " + Cfg.alertRadius);
-                break;
-        }
+    public List<Hunter> getHunters() {
+        return hunters;
     }
 
     protected void changeGameState(GameState state) {
@@ -262,7 +237,7 @@ public class Engine extends JavaPlugin {
     }
 
     private void alertOutlaw() {
-        Player outlawPlayer = outlaw.getPlayer();
+        LivingEntity outlawPlayer = outlaw.getRepresentative();
         Location outlawLocation = outlawPlayer.getLocation();
         for (Hunter h : hunters) {
             if (!h.getPlayer().getWorld().equals(outlawLocation.getWorld()))
@@ -270,6 +245,10 @@ public class Engine extends JavaPlugin {
             if (Util.distance(h.getPlayer().getLocation(), outlawLocation) < Cfg.alertRadius) {
                 alertTimeoutTimer = Cfg.alertTimeout;
                 outlawPlayer.sendMessage("§cHunters near");
+                //glow placeholder entity if Outlaw player is offline
+                if (!(outlawPlayer instanceof Player)) {
+                    outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout, 2));
+                }
                 break;
             }
         }
@@ -292,18 +271,17 @@ public class Engine extends JavaPlugin {
     }
 
     public boolean isOutside(Location l) {
-        return ((Math.abs(l.getX()) > halfSize+1) || (Math.abs(l.getZ()) > halfSize+1));
+        return ((Math.abs(l.getX()) > halfSize+1) || (Math.abs(l.getZ()) > halfSize+1) || l.getY() > 255);
     }
 
         //todo refactor wall methods from Engine
 
     //todo
     //  join / dc events
-    //  test + feedback
     //  refactor code
     //  more commands + stats
-    //  generate barriers to prevent escape via jump over the wall
-    //  impl cfg param: disable wall rebuild
+    //  late join feature
+    //  command alias: manhunt
 
-    //todo Desmond feature: use netherite for spots instead of obsidian
+    //todo: re-organize gamemodes impl
 }
