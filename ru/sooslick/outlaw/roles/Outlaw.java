@@ -42,8 +42,9 @@ public class Outlaw extends AbstractPlayer {
         Bukkit.broadcastMessage("§cVictim left the game, but there is §eVictim Chicken§c. Kill it!");
     }
 
-    public void goOnline() {
-        placeholder.remove();       //todo test. Do this line despawn event?
+    public void goOnline(Player p) {
+        placeholder.remove();
+        player = p;
         offline = false;
         placeholder = null;
         Bukkit.broadcastMessage("§cVictim returns back to the game.");

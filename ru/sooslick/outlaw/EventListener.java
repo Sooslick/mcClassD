@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Chicken;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -52,6 +53,8 @@ public class EventListener implements Listener {
         if (!e.getEntity().equals(outlaw))
             return;
         if (outlaw.getHealth() - e.getFinalDamage() <= 0) {
+            e.setCancelled(true);
+            //todo inv to chest method?
             Bukkit.broadcastMessage("§cVictim died. §eHunters win!");   //todo: impl method victory in Engine
             engine.changeGameState(GameState.IDLE);
         }
@@ -93,8 +96,13 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
+        if (!Cfg.enableEscapeGamemode)
+            return;
+        if (!engine.getGameState().equals(GameState.GAME))
+            return;
         if (firstBlockAlerted)
             return;
+
         Player p = e.getPlayer();
         if (!p.equals(engine.getOutlaw().getPlayer()))
             return;
@@ -136,15 +144,17 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
-        if (!engine.getGameState().equals(GameState.GAME))
+        if (!engine.getGameState().equals(GameState.GAME)) {
             //todo infomessages
+            e.getPlayer().setGameMode(GameMode.SPECTATOR);
             return;
+        }
         Player p = e.getPlayer();
         Outlaw o = engine.getOutlaw();
 
         //check Outlaw
         if (p.getName().equals(o.getPlayer().getName())) {
-            o.goOnline();
+            o.goOnline(p);
             return;
         }
 
@@ -156,18 +166,21 @@ public class EventListener implements Listener {
             }
         }
 
+        //set spectator mode for anyone else
         p.setGameMode(GameMode.SPECTATOR);
     }
 
     @EventHandler
     public void onLeave(PlayerQuitEvent e) {
         if (!engine.getGameState().equals(GameState.GAME))
+            //todo: remove from vs / suggest
             return;
         Player p = e.getPlayer();
         Outlaw o = engine.getOutlaw();
         if (o.getPlayer().equals(p)) {
             LivingEntity entity = (LivingEntity) p.getWorld().spawnEntity(p.getLocation(), EntityType.CHICKEN);
             entity.setAI(false);
+            entity.setCustomName(p.getName());
             o.goOffline(entity);
         }
     }

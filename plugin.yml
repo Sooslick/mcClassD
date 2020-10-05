@@ -1,8 +1,9 @@
 name: ClassD
-version: 0.2.2
+version: 0.2.3
 description: Manhunt
 author: sooslick
 main: ru.sooslick.outlaw.Engine
+api-version: 1.16
 commands:
   outlaw:
     description: some outlaw commands

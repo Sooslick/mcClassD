@@ -28,7 +28,7 @@ public class Engine extends JavaPlugin {
     private int votestartCountdown;
     private int votestartTimerId;
     private int gameTimerId;
-    private int gameTimer;
+    private long gameTimer;
     private int killCounter;
     private int alertTimeoutTimer;
     private boolean hunterAlert;
@@ -38,6 +38,7 @@ public class Engine extends JavaPlugin {
     private CommandListener cmdListener;
     private EventListener eventListener;
     private Logger log;
+    private TimedMessages timedMessages;
 
     private final Runnable votestartTimerImpl = () -> {
         votestartCountdown--;
@@ -76,6 +77,7 @@ public class Engine extends JavaPlugin {
             }
         }
         changeGameState(GameState.IDLE);
+        timedMessages = new TimedMessages(this).launch();
         cmdListener = new CommandListener(this);
         getCommand("outlaw").setExecutor(cmdListener);
         eventListener = new EventListener(this);
@@ -125,6 +127,14 @@ public class Engine extends JavaPlugin {
 
     public List<Hunter> getHunters() {
         return hunters;
+    }
+
+    public long getGameTimer() {
+        return gameTimer;
+    }
+
+    public int getKillCounter() {
+        return killCounter;
     }
 
     protected void changeGameState(GameState state) {
@@ -217,7 +227,7 @@ public class Engine extends JavaPlugin {
         p.setHealth(20);
         p.setFoodLevel(20);
         p.setTotalExperience(0);
-        p.getInventory().clear();       //todo check armor exploit
+        p.getInventory().clear();
         p.getActivePotionEffects().clear();
         p.setBedSpawnLocation(dest);
     }
@@ -247,7 +257,7 @@ public class Engine extends JavaPlugin {
                 outlawPlayer.sendMessage("§cHunters near");
                 //glow placeholder entity if Outlaw player is offline
                 if (!(outlawPlayer instanceof Player)) {
-                    outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout, 2));
+                    outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout*20, 3));
                 }
                 break;
             }
@@ -277,7 +287,6 @@ public class Engine extends JavaPlugin {
         //todo refactor wall methods from Engine
 
     //todo
-    //  join / dc events
     //  refactor code
     //  more commands + stats
     //  late join feature
