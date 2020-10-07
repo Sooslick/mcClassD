@@ -4,8 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.sooslick.outlaw.roles.Outlaw;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Duration;
 
 public class TimedMessages {
 
@@ -28,14 +27,20 @@ public class TimedMessages {
         switch (engine.getGameState()) {
             case IDLE:
             case PRESTART:
-                //todo impl
-                return "TimedMessages.getMessage() not implemented for idle/prestart states";
+                StringBuilder sb = new StringBuilder();
+                sb.append("§e`Class D` Manhunt gamemode")
+                        .append("\nType §6/outlaw help §efor more info")
+                        .append("\nTry yourself: §6/outlaw suggest")
+                        .append("\n§eType §6/outlaw votestart §eto begin or simply §6/outlaw v")
+                        .append("\n§ePreffered gamemode: §c")
+                        .append(Cfg.enableEscapeGamemode ? "The Wall" : "Minecraft Any%");
+                return sb.toString();
             case GAME:
-                Date date = new Date(engine.getGameTimer() * 1000);
+                Duration duration = Duration.ofSeconds(engine.getGameTimer());
                 Outlaw o = engine.getOutlaw();
                 String outlawString = o.getRepresentative() instanceof Player ? "Victim" : "Victim Chicken";
-                StringBuilder sb = new StringBuilder();
-                sb.append("§eGame timer: ").append(new SimpleDateFormat("HH:mm:ss").format(date))
+                sb = new StringBuilder();
+                sb.append("§eGame timer: ").append(Util.formatDuration(duration))
                         .append("\nDeath counter: ").append(engine.getKillCounter())
                         .append("\nCompass is pointing to §c").append(outlawString).append(" §o").append(o.getName());
                 return sb.toString();

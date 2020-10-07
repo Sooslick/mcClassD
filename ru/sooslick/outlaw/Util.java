@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -90,5 +91,22 @@ public class Util {
         int x = l1.getBlockX() - l2.getBlockX();
         int z = l1.getBlockZ() - l2.getBlockZ();
         return Math.sqrt(x*x + z*z);
+    }
+
+    public static String formatDuration(Duration duration) {
+        long seconds = duration.getSeconds();
+        long h = seconds / 3600;
+        if (h > 0) {
+            return String.format(
+                    "%d:%02d:%02d",
+                    seconds / 3600,
+                    (seconds % 3600) / 60,
+                    seconds % 60);
+        } else {
+            return String.format(
+                    "%d:%02d",
+                    (seconds % 3600) / 60,
+                    seconds % 60);
+        }
     }
 }

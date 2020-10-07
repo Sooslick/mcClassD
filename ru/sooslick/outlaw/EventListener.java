@@ -6,7 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Chicken;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -15,6 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -35,13 +36,13 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    public void OnDamage(EntityDamageEvent e) {
+    public void onDamage(EntityDamageEvent e) {
         if (!engine.getGameState().equals(GameState.GAME))
             return;
 
         //check if dragon dead
         if (e.getEntity().getType().equals(EntityType.ENDER_DRAGON)) {
-            if (((LivingEntity) e.getEntity()).getHealth() - e.getDamage() <= 0) {
+            if (((LivingEntity) e.getEntity()).getHealth() - e.getFinalDamage() <= 0) {
                 Bukkit.broadcastMessage("§cDragon died. §eVictim escaped!");            //todo: impl method victory in Engine
                 engine.changeGameState(GameState.IDLE);
             }
@@ -60,6 +61,22 @@ public class EventListener implements Listener {
         }
 
         //todo: check if hunter s ded
+    }
+
+    @EventHandler
+    public void onDeath(EntityDeathEvent e) {
+        if (!engine.getGameState().equals(GameState.GAME))
+            return;
+
+        //check outlaw
+        Entity eventEntity = e.getEntity();
+        LivingEntity outlaw = engine.getOutlaw().getRepresentative();
+        if (e.getEntity().equals(outlaw))
+            return;
+
+        //else inc killcounter
+        if (eventEntity instanceof Player)
+            engine.incKill();
     }
 
     @EventHandler
@@ -123,7 +140,7 @@ public class EventListener implements Listener {
         if (!Cfg.allowBuildWall) {
             Material m = b.getType();
             if (m.equals(Material.OBSIDIAN) || m.equals(Material.NETHERITE_BLOCK) || m.equals(Material.CRYING_OBSIDIAN)) {
-                if ((Math.abs(l.getBlockX()) >= Wall.startPosY-1) || (Math.abs(l.getBlockZ()) >= Wall.startPosY-1)) {
+                if ((Math.abs(l.getBlockX()) >= Wall.startPosY - 1) || (Math.abs(l.getBlockZ()) >= Wall.startPosY - 1)) {
                     e.setCancelled(true);
                     e.getPlayer().sendMessage("Obsidian is denied here");
                 }

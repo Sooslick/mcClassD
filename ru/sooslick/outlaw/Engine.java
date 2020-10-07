@@ -137,6 +137,10 @@ public class Engine extends JavaPlugin {
         return killCounter;
     }
 
+    public void incKill() {
+        killCounter++;
+    }
+
     protected void changeGameState(GameState state) {
         this.state = state;
         log.info("Outlaw game state changed. New state: " + state.toString());
@@ -173,6 +177,9 @@ public class Engine extends JavaPlugin {
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+
+                //prepare environment
+                Bukkit.getWorlds().get(0).setTime(0);
 
                 //select outlaw entity
                 if (volunteers.isEmpty()) {
