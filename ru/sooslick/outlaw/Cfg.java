@@ -12,6 +12,7 @@ public class Cfg {
     public static int spawnDistance;
     public static int alertRadius;
     public static int alertTimeout;
+    public static boolean enablePotionHandicap;
     public static boolean enableEscapeGamemode;
     public static int playzoneSize;
     public static int wallThickness;
@@ -56,6 +57,11 @@ public class Cfg {
         if (alertTimeout != temp) {
             Bukkit.broadcastMessage(SET + "alertTimeout = " + temp);
             alertTimeout = temp;
+        }
+        b = f.getBoolean("enablePotionHandicap", true);
+        if (enablePotionHandicap != b) {
+            Bukkit.broadcastMessage(SET + "enablePotionHandicap = " + b);
+            enablePotionHandicap = b;
         }
         b = f.getBoolean("enableEscapeGamemode", false);
         if (enableEscapeGamemode != b) {

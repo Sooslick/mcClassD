@@ -193,6 +193,10 @@ public class Engine extends JavaPlugin {
                 outlaw = new Outlaw(selectedPlayer);
                 Location outlawLocation = Util.getSafeRandomLocation(Cfg.spawnRadius);
                 preparePlayer(selectedPlayer, outlawLocation);
+                //give handicap effects
+                if (Cfg.enablePotionHandicap) {
+                    applyPotionHandicap(selectedPlayer, Bukkit.getOnlinePlayers().size() * 400);
+                }
 
                 //process others
                 Location hunterLocation = Util.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
@@ -233,6 +237,8 @@ public class Engine extends JavaPlugin {
         p.setGameMode(GameMode.SURVIVAL);
         p.setHealth(20);
         p.setFoodLevel(20);
+        p.setSaturation(5);
+        p.setExhaustion(0);
         p.setTotalExperience(0);
         p.getInventory().clear();
         p.getActivePotionEffects().clear();
@@ -289,6 +295,12 @@ public class Engine extends JavaPlugin {
 
     public boolean isOutside(Location l) {
         return ((Math.abs(l.getX()) > halfSize+1) || (Math.abs(l.getZ()) > halfSize+1) || l.getY() > 255);
+    }
+
+    private void applyPotionHandicap(LivingEntity selectedPlayer, int duration) {
+        selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, duration, 1));
+        selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 1));
+        selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
     }
 
         //todo refactor wall methods from Engine
