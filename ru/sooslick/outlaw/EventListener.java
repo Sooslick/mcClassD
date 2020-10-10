@@ -16,11 +16,14 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
@@ -29,6 +32,7 @@ public class EventListener implements Listener {
 
     private Engine engine;
     private boolean firstBlockAlerted;
+    private boolean goldenPickaxeAlerted;
 
     public EventListener(Engine engine) {
         this.engine = engine;
@@ -142,7 +146,7 @@ public class EventListener implements Listener {
             if (m.equals(Material.OBSIDIAN) || m.equals(Material.NETHERITE_BLOCK) || m.equals(Material.CRYING_OBSIDIAN)) {
                 if ((Math.abs(l.getBlockX()) >= Wall.startPosY - 1) || (Math.abs(l.getBlockZ()) >= Wall.startPosY - 1)) {
                     e.setCancelled(true);
-                    e.getPlayer().sendMessage("Obsidian is denied here");
+                    e.getPlayer().sendMessage("§4Obsidian is denied here");
                 }
             }
         }
@@ -202,7 +206,32 @@ public class EventListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent e) {
+        //todo just understand how it works and do adequate impl
+        detectGoldPickaxe();
+    }
+
+    @EventHandler
+    public void onItemPickup(EntityPickupItemEvent e) {
+        detectGoldPickaxe();
+    }
+
     public void reset() {
         firstBlockAlerted = false;
+        goldenPickaxeAlerted = false;
+    }
+
+    private void detectGoldPickaxe() {
+        if (!engine.getGameState().equals(GameState.GAME))
+            return;
+        if (goldenPickaxeAlerted)
+            return;
+        Inventory inv = engine.getOutlaw().getPlayer().getInventory();
+        for (ItemStack is : inv.getContents())
+            if (Material.GOLDEN_PICKAXE.equals(is.getType())) {
+                goldenPickaxeAlerted = true;
+                Bukkit.broadcastMessage("§cGolden pickaxe detected");       //todo refactor broadcast to broadcaster class
+            }
     }
 }

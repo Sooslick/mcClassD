@@ -80,6 +80,7 @@ public class Engine extends JavaPlugin {
         timedMessages = new TimedMessages(this).launch();
         cmdListener = new CommandListener(this);
         getCommand("outlaw").setExecutor(cmdListener);
+        getCommand("y").setExecutor(cmdListener);
         eventListener = new EventListener(this);
         getServer().getPluginManager().registerEvents(eventListener, this);
         log.info("Init Class D Plugin - success");
@@ -195,7 +196,7 @@ public class Engine extends JavaPlugin {
                 preparePlayer(selectedPlayer, outlawLocation);
                 //give handicap effects
                 if (Cfg.enablePotionHandicap) {
-                    applyPotionHandicap(selectedPlayer, Bukkit.getOnlinePlayers().size() * 400);
+                    applyPotionHandicap(selectedPlayer);
                 }
 
                 //process others
@@ -297,7 +298,8 @@ public class Engine extends JavaPlugin {
         return ((Math.abs(l.getX()) > halfSize+1) || (Math.abs(l.getZ()) > halfSize+1) || l.getY() > 255);
     }
 
-    private void applyPotionHandicap(LivingEntity selectedPlayer, int duration) {
+    private void applyPotionHandicap(LivingEntity selectedPlayer) {
+        int duration = Bukkit.getOnlinePlayers().size() * 400;
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
@@ -307,9 +309,10 @@ public class Engine extends JavaPlugin {
 
     //todo
     //  refactor code
-    //  more commands + stats
+    //  more stats
     //  late join feature
     //  command alias: manhunt
+    //  custom advancements for breaking wall and golden pickaxe
 
     //todo: re-organize gamemodes impl
 }

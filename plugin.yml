@@ -8,3 +8,6 @@ commands:
   outlaw:
     description: some outlaw commands
     usage: /outlaw <commands>
+  y:
+    description: alias for /outlaw accept command
+    usage: /y

@@ -33,46 +33,47 @@ public class Util {
 
     public static Location getRandomLocation(int bound) {
         //todo: world?
-        int dbound = bound*2;
-        return new Location(Bukkit.getWorlds().get(0), random.nextInt(dbound)-bound, 64, random.nextInt(dbound)-bound);
+        int dbound = bound * 2;
+        return new Location(Bukkit.getWorlds().get(0), random.nextInt(dbound) - bound, 64, random.nextInt(dbound) - bound);
     }
 
     public static Location getSafeRandomLocation(int bound) {
         World w = Bukkit.getWorlds().get(0);
-        for (int i=0; i<10; i++) {      //10 attempts to get safe loc
-            Location l = getRandomLocation(bound);
+        Location l = w.getSpawnLocation();  //spawn location will have never used. Init variable due to compile error
+        for (int i = 0; i < 10; i++) {      //10 attempts to get safe loc
+            l = getRandomLocation(bound);
             if (isSafeLocation(l)) {
                 logger.info("getSafeRandomLocation - success");
-                return w.getHighestBlockAt(l).getLocation().add(0, 1, 0);
+                return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             } else
                 logger.info("getSafeRandomLocation - fail");
         }
-        //todo: adequate safe loc?
         logger.info("getSafeRandomLocation - default");
-        return Bukkit.getWorlds().get(0).getSpawnLocation();
+        safetizeLocation(l);
+        return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
     }
 
     public static Location getDistanceLocation(Location src, int dist) {
         double angle = Math.random() * Math.PI * 2;
-        double x = Math.cos(angle) * dist;
-        double z = Math.sin(angle) * dist;
+        double x = Math.round(Math.cos(angle) * dist);
+        double z = Math.round(Math.sin(angle) * dist);
         return new Location(src.getWorld(), src.getBlockX() + x, src.getBlockY(), src.getBlockZ() + z);
     }
 
     public static Location getSafeDistanceLocation(Location src, int dist) {
         World w = Bukkit.getWorlds().get(0);
         Location l = src;               // init var with src value due to compile error
-        for (int i=0; i<10; i++) {      //10 attempts to get safe loc
+        for (int i = 0; i < 10; i++) {      //10 attempts to get safe loc
             l = getDistanceLocation(src, dist);
             if (isSafeLocation(l)) {
                 logger.info("getSafeDistanceLocation - success");
-                return w.getHighestBlockAt(l).getLocation().add(0, 1, 0);
+                return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             } else
                 logger.info("getSafeDistanceLocation - fail");
         }
-        //todo: adequate safe loc? Returns NOT SAFE location!
         logger.info("getSafeDistanceLocation - default");
-        return w.getHighestBlockAt(l).getLocation().add(0,1,0);
+        safetizeLocation(l);
+        return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
     }
 
     public static boolean isSafeLocation(Location l) {
@@ -90,7 +91,7 @@ public class Util {
     public static double distance(Location l1, Location l2) {
         int x = l1.getBlockX() - l2.getBlockX();
         int z = l1.getBlockZ() - l2.getBlockZ();
-        return Math.sqrt(x*x + z*z);
+        return Math.sqrt(x * x + z * z);
     }
 
     public static String formatDuration(Duration duration) {
@@ -108,5 +109,20 @@ public class Util {
                     (seconds % 3600) / 60,
                     seconds % 60);
         }
+    }
+
+    public static void safetizeLocation(Location l) {
+        World w = l.getWorld();
+        w.loadChunk(l.getChunk());
+        int x = l.getBlockX();
+        int y = l.getBlockY();
+        int z = l.getBlockZ();
+        for (int i = x - 2; i <= x + 2; i++)
+            for (int j = z - 2; j <= z + 2; j++) {
+                w.getBlockAt(i, y, z).setType(Material.BIRCH_LOG);
+                w.getBlockAt(i, y+1, j).setType(Material.AIR);
+                w.getBlockAt(i, y+2, j).setType(Material.AIR);
+                w.getBlockAt(i, y+3, j).setType(Material.AIR);
+            }
     }
 }

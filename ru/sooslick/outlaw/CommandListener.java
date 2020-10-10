@@ -10,6 +10,7 @@ public class CommandListener implements CommandExecutor {
     private final String COMMAND_VOTE = "votestart";
     private final String COMMAND_VOTE_ALIAS = "v";
     private final String COMMAND_SUGGEST = "suggest";
+    private final String COMMAND_JOIN_REQUEST = "joinrequest";
     private final String COMMAND_HELP = "help";
 
     Engine engine;
@@ -19,11 +20,19 @@ public class CommandListener implements CommandExecutor {
     }
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        //todo refactor to two methods for outlaw and for y command
+        //y
+        if (command.getName().equals("y")) {
+            sender.sendMessage("not implemented");
+            return true;
+        }
+
+        //outlaw
         if (args.length == 0) {
             printInfo(sender);
             return true;
         }
-        switch (args[0]) {
+        switch (args[0].toLowerCase()) {
             case COMMAND_VOTE:
             case COMMAND_VOTE_ALIAS:
                 if (sender instanceof Player)       //todo refactor: action else print
@@ -36,6 +45,9 @@ public class CommandListener implements CommandExecutor {
                     engine.suggest((Player) sender);
                 else
                     printConsoleInfo(sender);
+                break;
+            case COMMAND_JOIN_REQUEST:
+                sender.sendMessage("not implemented...");
                 break;
             case COMMAND_HELP:
                 printHelpInfo(sender);
