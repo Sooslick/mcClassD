@@ -1,4 +1,4 @@
-# Hunters gamemode plugin
+# Manhunt gamemode plugin
 Плагин для серверов Minecraft на платформе Spigot.
 Реализует игровой режим, в котором один из игроков становится жертвой,
 а все остальные - охотниками.

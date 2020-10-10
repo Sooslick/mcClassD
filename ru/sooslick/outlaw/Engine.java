@@ -87,7 +87,7 @@ public class Engine extends JavaPlugin {
 
     public void voteStart(Player p) {
         if (state == GameState.GAME) {
-            p.sendMessage("§cCannot votestart while game is started");
+            p.sendMessage("§cCannot votestart while game is running");
             return;
         }
         String name = p.getName();
@@ -105,7 +105,7 @@ public class Engine extends JavaPlugin {
 
     public void suggest(Player p) {
         if (state == GameState.GAME) {
-            p.sendMessage("§cCannot suggest while game is started");
+            p.sendMessage("§cCannot suggest while game is running");
             return;
         }
         String name = p.getName();
@@ -114,7 +114,7 @@ public class Engine extends JavaPlugin {
             return;
         }
         volunteers.add(name);
-        Bukkit.broadcastMessage("§e" + name + " suggest yourself as Victim");
+        Bukkit.broadcastMessage("§e" + name + " suggested yourself as Victim");
     }
 
     public GameState getGameState() {
@@ -158,7 +158,7 @@ public class Engine extends JavaPlugin {
                 killCounter = 0;
                 hunterAlert = false;
                 halfSize = Cfg.playzoneSize / 2;
-                escapeArea = halfSize + Cfg.wallThickness + 2;
+                escapeArea = halfSize + Cfg.wallThickness + 1;
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");
