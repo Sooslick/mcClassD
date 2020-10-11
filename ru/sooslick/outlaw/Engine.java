@@ -16,7 +16,9 @@ import ru.sooslick.outlaw.roles.Outlaw;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class Engine extends JavaPlugin {
@@ -25,6 +27,7 @@ public class Engine extends JavaPlugin {
     private Outlaw outlaw;
     private List<String> volunteers;
     private List<String> votestarters;
+    private Map<String, TimedRequest> joinRequests;
     private int votestartCountdown;
     private int votestartTimerId;
     private int gameTimerId;
@@ -41,31 +44,46 @@ public class Engine extends JavaPlugin {
     private TimedMessages timedMessages;
 
     private final Runnable votestartTimerImpl = () -> {
-        votestartCountdown--;
-        if (votestartCountdown % 10 == 0) {
-            Bukkit.broadcastMessage("§c" + votestartCountdown + " seconds to start");
-        }
-        if (votestartCountdown <= 0) {
-            changeGameState(GameState.GAME);
+        if (--votestartCountdown % 10 == 0) {
+            if (votestartCountdown <= 0)
+                changeGameState(GameState.GAME);
+            else
+                Bukkit.broadcastMessage("§c" + votestartCountdown + " seconds to start");
         }
     };
 
-    private Runnable gameProcessor = () -> {
+    private final Runnable gameProcessor = () -> {
         gameTimer++;
+
+        //wait for alert cooldown, then check distance between victim and hunters every second
         if (alertTimeoutTimer > 0)
             alertTimeoutTimer--;
         else
             alertOutlaw();
+
+        //change compass direction to actual victim's position every second
         updateCompass();
+
+        //check if Victim's position is inside or outside the wall
         if (Cfg.enableEscapeGamemode) {
             if (!hunterAlert)
                 alertHunter();
             checkEscape();
         }
+
+        //process join requests
+        for (Map.Entry<String, TimedRequest> e : joinRequests.entrySet()) {
+            if (e.getValue().tick()) {
+                Player p = Bukkit.getPlayer(e.getKey());
+                if (p != null)
+                    p.sendMessage("Your request have been expired");
+            }
+        }
     };
 
     @Override
     public void onEnable() {
+        //init working folder and config file
         log = Bukkit.getLogger();
         log.info("Init Class D Plugin");
         if (!(getDataFolder().exists())) {
@@ -76,8 +94,12 @@ public class Engine extends JavaPlugin {
                 log.warning("§eCannot create plugin data folder. Default config will be loaded.\n Do you have correct rights?");
             }
         }
+
+        //init game variables
         changeGameState(GameState.IDLE);
         timedMessages = new TimedMessages(this).launch();
+
+        //register commands and events
         cmdListener = new CommandListener(this);
         getCommand("outlaw").setExecutor(cmdListener);
         getCommand("y").setExecutor(cmdListener);
@@ -118,6 +140,75 @@ public class Engine extends JavaPlugin {
         Bukkit.broadcastMessage("§e" + name + " suggested yourself as Victim");
     }
 
+    public void joinRequest(Player sender) {
+        //allow command only in game
+        if (state != GameState.GAME) {
+            sender.sendMessage("§cGame is not running, use §e/outlaw votestart §cinstead");
+            return;
+        }
+        //check outlaw
+        if (outlaw.getPlayer().equals(sender)) {
+            sender.sendMessage("§cYou are Victim. Nice try :P");
+            return;
+        }
+        //check hunters
+        for (Hunter h : hunters) {
+            if (h.getPlayer().equals(sender)) {
+                sender.sendMessage("§cYou are Hunter");
+                return;
+            }
+        }
+        //check requests
+        for (Map.Entry<String, TimedRequest> e : joinRequests.entrySet()) {
+            if (e.getKey().equals(sender.getName())) {
+                sender.sendMessage("§cYou have sent the request yet");
+                return;
+            }
+        }
+        //then create new request and alert Victim
+        joinRequests.put(sender.getName(), new TimedRequest());
+        sender.sendMessage("§cJoin request has sent");
+        outlaw.getPlayer().sendMessage("§e" + sender.getName() + " §cwant to join the game. Type §e/y §c to accept or just ignore him");
+    }
+
+    public void acceptJoinRequest(Player sender) {
+        //allow command only in game
+        if (state != GameState.GAME) {
+            sender.sendMessage("§cGame is not running.");
+            return;
+        }
+        //allow only for outlaw
+        if (!sender.equals(outlaw.getPlayer())) {
+            sender.sendMessage("§cOnly Victim can use this command");
+            return;
+        }
+        //accept all active requests
+        int acceptedRequests = 0;
+        for (Map.Entry<String, TimedRequest> e : joinRequests.entrySet()) {
+            TimedRequest req = e.getValue();
+            if (req.isActive()) {
+                req.deactivate();
+                Player p = Bukkit.getPlayer(e.getKey());
+                if (p != null) {
+                    //todo copypasted from changeGameState - Game, refactor to method
+                    Hunter h = new Hunter(p);
+                    hunters.add(h);
+                    preparePlayer(p, Bukkit.getWorlds().get(0).getSpawnLocation());
+                    p.getInventory().addItem(new ItemStack(Material.COMPASS));
+
+                    acceptedRequests++;
+                    Bukkit.broadcastMessage("§e" + p.getName() + " §cjoined the game as Hunter");
+                }
+            }
+        }
+        //apply handicap potion effects if there are accepted requests
+        if (acceptedRequests > 0) {
+            applyPotionHandicap(sender);
+        } else {
+            sender.sendMessage("§cYou have no join requests");
+        }
+    }
+
     public GameState getGameState() {
         return state;
     }
@@ -153,6 +244,7 @@ public class Engine extends JavaPlugin {
                 votestarters = new ArrayList<>();
                 volunteers = new ArrayList<>();
                 hunters = new ArrayList<>();
+                joinRequests = new HashMap<>();
                 votestartCountdown = Cfg.votestartTimer;
                 alertTimeoutTimer = 0;
                 gameTimer = 0;
@@ -235,7 +327,6 @@ public class Engine extends JavaPlugin {
 
     private void preparePlayer(Player p, Location dest) {
         p.teleport(dest);
-        p.setGameMode(GameMode.SURVIVAL);
         p.setHealth(20);
         p.setFoodLevel(20);
         p.setSaturation(5);
@@ -244,12 +335,13 @@ public class Engine extends JavaPlugin {
         p.getInventory().clear();
         p.getActivePotionEffects().clear();
         p.setBedSpawnLocation(dest);
+        p.setGameMode(GameMode.SURVIVAL);
     }
 
     private void updateCompass() {
         Location l = outlaw.getPlayer().getLocation();
         World w = l.getWorld();
-        for(Hunter h : hunters) {
+        for (Hunter h : hunters) {
             Player p = h.getPlayer();
             if (p.getWorld().equals(w))
                 p.setCompassTarget(l);
@@ -271,7 +363,7 @@ public class Engine extends JavaPlugin {
                 outlawPlayer.sendMessage("§cHunters near");
                 //glow placeholder entity if Outlaw player is offline
                 if (!(outlawPlayer instanceof Player)) {
-                    outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout*20, 3));
+                    outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout * 20, 3));
                 }
                 break;
             }
@@ -295,7 +387,7 @@ public class Engine extends JavaPlugin {
     }
 
     public boolean isOutside(Location l) {
-        return ((Math.abs(l.getX()) > halfSize+1) || (Math.abs(l.getZ()) > halfSize+1) || l.getY() > 255);
+        return ((Math.abs(l.getX()) > halfSize + 1) || (Math.abs(l.getZ()) > halfSize + 1) || l.getY() > 255);
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer) {
@@ -305,7 +397,7 @@ public class Engine extends JavaPlugin {
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
     }
 
-        //todo refactor wall methods from Engine
+    //todo refactor wall methods from Engine
 
     //todo
     //  refactor code

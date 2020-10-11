@@ -11,6 +11,7 @@ public class CommandListener implements CommandExecutor {
     private final String COMMAND_VOTE_ALIAS = "v";
     private final String COMMAND_SUGGEST = "suggest";
     private final String COMMAND_JOIN_REQUEST = "joinrequest";
+    private final String COMMAND_ACCEPT = "accept";
     private final String COMMAND_HELP = "help";
 
     Engine engine;
@@ -23,7 +24,10 @@ public class CommandListener implements CommandExecutor {
         //todo refactor to two methods for outlaw and for y command
         //y
         if (command.getName().equals("y")) {
-            sender.sendMessage("not implemented");
+            if (sender instanceof Player)
+                engine.acceptJoinRequest((Player) sender);
+            else
+                printConsoleInfo(sender);
             return true;
         }
 
@@ -36,7 +40,7 @@ public class CommandListener implements CommandExecutor {
             case COMMAND_VOTE:
             case COMMAND_VOTE_ALIAS:
                 if (sender instanceof Player)       //todo refactor: action else print
-                    engine.voteStart((Player) sender);
+                    engine.voteStart((Player) sender);  //todo: is possible refactor if sender instanceof Player to method and pass action as param?
                 else
                     printConsoleInfo(sender);
                 break;
@@ -47,7 +51,16 @@ public class CommandListener implements CommandExecutor {
                     printConsoleInfo(sender);
                 break;
             case COMMAND_JOIN_REQUEST:
-                sender.sendMessage("not implemented...");
+                if (sender instanceof Player)
+                    engine.joinRequest((Player) sender);
+                else
+                    printConsoleInfo(sender);
+                break;
+            case COMMAND_ACCEPT:
+                if (sender instanceof Player)
+                    engine.acceptJoinRequest((Player) sender);
+                else
+                    printConsoleInfo(sender);
                 break;
             case COMMAND_HELP:
                 printHelpInfo(sender);
@@ -63,10 +76,13 @@ public class CommandListener implements CommandExecutor {
     }
 
     private void printInfo(CommandSender s) {
+        s.sendMessage("§6\nAvailable commands:\n/outlaw help");                 //always send help
         if (s instanceof Player) {
-            s.sendMessage("§6\nAvailable commands:\n/outlaw help\n/outlaw votestart\n/outlaw suggest");
-        } else {
-            s.sendMessage("§6\nAvailable commands:\n/outlaw help");
+            if (engine.getGameState().equals(GameState.GAME)) {
+                s.sendMessage("§6/outlaw joinrequest\n/outlaw accept §7(/y)");  //send req / accept while game is running
+            } else {
+                s.sendMessage("§6/outlaw votestart §7(/outlaw v)\n§6/outlaw suggest");          //send vs / suggest otherwise
+            }
         }
     }
 

@@ -229,9 +229,10 @@ public class EventListener implements Listener {
             return;
         Inventory inv = engine.getOutlaw().getPlayer().getInventory();
         for (ItemStack is : inv.getContents())
-            if (Material.GOLDEN_PICKAXE.equals(is.getType())) {
-                goldenPickaxeAlerted = true;
-                Bukkit.broadcastMessage("§cGolden pickaxe detected");       //todo refactor broadcast to broadcaster class
-            }
+            if (is != null)
+                if (is.getType() == Material.GOLDEN_PICKAXE) {
+                    goldenPickaxeAlerted = true;
+                    Bukkit.broadcastMessage("§cGolden pickaxe detected");       //todo refactor broadcast to broadcaster class
+                }
     }
 }

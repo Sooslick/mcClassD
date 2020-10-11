@@ -119,7 +119,7 @@ public class Util {
         int z = l.getBlockZ();
         for (int i = x - 2; i <= x + 2; i++)
             for (int j = z - 2; j <= z + 2; j++) {
-                w.getBlockAt(i, y, z).setType(Material.BIRCH_LOG);
+                w.getBlockAt(i, y, j).setType(Material.OAK_LOG);
                 w.getBlockAt(i, y+1, j).setType(Material.AIR);
                 w.getBlockAt(i, y+2, j).setType(Material.AIR);
                 w.getBlockAt(i, y+3, j).setType(Material.AIR);
