@@ -42,6 +42,7 @@ public class Engine extends JavaPlugin {
     private EventListener eventListener;
     private Logger log;
     private TimedMessages timedMessages;
+    private ChestTracker chestTracker;
 
     private final Runnable votestartTimerImpl = () -> {
         if (--votestartCountdown % 10 == 0) {
@@ -203,7 +204,8 @@ public class Engine extends JavaPlugin {
         }
         //apply handicap potion effects if there are accepted requests
         if (acceptedRequests > 0) {
-            applyPotionHandicap(sender);
+            if (Cfg.enablePotionHandicap)
+                applyPotionHandicap(sender, 400);
         } else {
             sender.sendMessage("§cYou have no join requests");
         }
@@ -233,14 +235,21 @@ public class Engine extends JavaPlugin {
         killCounter++;
     }
 
+    public ChestTracker getChestTracker() {
+        return chestTracker;
+    }
+
     protected void changeGameState(GameState state) {
         this.state = state;
         log.info("Outlaw game state changed. New state: " + state.toString());
         switch (state) {
             case IDLE:
+                //stop game and read cfg
                 Bukkit.getScheduler().cancelTask(gameTimerId);
                 reloadConfig();
                 Cfg.readConfig(getConfig());
+
+                //reinit game variables
                 votestarters = new ArrayList<>();
                 volunteers = new ArrayList<>();
                 hunters = new ArrayList<>();
@@ -252,9 +261,13 @@ public class Engine extends JavaPlugin {
                 hunterAlert = false;
                 halfSize = Cfg.playzoneSize / 2;
                 escapeArea = halfSize + Cfg.wallThickness + 1;
+
+                //reset players gamemode and achievements
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");
+
+                //regenerate wall
                 if (Cfg.enableEscapeGamemode) {
                     Wall.generate(this);
                 } else {
@@ -262,10 +275,17 @@ public class Engine extends JavaPlugin {
                 }
                 break;
             case PRESTART:
+                //removes created or found containers and beds
+                if (chestTracker != null)
+                    chestTracker.cleanup();
+                chestTracker = new ChestTracker();
+
+                //launch timer
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
                 Bukkit.broadcastMessage(Cfg.votestartTimer + " seconds to launch");
                 break;
             case GAME:
+                //reinit variables and stop lobby timers
                 eventListener.reset();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;
@@ -391,7 +411,10 @@ public class Engine extends JavaPlugin {
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer) {
-        int duration = Bukkit.getOnlinePlayers().size() * 400;
+        applyPotionHandicap(selectedPlayer, Bukkit.getOnlinePlayers().size() * 400);
+    }
+
+    private void applyPotionHandicap(LivingEntity selectedPlayer, int duration) {
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
@@ -405,6 +428,8 @@ public class Engine extends JavaPlugin {
     //  late join feature
     //  command alias: manhunt
     //  custom advancements for breaking wall and golden pickaxe
+    //  rm debugmode param and debug outputs
+    //  rm allow rebuild wall param
 
     //todo: re-organize gamemodes impl
 }

@@ -5,6 +5,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -124,5 +127,26 @@ public class Util {
                 w.getBlockAt(i, y+2, j).setType(Material.AIR);
                 w.getBlockAt(i, y+3, j).setType(Material.AIR);
             }
+    }
+
+    public static void invToChest(Inventory inv, Location l) {
+        World w = l.getWorld();
+        Block b = w.getBlockAt(l);
+        int slots = 0;
+        b.setType(Material.CHEST);
+        Inventory chestInv = ((Chest) b.getState()).getBlockInventory();
+        for (ItemStack is : inv.getContents()) {
+            if (is != null) {
+                //switch to next chest when filled
+                if (slots == 27) {
+                    b = w.getBlockAt(l.add(0, 1, 0));
+                    b.setType(Material.CHEST);
+                    chestInv = ((Chest) b.getState()).getBlockInventory();
+                }
+                //put item
+                chestInv.addItem(is);
+                slots++;
+            }
+        }
     }
 }

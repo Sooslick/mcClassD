@@ -12,12 +12,14 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -59,7 +61,12 @@ public class EventListener implements Listener {
             return;
         if (outlaw.getHealth() - e.getFinalDamage() <= 0) {
             e.setCancelled(true);
-            //todo inv to chest method?
+            if (outlaw instanceof Player) {
+                Location l = outlaw.getLocation();
+                Util.invToChest(((Player) outlaw).getInventory(), l);
+                engine.getChestTracker().detectBlock(l.getBlock());
+                engine.getChestTracker().detectBlock(l.add(0, 1, 0).getBlock());
+            }
             Bukkit.broadcastMessage("§cVictim died. §eHunters win!");   //todo: impl method victory in Engine
             engine.changeGameState(GameState.IDLE);
         }
@@ -136,31 +143,44 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
+        //detect beds and chests
+        Block b = e.getBlockPlaced();
+        engine.getChestTracker().detectBlock(b);
+
         if (!Cfg.enableEscapeGamemode)
             return;
 
-        Block b = e.getBlockPlaced();
-        Location l = b.getLocation();
+        //detect wall restoring
         if (!Cfg.allowBuildWall) {
             Material m = b.getType();
             if (m.equals(Material.OBSIDIAN) || m.equals(Material.NETHERITE_BLOCK) || m.equals(Material.CRYING_OBSIDIAN)) {
-                if ((Math.abs(l.getBlockX()) >= Wall.startPosY - 1) || (Math.abs(l.getBlockZ()) >= Wall.startPosY - 1)) {
+                if ((Math.abs(b.getX()) >= Wall.startPosY - 1) || (Math.abs(b.getZ()) >= Wall.startPosY - 1)) {
                     e.setCancelled(true);
                     e.getPlayer().sendMessage("§4Obsidian is denied here");
                 }
             }
         }
 
-        if (l.getBlockY() > 240) {
+        //detect towering escape attempts
+        if (b.getY() > 240) {
             //generate weird barrier for wall gamemode to prevent escape over the wall
-            World w = l.getWorld();
-            w.getBlockAt(l.getBlockX(), 255, l.getBlockZ()).setType(Material.BARRIER);
-            w.getBlockAt(l.getBlockX() - 1, 255, l.getBlockZ()).setType(Material.BARRIER);
-            w.getBlockAt(l.getBlockX(), 255, l.getBlockZ() - 1).setType(Material.BARRIER);
-            w.getBlockAt(l.getBlockX() + 1, 255, l.getBlockZ()).setType(Material.BARRIER);
-            w.getBlockAt(l.getBlockX(), 255, l.getBlockZ() + 1).setType(Material.BARRIER);
+            World w = b.getWorld();
+            w.getBlockAt(b.getX(), 255, b.getZ()).setType(Material.BARRIER);
+            w.getBlockAt(b.getX() - 1, 255, b.getZ()).setType(Material.BARRIER);
+            w.getBlockAt(b.getX(), 255, b.getZ() - 1).setType(Material.BARRIER);
+            w.getBlockAt(b.getX() + 1, 255, b.getZ()).setType(Material.BARRIER);
+            w.getBlockAt(b.getX(), 255, b.getZ() + 1).setType(Material.BARRIER);
             //todo: piston exploit
         }
+    }
+
+    @EventHandler
+    public void onInteract(PlayerInteractEvent e) {
+        if (engine.getGameState() != GameState.GAME)
+            return;
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK)
+            return;
+        engine.getChestTracker().detectBlock(e.getClickedBlock());
     }
 
     @EventHandler
