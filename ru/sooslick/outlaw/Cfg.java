@@ -14,6 +14,7 @@ public class Cfg {
     public static int alertTimeout;
     public static boolean enablePotionHandicap;
     public static boolean enableEscapeGamemode;
+    public static int blocksPerSecondLimit;
     public static int playzoneSize;
     public static int wallThickness;
     public static int spotSize;
@@ -68,13 +69,18 @@ public class Cfg {
             Bukkit.broadcastMessage(SET + "enableEscapeGamemode = " + b);
             enableEscapeGamemode = b;
         }
+        temp = f.getInt("blocksPerSecondLimit", 100000);
+        if (blocksPerSecondLimit != temp) {
+            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "blocksPerSecondLimit = " + temp);
+            blocksPerSecondLimit = temp;
+        }
         temp = f.getInt("playzoneSize", 1000);  //todo validate: must be wider than spawn radius+distance
         if (playzoneSize != temp) {
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "playzoneSize = " + temp);
             playzoneSize = temp;
         }
         temp = f.getInt("wallThickness", 16);
-        if (wallThickness != temp) {
+        if (wallThickness != temp) {                    //todo alert when changed or rebuild wall completely
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "wallThickness = " + temp);
             wallThickness = temp;
         }

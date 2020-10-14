@@ -11,252 +11,105 @@ import java.util.logging.Logger;
 public class Wall {
     private static int generatorTimerId;
     private static LinkedList<Integer> spotPositions;
-    private static int groundMax;
-    private static int airMax;
-    private static int undergroundMax;
+    private static int groundCurr;
+    private static int airCurr;
+    private static int undergroundCurr;
     private static int size;
     private static int halfSize;
     private static int spotSize;
-    private static int spotHalfSize;
     private static int side;                        //current side of square
     private static int currentBlock;                //current block of side
-    private static int genState;                    //generator state
-    private static int limiter = 256;
-    public static int startPosY;                    //todo private
-    private static int endPosY;
+    private static int limiter;
+    public static int startWallCoord;                    //todo private
+    private static int endWallCoord;
+    private static boolean wallBuilt;
+    private static boolean spotsQueued;
     private static World w;
-    private static Logger log;
+    private static Engine engine;
 
-    private final static Runnable generatorTick = () -> {
-        switch (genState) {
-            case 0:             //generate walls
-                boolean gotoNext = false;
-                int startPosX = -halfSize + currentBlock;
-                int endPosX = startPosX + limiter;
-                if (endPosX > halfSize) {
-                    endPosX = halfSize;
-                    gotoNext = true;
+    private final static Logger log = Bukkit.getLogger();
+    private final static Runnable buildWallTick = () -> {
+        log.info("buildWallTick, side=" + side + ", currentBlock=" + currentBlock);
+        int from = currentBlock;
+        int to = currentBlock + limiter;
+        if (to > endWallCoord)
+            to = endWallCoord;
+        Filler f = getSideBasedFiller(side, from, to)
+                .setStartY(0)
+                .setEndY(255)
+                .setMaterial(Material.BEDROCK);
+        if (f.fill()) {
+            currentBlock+= limiter;
+            if (currentBlock >= endWallCoord) {
+                currentBlock = -startWallCoord;
+                side++;
+                if (side > 3) {
+                    Bukkit.getScheduler().cancelTask(generatorTimerId);
+                    log.info("buildWall finished, spotsQueued = " + spotsQueued);
+                    wallBuilt = true;
+                    if (spotsQueued) {
+                        launchBuildSpots();
+                    }
                 }
-                switch (side) {
-                    case 0:                                         //x -> x, y -> +z
-                        for (int i = startPosX; i <= endPosX; i++)      //x
-                            for (int j = startPosY; j < endPosY; j++)  //z
-                                for (int k = 0; k < 256; k++)          //y
-                                    w.getBlockAt(i, k, j).setType(Material.BEDROCK);
-                        break;
-                    case 1:                                         //x -> z, y -> +x
-                        for (int i = startPosX; i <= endPosX; i++)      //z
-                            for (int j = startPosY; j < endPosY; j++)  //x
-                                for (int k = 0; k < 256; k++)          //y
-                                    w.getBlockAt(j, k, i).setType(Material.BEDROCK);
-                        break;
-                    case 2:                                             //x -> x, y -> -z
-                        for (int i = startPosX; i <= endPosX; i++)          //x
-                            for (int j = -startPosY; j > -endPosY; j--)    //z
-                                for (int k = 0; k < 256; k++)              //y
-                                    w.getBlockAt(i, k, j).setType(Material.BEDROCK);
-                        break;
-                    case 3:                                             //x -> z, y -> -x
-                        for (int i = startPosX; i <= endPosX; i++)          //z
-                            for (int j = -startPosY; j > -endPosY; j--)    //x
-                                for (int k = 0; k < 256; k++)              //y
-                                    w.getBlockAt(j, k, i).setType(Material.BEDROCK);
-                        break;
-                    case 4:
-                        genState++;
-                        gotoNext = false;
-                        currentBlock = 0;
-                        side = 0;
-                        log.info("built wall, launch spot processing");
-                        break;
-                }
-                log.info("Gen wall, side " + side + ", block " + currentBlock);
-                if (gotoNext) {
-                    side++;
-                    currentBlock = 0;
-                } else {
-                    currentBlock += limiter;
-                }
-                break;
-            case 1:             //generate spots
-                switch (side) {
-                    case 0:             //x -> x, y -> +z
-                        for (int q = 0; q < groundMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            Block b = w.getBlockAt(baseX, 0, halfSize);
-                            w.loadChunk(b.getChunk());
-                            int baseH = w.getHighestBlockYAt(b.getLocation()) + 2;
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //x
-                                for (int j = startPosY; j < endPosY; j++)                               //z
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(i, k, j).setType(Material.OBSIDIAN);
-                        }
-                        for (int q = 0; q < undergroundMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            int baseH = Util.random.nextInt(56);
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //x
-                                for (int j = startPosY; j < endPosY; j++)                               //z
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(i, k, j).setType(Material.OBSIDIAN);
-                        }
-                        for (int q = 0; q < airMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            int baseH = Util.random.nextInt(120) + 80;
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //x
-                                for (int j = startPosY; j < endPosY; j++)                               //z
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(i, k, j).setType(Material.OBSIDIAN);
-                        }
-                        side++;
-                        break;
-                    case 1:                 //x -> z, y -> +x
-                        for (int q = 0; q < groundMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            Block b = w.getBlockAt(baseX, 0, halfSize);
-                            w.loadChunk(b.getChunk());
-                            int baseH = w.getHighestBlockYAt(b.getLocation()) + 2;
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //z
-                                for (int j = startPosY; j < endPosY; j++)                               //x
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(j, k, i).setType(Material.OBSIDIAN);
-                        }
-                        for (int q = 0; q < undergroundMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            int baseH = Util.random.nextInt(56);
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //z
-                                for (int j = startPosY; j < endPosY; j++)                               //x
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(j, k, i).setType(Material.OBSIDIAN);
-                        }
-                        for (int q = 0; q < airMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            int baseH = Util.random.nextInt(120) + 80;
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //z
-                                for (int j = startPosY; j < endPosY; j++)                               //x
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(j, k, i).setType(Material.OBSIDIAN);
-                        }
-                        side++;
-                        break;
-                    case 2:                                         //x -> x, y -> -z
-                        for (int q = 0; q < groundMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            Block b = w.getBlockAt(baseX, 0, halfSize);
-                            w.loadChunk(b.getChunk());
-                            int baseH = w.getHighestBlockYAt(b.getLocation()) + 2;
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //x
-                                for (int j = -startPosY; j > -endPosY; j--)                               //z
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(i, k, j).setType(Material.OBSIDIAN);
-                        }
-                        for (int q = 0; q < undergroundMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            int baseH = Util.random.nextInt(56);
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //x
-                                for (int j = -startPosY; j > -endPosY; j--)                                //z
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(i, k, j).setType(Material.OBSIDIAN);
-                        }
-                        for (int q = 0; q < airMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            int baseH = Util.random.nextInt(120) + 80;
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //x
-                                for (int j = -startPosY; j > -endPosY; j--)                                //z
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(i, k, j).setType(Material.OBSIDIAN);
-                        }
-                        side++;
-                        break;
-                    case 3:         //x -> z, y -> -x
-                        for (int q = 0; q < groundMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            Block b = w.getBlockAt(baseX, 0, halfSize);
-                            w.loadChunk(b.getChunk());
-                            int baseH = w.getHighestBlockYAt(b.getLocation()) + 2;
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //z
-                                for (int j = -startPosY; j > -endPosY; j--)                                //x
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(j, k, i).setType(Material.OBSIDIAN);
-                        }
-                        for (int q = 0; q < undergroundMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            int baseH = Util.random.nextInt(56);
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //z
-                                for (int j = -startPosY; j > -endPosY; j--)                               //x
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(j, k, i).setType(Material.OBSIDIAN);
-                        }
-                        for (int q = 0; q < airMax; q++) {
-                            int baseX = spotPositions.get(0);
-                            spotPositions.remove(0);
-                            int baseH = Util.random.nextInt(120) + 80;
-                            for (int i = baseX - spotHalfSize; i < baseX + spotHalfSize; i++)               //z
-                                for (int j = -startPosY; j > -endPosY; j--)                               //x
-                                    for (int k = baseH - spotHalfSize; k < baseH + spotHalfSize; k++)     //y
-                                        w.getBlockAt(j, k, i).setType(Material.OBSIDIAN);
-                        }
-                        side++;
-                        break;
-                    case 4:
-                        genState++;
-                        log.info("generated escape spots, finishing...");
-                        break;
-                }
-                break;
-            case 2:             //generate corners
-                for (int i = startPosY; i < endPosY; i++)
-                    for (int j = startPosY; j < endPosY; j++)
-                        for (int k = 0; k < 256; k++)
-                            w.getBlockAt(i, k, j).setType(Material.BEDROCK);
-                for (int i = startPosY; i < endPosY; i++)
-                    for (int j = startPosY; j < endPosY; j++)
-                        for (int k = 0; k < 256; k++)
-                            w.getBlockAt(-i, k, j).setType(Material.BEDROCK);
-                for (int i = startPosY; i < endPosY; i++)
-                    for (int j = startPosY; j < endPosY; j++)
-                        for (int k = 0; k < 256; k++)
-                            w.getBlockAt(-i, k, -j).setType(Material.BEDROCK);
-                for (int i = startPosY; i < endPosY; i++)
-                    for (int j = startPosY; j < endPosY; j++)
-                        for (int k = 0; k < 256; k++)
-                            w.getBlockAt(i, k, -j).setType(Material.BEDROCK);
-                genState++;
-                Bukkit.getScheduler().cancelTask(generatorTimerId);
-                Bukkit.broadcastMessage("ready to next game");
-                break;
+            }
         }
     };
 
-    //todo generate spots after startgame
-    //todo: refactor this piece of shit
+    private final static Runnable buildSpotTick = () -> {
+        int center = spotPositions.getFirst();
+        Filler f = getSideBasedFiller(side, center-spotSize, center+spotSize).setMaterial(Material.OBSIDIAN);
+        if (groundCurr < Cfg.groundSpotDensity) {
+            int h = getGroundLevel(side, center);
+            f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
+            groundCurr++;
+        } else if (airCurr < Cfg.airSpotDensity) {
+            int h = getAirLevel(side, center);
+            f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
+            airCurr++;
+        } else if (undergroundCurr < Cfg.undergroundSpotDensity) {
+            int h = getUndergroundLevel(side, center);
+            f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
+            if (++undergroundCurr >= Cfg.undergroundSpotDensity) {
+                groundCurr = 0;
+                airCurr = 0;
+                undergroundCurr = 0;
+                if (++side > 3) {
+                    Bukkit.getScheduler().cancelTask(generatorTimerId);
+                    log.info("buildSpots finished");
+                }
+            }
+        }
+        spotPositions.removeFirst();
+        log.info("created spot at side " + side + ", center " + center);
+    };
 
-    public static void generate(Engine engine) {
+    public static void buildWall() {
         //stop previous generator if it still working, clear
         Bukkit.getScheduler().cancelTask(generatorTimerId);
+        wallBuilt = false;
+        spotsQueued = false;
         size = Cfg.playzoneSize;
         halfSize = size / 2;
-        startPosY = halfSize + 1;
-        endPosY = startPosY + Cfg.wallThickness;
-        spotSize = Cfg.spotSize;
-        spotHalfSize = spotSize / 2;
+        startWallCoord = halfSize + 1;
+        endWallCoord = startWallCoord + Cfg.wallThickness - 1;
         side = 0;
-        currentBlock = 0;
-        genState = 0;
-        groundMax = Cfg.groundSpotDensity;
-        undergroundMax = Cfg.undergroundSpotDensity;
-        airMax = Cfg.airSpotDensity;
+        currentBlock = -startWallCoord;         //from -start to +end
+        limiter = Cfg.blocksPerSecondLimit / 256 / Cfg.wallThickness;
+        if (limiter == 0)
+            limiter = 1;
         w = Bukkit.getWorlds().get(0);
+
+        //launch
+        generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(engine, buildWallTick, 1, 20);
+        log.info("Resetted wall generator and launched buildWallTick");
+    }
+
+    public static void launchBuildSpots() {
+        spotSize = Cfg.spotSize;
+        side = 0;
+        groundCurr = 0;
+        undergroundCurr = 0;
+        airCurr = 0;
 
         //pre-generate spots
         spotPositions = new LinkedList<>();
@@ -266,8 +119,140 @@ public class Wall {
         }
 
         //launch
-        log = Bukkit.getLogger();
-        generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(engine, generatorTick, 1, 20);
-        log.info("Wall generator launched");
+        generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(engine, buildSpotTick, 1, 1);
+        log.info("Resetted and launched buildSpotTick");
+    }
+
+    public static void buildSpots() {
+        log.info("buildSpots queued, wallBuilt = " + wallBuilt);
+        if (wallBuilt) {
+            launchBuildSpots();
+        } else {
+            spotsQueued = true;
+        }
+    }
+
+    public static void setEngine(Engine engine) {
+        Wall.engine = engine;
+    }
+
+    private static class Filler {
+        private int startX;
+        private int startY;
+        private int startZ;
+        private int endX;
+        private int endY;
+        private int endZ;
+        private Material material;
+
+        public Filler setStartX(int value) {
+            startX = value;
+            return this;
+        }
+
+        public Filler setStartY(int value) {
+            startY = value;
+            return this;
+        }
+
+        public Filler setStartZ(int value) {
+            startZ = value;
+            return this;
+        }
+
+        public Filler setEndX(int value) {
+            endX = value;
+            return this;
+        }
+
+        public Filler setEndY(int value) {
+            endY = value;
+            return this;
+        }
+
+        public Filler setEndZ(int value) {
+            endZ = value;
+            return this;
+        }
+
+        public Filler setMaterial(Material value) {
+            material = value;
+            return this;
+        }
+
+        public boolean fill() {
+            //validate size
+            int volume = (endX - startX) * (endY - startY) * (endZ - startZ);
+            if (Math.abs(volume) > Cfg.blocksPerSecondLimit) {
+                log.warning("fill cancelled, blocks limit exceed");
+                return false;
+            } else if (volume == 0) {
+                log.warning("fill cancelled, empty area");
+                return false;
+            }
+            //validate material
+            if (material == null) {
+                material = Material.AIR;
+            }
+            //proceed
+            for (int x = startX; x <= endX; x++)
+                for (int y = startY; y <= endY; y++)
+                    for (int z = startZ; z <= endZ; z++)
+                        w.getBlockAt(x, y, z).setType(material);
+            return true;
+        }
+    }
+
+    private static Filler getSideBasedFiller(int side, int from, int to) {
+        Filler f = new Filler();
+        switch (side) {
+            case 0:         //+x
+                f.setStartX(startWallCoord).setEndX(endWallCoord)
+                        .setStartZ(from).setEndZ(to);
+                break;
+            case 1:         //+z
+                f.setStartZ(startWallCoord).setEndZ(endWallCoord)
+                        .setStartX(from).setEndX(to);
+                break;
+            case 2:         //-x
+                f.setStartX(-endWallCoord).setEndX(-startWallCoord)
+                        .setStartZ(from).setEndZ(to);
+                break;
+            case 3:         //-z
+                f.setStartZ(-endWallCoord).setEndZ(-startWallCoord)
+                        .setStartX(from).setEndX(to);
+        }
+        return f;
+    }
+
+    private static int getGroundLevel(int side, int center) {
+        Block b;
+        switch (side) {
+            case 0:                 //+x
+                b = w.getBlockAt(startWallCoord-1, 0, center);
+                break;
+            case 1:                 //+z
+                b = w.getBlockAt(center, 0, startWallCoord-1);
+                break;
+            case 2:                 //-x
+                b = w.getBlockAt(-startWallCoord+1, 0, center);
+                break;
+            case 3:                 //-z
+                b = w.getBlockAt(center, 0, -startWallCoord+1);
+                break;
+            default: return 65;
+        }
+        w.loadChunk(b.getChunk());
+        return w.getHighestBlockAt(b.getLocation()).getY() + 1;
+    }
+
+    private static int getAirLevel(int side, int center) {
+        int groundLevel = getGroundLevel(side, center);
+        return Util.random.nextInt(240 - groundLevel) + groundLevel + spotSize;
+    }
+
+    private static int getUndergroundLevel(int side, int center) {
+        int groundLevel = getGroundLevel(side, center);
+        return Util.random.nextInt(groundLevel - spotSize) + spotSize;
     }
 }

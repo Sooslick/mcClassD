@@ -9,10 +9,12 @@ alertTimeout: 60
 enablePotionHandicap: true
 #gamemode
 enableEscapeGamemode: false
+#performance
+blocksPerSecondLimit: 100000
 #escape gamemode parameters
 playzoneSize: 1000
 wallThickness: 10
-spotSize: 8
+spotSize: 4
 groundSpotDensity: 3
 airSpotDensity: 2
 undergroundSpotDensity: 5

@@ -9,6 +9,7 @@ import org.bukkit.inventory.InventoryHolder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 public class ChestTracker {
@@ -22,7 +23,8 @@ public class ChestTracker {
     static {
         LOG = Bukkit.getLogger();
         Material[] containers = {Material.CHEST, Material.FURNACE, Material.BLAST_FURNACE, Material.SMOKER, Material.BARREL,
-                Material.DISPENSER, Material.DROPPER, Material.BREWING_STAND, Material.HOPPER, Material.TRAPPED_CHEST};
+                Material.DISPENSER, Material.DROPPER, Material.BREWING_STAND, Material.HOPPER, Material.TRAPPED_CHEST,
+                Material.ENDER_CHEST};
         //todo: can I track minecart with hoppers and chests, frames and armor stands?
         CONTAINERS = new ArrayList<>(Arrays.asList(containers));
     }
@@ -36,19 +38,28 @@ public class ChestTracker {
         if (CONTAINERS.contains(b.getType())) {
             if (trackedContainers.add(b))
                 LOG.info("Tracked container at " + b.getLocation().toString());
-        }
-        else if (b.getBlockData() instanceof Bed)
+        } else if (b.getBlockData() instanceof Bed)
             if (trackedBeds.add(b))
                 LOG.info("Tracked bed at " + b.getLocation().toString());
     }
 
     public void cleanup() {
+        AtomicInteger chests = new AtomicInteger();
+        AtomicInteger beds = new AtomicInteger();
         trackedContainers.forEach(b -> {
-            if (b.getState() instanceof InventoryHolder)
+            if (b.getState() instanceof InventoryHolder) {
                 ((InventoryHolder) b.getState()).getInventory().clear();
-            b.setType(Material.AIR);
+                b.setType(Material.AIR);
+                chests.getAndIncrement();
+            }
         });
-        trackedBeds.forEach(b -> b.setType(Material.AIR));
+        trackedBeds.forEach(b -> {
+            if (b.getBlockData() instanceof Bed) {
+                b.setType(Material.AIR);            //todo prevent drop
+                beds.getAndIncrement();
+            }
+        });
+        LOG.info("ChestTracker cleanup report:\nContainers: " + chests.toString() + "\n      Beds: " + beds.toString());
     }
 
 }

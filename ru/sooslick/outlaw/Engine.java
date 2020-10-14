@@ -96,16 +96,17 @@ public class Engine extends JavaPlugin {
             }
         }
 
-        //init game variables
-        changeGameState(GameState.IDLE);
-        timedMessages = new TimedMessages(this).launch();
-
         //register commands and events
+        Wall.setEngine(this);
         cmdListener = new CommandListener(this);
         getCommand("outlaw").setExecutor(cmdListener);
         getCommand("y").setExecutor(cmdListener);
         eventListener = new EventListener(this);
         getServer().getPluginManager().registerEvents(eventListener, this);
+
+        //init game variables
+        changeGameState(GameState.IDLE);
+        timedMessages = new TimedMessages(this).launch();
         log.info("Init Class D Plugin - success");
     }
 
@@ -260,7 +261,7 @@ public class Engine extends JavaPlugin {
                 killCounter = 0;
                 hunterAlert = false;
                 halfSize = Cfg.playzoneSize / 2;
-                escapeArea = halfSize + Cfg.wallThickness + 1;
+                escapeArea = halfSize + Cfg.wallThickness + 2;  //todo: +/- bug
 
                 //reset players gamemode and achievements
                 for (Player p : Bukkit.getOnlinePlayers())
@@ -269,9 +270,10 @@ public class Engine extends JavaPlugin {
 
                 //regenerate wall
                 if (Cfg.enableEscapeGamemode) {
-                    Wall.generate(this);
+                    Wall.buildWall();
+                    Bukkit.broadcastMessage("§cPlz wait until the rebuild process ends...");
                 } else {
-                    Bukkit.broadcastMessage("§eReady to next game");
+                    Bukkit.broadcastMessage("§eReady to the next game");
                 }
                 break;
             case PRESTART:
@@ -279,6 +281,11 @@ public class Engine extends JavaPlugin {
                 if (chestTracker != null)
                     chestTracker.cleanup();
                 chestTracker = new ChestTracker();
+
+                //generate wall spots
+                if (Cfg.enableEscapeGamemode) {
+                    Wall.buildSpots();
+                }
 
                 //launch timer
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);

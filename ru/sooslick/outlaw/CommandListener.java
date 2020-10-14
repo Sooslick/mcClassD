@@ -89,19 +89,19 @@ public class CommandListener implements CommandExecutor {
     private void printHelpInfo(CommandSender s) {
         s.sendMessage("§6\nMinecraft Manhunt gamemode\n" +
                 "§eIn this game one of players starts as §cVictim§e and others become §cHunters§e.\n" +
-                "Victim have to complete gamemode's objective, avoiding Hunters, and gets loose when died.\n" +
-                "Hunters must prevent Victim from reaching his objective by any means. " +
-                "They have unlimited respawns and spawn with compass which always pointing to Victim's location.");
+                "Victim has to complete the gamemode's objective avoiding Hunters and loses on death.\n" +
+                "Hunters must prevent Victim from reaching their objective by any means. " +
+                "They have unlimited respawns and spawn with compasses that always point to Victim's location.");
         if (Cfg.enableEscapeGamemode) { //todo: refactor to gamemode class and impl getRule method
             s.sendMessage("§6\nThe Wall gamemode\n" +
                     "§ePlayers start in square zone restricted by wall of bedrock. " +
-                    "This wall has few spots of obsidian, " +
-                    "and Victim have to escape from zone by breaking one of this spots.\n" +
+                    "This wall has some obsidian spots " +
+                    "and Victim has to escape the zone by breaking through one of them.\n" +
                     "Wall thickness: §c" + Cfg.wallThickness + "\n§eZone size: §c" + Cfg.playzoneSize);
         } else {
             s.sendMessage("§6\nMinecraft Any% gamemode\n" +
-                    "§eAs in a vanilla Minecraft, Victim have to beat the Ender Dragon, " +
-                    "while Hunters trying to prevent this.");
+                    "§eLike in a vanilla Minecraft, Victim has to beat the Ender Dragon " +
+                    "while Hunters try to prevent this.");
         }
     }
 }
