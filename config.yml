@@ -18,4 +18,3 @@ spotSize: 4
 groundSpotDensity: 3
 airSpotDensity: 2
 undergroundSpotDensity: 5
-allowBuildWall: false

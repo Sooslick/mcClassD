@@ -21,9 +21,8 @@ public class Cfg {
     public static int groundSpotDensity;
     public static int airSpotDensity;
     public static int undergroundSpotDensity;
-    public static boolean allowBuildWall;
 
-    private static final String SET = "Set game parameter ";
+    private static final String SET = "§cGame parameter changed: §e";
 
     public static void readConfig(FileConfiguration f) {
         debugMode = f.getBoolean("debugMode", false);
@@ -103,11 +102,6 @@ public class Cfg {
         if (undergroundSpotDensity != temp) {
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "undergroundSpotDensity = " + temp);
             undergroundSpotDensity = temp;
-        }
-        b = f.getBoolean("allowBuildWall", false);
-        if (allowBuildWall != b) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "allowBuildWall = " + b);
-            allowBuildWall = b;
         }
     }
 

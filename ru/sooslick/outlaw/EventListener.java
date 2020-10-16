@@ -115,6 +115,9 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onEnderPearl(PlayerTeleportEvent e) {
+        if (!Cfg.enableEscapeGamemode) {
+            return;
+        }
         if (e.getCause().equals(PlayerTeleportEvent.TeleportCause.ENDER_PEARL)) {
             Location l = e.getTo();
             if (engine.isOutside(l))
@@ -151,13 +154,11 @@ public class EventListener implements Listener {
             return;
 
         //detect wall restoring
-        if (!Cfg.allowBuildWall) {
-            Material m = b.getType();
-            if (m == Material.OBSIDIAN || m == Material.NETHERITE_BLOCK || m == Material.CRYING_OBSIDIAN || m == Material.ANCIENT_DEBRIS) {
-                if ((Math.abs(b.getX()) >= Wall.startWallCoord - 1) || (Math.abs(b.getZ()) >= Wall.startWallCoord - 1)) {
-                    e.setCancelled(true);
-                    e.getPlayer().sendMessage("§4Obsidian is denied here");
-                }
+        Material m = b.getType();
+        if (m == Material.OBSIDIAN || m == Material.NETHERITE_BLOCK || m == Material.CRYING_OBSIDIAN || m == Material.ANCIENT_DEBRIS) {
+            if ((Math.abs(b.getX()) >= Wall.startWallCoord - 1) || (Math.abs(b.getZ()) >= Wall.startWallCoord - 1)) {
+                e.setCancelled(true);
+                e.getPlayer().sendMessage("§4Obsidian is denied here");
             }
         }
 

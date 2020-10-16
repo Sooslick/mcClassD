@@ -80,8 +80,11 @@ public class Wall {
             }
         }
         spotPositions.removeFirst();
-        log.info("created spot at side " + side + ", center " + center);
+        //todo debugMode check? + side fix
+        //log.info("created spot at side " + side + ", center " + center);
     };
+
+    //todo rebuild wall method if thickness changed
 
     public static void buildWall() {
         //stop previous generator if it still working, clear

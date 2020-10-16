@@ -266,7 +266,6 @@ public class Engine extends JavaPlugin {
                 //reset players gamemode and achievements
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke @a everything");
 
                 //regenerate wall
                 if (Cfg.enableEscapeGamemode) {
@@ -359,9 +358,12 @@ public class Engine extends JavaPlugin {
         p.setSaturation(5);
         p.setExhaustion(0);
         p.setTotalExperience(0);
+        p.setExp(0);
+        p.setLevel(0);
         p.getInventory().clear();
         p.getActivePotionEffects().clear();
         p.setBedSpawnLocation(dest);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke " + p.getName() + " everything");
         p.setGameMode(GameMode.SURVIVAL);
     }
 
@@ -418,7 +420,8 @@ public class Engine extends JavaPlugin {
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer) {
-        applyPotionHandicap(selectedPlayer, Bukkit.getOnlinePlayers().size() * 400);
+        int x = Bukkit.getOnlinePlayers().size();
+        applyPotionHandicap(selectedPlayer, (int) (x*x/8 + 0.875) * 400);
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer, int duration) {
@@ -432,11 +435,8 @@ public class Engine extends JavaPlugin {
     //todo
     //  refactor code
     //  more stats
-    //  late join feature
     //  command alias: manhunt
-    //  custom advancements for breaking wall and golden pickaxe
     //  rm debugmode param and debug outputs
-    //  rm allow rebuild wall param
 
     //todo: re-organize gamemodes impl
 }

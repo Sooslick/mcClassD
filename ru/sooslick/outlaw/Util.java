@@ -25,7 +25,7 @@ public class Util {
 
     static {
         logger = Bukkit.getLogger();
-        Material[] dgrs = {Material.FIRE, Material.CACTUS, Material.VINE, Material.LADDER, Material.COBWEB,
+        Material[] dgrs = {Material.FIRE, Material.CACTUS, Material.VINE, Material.LADDER, Material.COBWEB, Material.AIR,
                 Material.TRIPWIRE, Material.TRIPWIRE_HOOK, Material.SWEET_BERRY_BUSH, Material.MAGMA_BLOCK};
         DANGERS = new ArrayList<>(Arrays.asList(dgrs));
     }
@@ -71,8 +71,7 @@ public class Util {
             if (isSafeLocation(l)) {
                 logger.info("getSafeDistanceLocation - success");
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
-            } else
-                logger.info("getSafeDistanceLocation - fail");
+            }
         }
         logger.info("getSafeDistanceLocation - default");
         safetizeLocation(l);
@@ -82,12 +81,22 @@ public class Util {
     public static boolean isSafeLocation(Location l) {
         l.getWorld().loadChunk(l.getChunk());
         Block b = l.getWorld().getHighestBlockAt(l);
-        if (b.getType().equals(Material.AIR)) return false;
-        if (!b.getRelative(0, +1, 0).getType().equals(Material.AIR)) return false;
-        if (!b.getRelative(0, +2, 0).getType().equals(Material.AIR)) return false;
-        if (b.isLiquid()) return false;
-        if (DANGERS.contains(b.getType())) return false;
-        //todo check nearby blocks
+        Material m = b.getType();
+        if (b.isLiquid()) {
+            logger.info("isSafeLocation - fail, liquid // " + l.toString());
+            return false;
+        }
+        if (DANGERS.contains(m)) {
+            logger.info("isSafeLocation - fail, " + m.name() + " // " + l.toString());
+            return false;
+        }
+        for (int i = -1; i <= 1; i++)
+            for (int j = -1; j <= 1; j++)
+                for (int k = 1; k <= 2; k++)
+                    if (!b.getRelative(i, k, j).getType().equals(Material.AIR)) {
+                        logger.info("isSafeLocation - fail, obstruction // " + l.toString());
+                        return false;
+                    }
         return true;
     }
 
@@ -123,9 +132,9 @@ public class Util {
         for (int i = x - 2; i <= x + 2; i++)
             for (int j = z - 2; j <= z + 2; j++) {
                 w.getBlockAt(i, y, j).setType(Material.OAK_LOG);
-                w.getBlockAt(i, y+1, j).setType(Material.AIR);
-                w.getBlockAt(i, y+2, j).setType(Material.AIR);
-                w.getBlockAt(i, y+3, j).setType(Material.AIR);
+                w.getBlockAt(i, y + 1, j).setType(Material.AIR);
+                w.getBlockAt(i, y + 2, j).setType(Material.AIR);
+                w.getBlockAt(i, y + 3, j).setType(Material.AIR);
             }
     }
 
