@@ -278,7 +278,7 @@ public class Engine extends JavaPlugin {
             case PRESTART:
                 //removes created or found containers and beds
                 if (chestTracker != null)
-                    chestTracker.cleanup();
+                    chestTracker.cleanup();         //todo: cleanup blocks and then cleanup entities at game start
                 chestTracker = new ChestTracker();
 
                 //generate wall spots
@@ -292,13 +292,16 @@ public class Engine extends JavaPlugin {
                 break;
             case GAME:
                 //reinit variables and stop lobby timers
+                //todo chectTracker: cleanup entites and then recreate
                 eventListener.reset();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
 
                 //prepare environment
-                Bukkit.getWorlds().get(0).setTime(0);
+                World w = Bukkit.getWorlds().get(0);
+                w.setTime(0);
+                w.setStorm(false);
 
                 //select outlaw entity
                 if (volunteers.isEmpty()) {
@@ -421,7 +424,7 @@ public class Engine extends JavaPlugin {
 
     private void applyPotionHandicap(LivingEntity selectedPlayer) {
         int x = Bukkit.getOnlinePlayers().size();
-        applyPotionHandicap(selectedPlayer, (int) (x*x/8 + 0.875) * 400);
+        applyPotionHandicap(selectedPlayer, (int) (x*x/5 + 0.8) * 400);
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer, int duration) {
@@ -439,4 +442,6 @@ public class Engine extends JavaPlugin {
     //  rm debugmode param and debug outputs
 
     //todo: re-organize gamemodes impl
+
+    //todo debug: check all location.add() usages
 }

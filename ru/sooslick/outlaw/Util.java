@@ -41,10 +41,11 @@ public class Util {
     }
 
     public static Location getSafeRandomLocation(int bound) {
-        World w = Bukkit.getWorlds().get(0);
+        World w = Bukkit.getWorlds().get(0);    //todo world?
         Location l = w.getSpawnLocation();  //spawn location will have never used. Init variable due to compile error
         for (int i = 0; i < 10; i++) {      //10 attempts to get safe loc
             l = getRandomLocation(bound);
+            l.getChunk().load();
             if (isSafeLocation(l)) {
                 logger.info("getSafeRandomLocation - success");
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
@@ -52,8 +53,9 @@ public class Util {
                 logger.info("getSafeRandomLocation - fail");
         }
         logger.info("getSafeRandomLocation - default");
+        l = w.getHighestBlockAt(l).getLocation();
         safetizeLocation(l);
-        return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
+        return l.add(0.5, 1, 0.5);
     }
 
     public static Location getDistanceLocation(Location src, int dist) {
@@ -64,22 +66,24 @@ public class Util {
     }
 
     public static Location getSafeDistanceLocation(Location src, int dist) {
-        World w = Bukkit.getWorlds().get(0);
+        World w = Bukkit.getWorlds().get(0);        //todo world?
         Location l = src;               // init var with src value due to compile error
         for (int i = 0; i < 10; i++) {      //10 attempts to get safe loc
             l = getDistanceLocation(src, dist);
+            l.getChunk().load();
             if (isSafeLocation(l)) {
                 logger.info("getSafeDistanceLocation - success");
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             }
         }
         logger.info("getSafeDistanceLocation - default");
+        l = w.getHighestBlockAt(l).getLocation();
         safetizeLocation(l);
-        return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
+        return l.add(0.5, 1, 0.5);
     }
 
     public static boolean isSafeLocation(Location l) {
-        l.getWorld().loadChunk(l.getChunk());
+        l.getChunk().load();                                //todo is necessary to load chunk? Already loaded in getSafeLocation
         Block b = l.getWorld().getHighestBlockAt(l);
         Material m = b.getType();
         if (b.isLiquid()) {
@@ -125,12 +129,13 @@ public class Util {
 
     public static void safetizeLocation(Location l) {
         World w = l.getWorld();
-        w.loadChunk(l.getChunk());
+        l.getChunk().load();        //todo chunk already loaded in getSafeLocation...
         int x = l.getBlockX();
         int y = l.getBlockY();
         int z = l.getBlockZ();
         for (int i = x - 2; i <= x + 2; i++)
             for (int j = z - 2; j <= z + 2; j++) {
+                w.getBlockAt(i, y - 1, j).setType(Material.STONE);
                 w.getBlockAt(i, y, j).setType(Material.OAK_LOG);
                 w.getBlockAt(i, y + 1, j).setType(Material.AIR);
                 w.getBlockAt(i, y + 2, j).setType(Material.AIR);
@@ -148,7 +153,7 @@ public class Util {
             if (is != null) {
                 //switch to next chest when filled
                 if (slots == 27) {
-                    b = w.getBlockAt(l.add(0, 1, 0));
+                    b = w.getBlockAt(l.getBlockX(), l.getBlockY()+1, l.getBlockZ());
                     b.setType(Material.CHEST);
                     chestInv = ((Chest) b.getState()).getBlockInventory();
                 }

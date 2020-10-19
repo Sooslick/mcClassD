@@ -235,7 +235,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent e) {
-        detectGoldPickaxe();
+        detectGoldPickaxe();    //todo fix it too
     }
 
     public void reset() {
