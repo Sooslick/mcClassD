@@ -18,13 +18,16 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.roles.Hunter;
@@ -176,12 +179,19 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    public void onInteract(PlayerInteractEvent e) {
+    public void onInteractBlock(PlayerInteractEvent e) {
         if (engine.getGameState() != GameState.GAME)
             return;
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK)
             return;
         engine.getChestTracker().detectBlock(e.getClickedBlock());
+    }
+
+    @EventHandler
+    public void onInteractEntity(PlayerInteractEntityEvent e) {
+        if (engine.getGameState() != GameState.GAME)
+            return;
+        engine.getChestTracker().detectEntity(e.getRightClicked());
     }
 
     @EventHandler
@@ -236,6 +246,24 @@ public class EventListener implements Listener {
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent e) {
         detectGoldPickaxe();    //todo fix it too
+    }
+
+    @EventHandler
+    public void onEntitySpawn(EntitySpawnEvent e) {
+        //ALWAYS detect entities!
+        //ChestTracker created after changeGameState - Game and its value is null before first game
+        ChestTracker ct = engine.getChestTracker();
+        if (ct != null)
+            engine.getChestTracker().detectEntity(e.getEntity());
+    }
+
+    @EventHandler
+    public void onVehicleSpawn(VehicleCreateEvent e) {
+        //ALWAYS detect entities!
+        //ChestTracker created after changeGameState - Game and its value is null before first game
+        ChestTracker ct = engine.getChestTracker();
+        if (ct != null)
+            engine.getChestTracker().detectEntity(e.getVehicle());
     }
 
     public void reset() {

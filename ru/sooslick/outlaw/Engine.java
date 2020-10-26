@@ -110,6 +110,14 @@ public class Engine extends JavaPlugin {
         log.info("Init Class D Plugin - success");
     }
 
+    @Override
+    public void onDisable() {
+        if (chestTracker != null) {
+            chestTracker.cleanupBlocks();
+            chestTracker.cleanupEntities();
+        }
+    }
+
     public void voteStart(Player p) {
         if (state == GameState.GAME) {
             p.sendMessage("§cCannot votestart while game is running");
@@ -278,8 +286,7 @@ public class Engine extends JavaPlugin {
             case PRESTART:
                 //removes created or found containers and beds
                 if (chestTracker != null)
-                    chestTracker.cleanup();         //todo: cleanup blocks and then cleanup entities at game start
-                chestTracker = new ChestTracker();
+                    chestTracker.cleanupBlocks();
 
                 //generate wall spots
                 if (Cfg.enableEscapeGamemode) {
@@ -292,7 +299,9 @@ public class Engine extends JavaPlugin {
                 break;
             case GAME:
                 //reinit variables and stop lobby timers
-                //todo chectTracker: cleanup entites and then recreate
+                if (chestTracker != null)
+                    chestTracker.cleanupEntities();     //separated cleanups due to beds dropping while blocks cleanup
+                chestTracker = new ChestTracker();
                 eventListener.reset();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;

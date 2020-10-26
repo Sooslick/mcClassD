@@ -5,8 +5,10 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.InventoryHolder;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -14,12 +16,23 @@ import java.util.logging.Logger;
 public class ChestTracker {
 
     private static final Logger LOG = Bukkit.getLogger();
+    private static final ArrayList<EntityType> TRACKED_ENTITY_TYPES;
 
     private final LinkedHashSet<Block> trackedContainers;
     private final LinkedHashSet<Block> trackedBeds;
     private final LinkedHashSet<Entity> trackedEntities;
 
-        //todo: can I track minecart with hoppers and chests, frames and armor stands?
+    static {
+        TRACKED_ENTITY_TYPES = new ArrayList<>();
+        TRACKED_ENTITY_TYPES.add(EntityType.DROPPED_ITEM);
+        TRACKED_ENTITY_TYPES.add(EntityType.MINECART_CHEST);
+        TRACKED_ENTITY_TYPES.add(EntityType.MINECART_HOPPER);
+        TRACKED_ENTITY_TYPES.add(EntityType.ARMOR_STAND);
+        TRACKED_ENTITY_TYPES.add(EntityType.ITEM_FRAME);
+        TRACKED_ENTITY_TYPES.add(EntityType.HORSE);
+        TRACKED_ENTITY_TYPES.add(EntityType.MULE);
+        TRACKED_ENTITY_TYPES.add(EntityType.DONKEY);
+    }
 
     public ChestTracker() {
         trackedContainers = new LinkedHashSet<>();
@@ -37,12 +50,14 @@ public class ChestTracker {
     }
 
     public void detectEntity(Entity e) {
-        if (e instanceof InventoryHolder)
-            if (trackedEntities.add(e))
-                LOG.info("tracked entity at " + e.getLocation());   //todo console will be flooded by these lines, remove or replace it later
+        if (TRACKED_ENTITY_TYPES.contains(e.getType()))
+            if (trackedEntities.add(e)) {
+                //todo if debug mode
+                //LOG.info("tracked entity at " + e.getLocation());
+            }
     }
 
-    public void cleanup() {
+    public void cleanupBlocks() {
         AtomicInteger chests = new AtomicInteger();
         AtomicInteger beds = new AtomicInteger();
         trackedContainers.forEach(b -> {
@@ -54,12 +69,23 @@ public class ChestTracker {
         });
         trackedBeds.forEach(b -> {
             if (b.getBlockData() instanceof Bed) {
-                b.setType(Material.AIR);            //todo prevent drop
+                b.setType(Material.AIR);
                 beds.getAndIncrement();
             }
         });
         LOG.info("ChestTracker cleanup report:\nContainers: " + chests.toString() +
                                                   "\n      Beds: " + beds.toString());
+    }
+
+    public void cleanupEntities() {
+        AtomicInteger ent = new AtomicInteger();
+        trackedEntities.forEach(e -> {
+            if (e != null) {
+                e.remove();
+                ent.getAndIncrement();
+            }
+        });
+        LOG.info("ChestTracker cleanup report: Entities: " + ent.toString());
     }
 
 }
