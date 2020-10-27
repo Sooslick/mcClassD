@@ -1,13 +1,15 @@
 name: ClassD
+prefix: ClassD
 version: 0.3.1
-description: Manhunt
+description: Manhunt gamemode
 author: sooslick
 main: ru.sooslick.outlaw.Engine
 api-version: 1.16
 commands:
-  outlaw:
-    description: some outlaw commands
-    usage: /outlaw <commands>
+  manhunt:
+    description: some manhunt commands
+    aliases: mh
+    usage: /manhunt <command>
   y:
-    description: alias for /outlaw accept command
+    description: alias for /manhunt accept command
     usage: /y

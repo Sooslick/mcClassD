@@ -38,7 +38,6 @@ public class Engine extends JavaPlugin {
     private int halfSize;
     private int escapeArea;
     private GameState state;
-    private CommandListener cmdListener;
     private EventListener eventListener;
     private Logger log;
     private TimedMessages timedMessages;
@@ -98,8 +97,8 @@ public class Engine extends JavaPlugin {
 
         //register commands and events
         Wall.setEngine(this);
-        cmdListener = new CommandListener(this);
-        getCommand("outlaw").setExecutor(cmdListener);
+        CommandListener cmdListener = new CommandListener(this);
+        getCommand("manhunt").setExecutor(cmdListener);
         getCommand("y").setExecutor(cmdListener);
         eventListener = new EventListener(this);
         getServer().getPluginManager().registerEvents(eventListener, this);

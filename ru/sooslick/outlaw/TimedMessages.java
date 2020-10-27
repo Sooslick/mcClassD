@@ -29,9 +29,9 @@ public class TimedMessages {
             case PRESTART:
                 StringBuilder sb = new StringBuilder();
                 sb.append("§e`Class D` Manhunt gamemode")
-                        .append("\nType §6/outlaw help §efor more info")
-                        .append("\nTry yourself: §6/outlaw suggest")
-                        .append("\n§eType §6/outlaw votestart §eto begin or simply §6/outlaw v")
+                        .append("\nType §6/manhunt help §efor more info")
+                        .append("\nTry yourself: §6/manhunt suggest")
+                        .append("\n§eType §6/manhunt votestart §eto begin or simply §6/mh v")
                         .append("\n§ePreffered gamemode: §c")
                         .append(Cfg.enableEscapeGamemode ? "The Wall" : "Minecraft Any%");
                 return sb.toString();

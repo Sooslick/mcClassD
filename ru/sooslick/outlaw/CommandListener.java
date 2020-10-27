@@ -31,7 +31,7 @@ public class CommandListener implements CommandExecutor {
             return true;
         }
 
-        //outlaw
+        //manhunt
         if (args.length == 0) {
             printInfo(sender);
             return true;
@@ -72,16 +72,16 @@ public class CommandListener implements CommandExecutor {
     }
 
     private void printConsoleInfo(CommandSender s) {
-        s.sendMessage("Console cannot do this. Try §6/outlaw help");
+        s.sendMessage("Console cannot do this. Try §6/manhunt help");
     }
 
     private void printInfo(CommandSender s) {
-        s.sendMessage("§6\nAvailable commands:\n/outlaw help");                 //always send help
+        s.sendMessage("§6\nAvailable commands:\n/manhunt help");                 //always send help
         if (s instanceof Player) {
             if (engine.getGameState().equals(GameState.GAME)) {
-                s.sendMessage("§6/outlaw joinrequest\n/outlaw accept §7(/y)");  //send req / accept while game is running
+                s.sendMessage("§6/manhunt joinrequest\n/manhunt accept §7(/y)");  //send req / accept while game is running
             } else {
-                s.sendMessage("§6/outlaw votestart §7(/outlaw v)\n§6/outlaw suggest");          //send vs / suggest otherwise
+                s.sendMessage("§6/manhunt votestart §7(/manhunt v)\n§6/manhunt suggest");          //send vs / suggest otherwise
             }
         }
     }
