@@ -376,6 +376,14 @@ public class Engine extends JavaPlugin {
         p.setBedSpawnLocation(dest);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke " + p.getName() + " everything");
         p.setGameMode(GameMode.SURVIVAL);
+        if (Cfg.enableStartInventory)
+            giveStartInventory(p);
+    }
+
+    private void giveStartInventory(Player p) {
+        for (Map.Entry<Material, Integer> e : Cfg.startInventory.entrySet()) {
+            p.getInventory().addItem(new ItemStack(e.getKey(), e.getValue()));
+        }
     }
 
     private void updateCompass() {

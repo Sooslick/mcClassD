@@ -1,7 +1,12 @@
 package ru.sooslick.outlaw;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+
+import java.util.HashMap;
+import java.util.logging.Logger;
 
 public class Cfg {
 
@@ -13,6 +18,7 @@ public class Cfg {
     public static int alertRadius;
     public static int alertTimeout;
     public static boolean enablePotionHandicap;
+    public static boolean enableStartInventory;
     public static boolean enableEscapeGamemode;
     public static int blocksPerSecondLimit;
     public static int playzoneSize;
@@ -21,8 +27,10 @@ public class Cfg {
     public static int groundSpotDensity;
     public static int airSpotDensity;
     public static int undergroundSpotDensity;
+    public static HashMap<Material, Integer> startInventory;
 
     private static final String SET = "§cGame parameter changed: §e";
+    private static final Logger LOG = Bukkit.getLogger();
 
     public static void readConfig(FileConfiguration f) {
         debugMode = f.getBoolean("debugMode", false);
@@ -63,6 +71,11 @@ public class Cfg {
             Bukkit.broadcastMessage(SET + "enablePotionHandicap = " + b);
             enablePotionHandicap = b;
         }
+        b = f.getBoolean("enableStartInventory", false);
+        if (enableStartInventory != b) {
+            Bukkit.broadcastMessage(SET + "enableStartInventory = " + b);
+            enableStartInventory = b;
+        }
         b = f.getBoolean("enableEscapeGamemode", false);
         if (enableEscapeGamemode != b) {
             Bukkit.broadcastMessage(SET + "enableEscapeGamemode = " + b);
@@ -102,6 +115,21 @@ public class Cfg {
         if (undergroundSpotDensity != temp) {
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "undergroundSpotDensity = " + temp);
             undergroundSpotDensity = temp;
+        }
+
+        //start inventory
+        startInventory = new HashMap<>();
+        ConfigurationSection cs = f.getConfigurationSection("startInventory");
+        for (String k : cs.getKeys(false)) {
+            try {
+                Material m = Material.valueOf(k);
+                int i = cs.getInt(k);
+                startInventory.put(m, i);
+                if (debugMode)
+                    LOG.info("startInventory.put: " + m.name() + " x " + i);
+            } catch (IllegalArgumentException e) {
+                LOG.warning("Unknown item in start inventory: " + k);
+            }
         }
     }
 

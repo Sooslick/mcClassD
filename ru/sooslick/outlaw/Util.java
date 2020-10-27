@@ -49,8 +49,7 @@ public class Util {
             if (isSafeLocation(l)) {
                 logger.info("getSafeRandomLocation - success");
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
-            } else
-                logger.info("getSafeRandomLocation - fail");
+            }
         }
         logger.info("getSafeRandomLocation - default");
         l = w.getHighestBlockAt(l).getLocation();
@@ -87,18 +86,18 @@ public class Util {
         Block b = l.getWorld().getHighestBlockAt(l);
         Material m = b.getType();
         if (b.isLiquid()) {
-            logger.info("isSafeLocation - fail, liquid // " + l.toString());
+            logger.info("isSafeLocation - fail, liquid // " + b.getLocation().toString());
             return false;
         }
         if (DANGERS.contains(m)) {
-            logger.info("isSafeLocation - fail, " + m.name() + " // " + l.toString());
+            logger.info("isSafeLocation - fail, " + m.name() + " // " + b.getLocation().toString());
             return false;
         }
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++)
                 for (int k = 1; k <= 2; k++)
                     if (!b.getRelative(i, k, j).getType().equals(Material.AIR)) {
-                        logger.info("isSafeLocation - fail, obstruction // " + l.toString());
+                        logger.info("isSafeLocation - fail, obstruction // " + b.getLocation().toString());
                         return false;
                     }
         return true;
