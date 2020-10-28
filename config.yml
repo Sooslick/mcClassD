@@ -6,6 +6,7 @@ spawnRadius: 250
 spawnDistance: 240
 alertRadius: 50
 alertTimeout: 60
+hideNametagFrom: 4
 enablePotionHandicap: true
 enableStartInventory: false
 #Escape the Wall gamemode

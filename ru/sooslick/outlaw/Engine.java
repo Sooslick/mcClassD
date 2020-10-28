@@ -11,6 +11,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 
@@ -37,6 +39,7 @@ public class Engine extends JavaPlugin {
     private boolean hunterAlert;
     private int halfSize;
     private int escapeArea;
+    private Scoreboard scoreboard;
     private GameState state;
     private EventListener eventListener;
     private Logger log;
@@ -305,6 +308,9 @@ public class Engine extends JavaPlugin {
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+                Team teamVictim = scoreboard.registerNewTeam("Victim");
+                Team teamHunter = scoreboard.registerNewTeam("Hunter");
 
                 //prepare environment
                 World w = Bukkit.getWorlds().get(0);
@@ -327,6 +333,11 @@ public class Engine extends JavaPlugin {
                 if (Cfg.enablePotionHandicap) {
                     applyPotionHandicap(selectedPlayer);
                 }
+                //join to team and hide nametag
+                teamVictim.addEntry(selectedPlayer.getName());
+                if (Bukkit.getOnlinePlayers().size() >= Cfg.hideNametagFrom) {
+                    teamVictim.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
+                }
 
                 //process others
                 Location hunterLocation = Util.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
@@ -339,6 +350,7 @@ public class Engine extends JavaPlugin {
                     Hunter h = new Hunter(p);
                     hunters.add(h);
                     preparePlayer(p, hunterLocation);
+                    teamHunter.addEntry(p.getName());
                     p.getInventory().addItem(new ItemStack(Material.COMPASS));
                 }
 
@@ -363,6 +375,7 @@ public class Engine extends JavaPlugin {
     }
 
     private void preparePlayer(Player p, Location dest) {
+        p.setScoreboard(scoreboard);
         p.teleport(dest);
         p.setHealth(20);
         p.setFoodLevel(20);
