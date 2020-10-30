@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 
 public class Cfg {
 
+    public static boolean firstRead = true;
+
     public static boolean debugMode;
     public static int minVotestarters;
     public static int votestartTimer;
@@ -92,15 +94,19 @@ public class Cfg {
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "blocksPerSecondLimit = " + temp);
             blocksPerSecondLimit = temp;
         }
-        temp = f.getInt("playzoneSize", 1000);  //todo validate: must be wider than spawn radius+distance
+        temp = f.getInt("playzoneSize", 1000);
         if (playzoneSize != temp) {
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "playzoneSize = " + temp);
             playzoneSize = temp;
+            if (firstRead)
+                LOG.warning("We recommend you to change world and restart server because after changing playzoneSize game may be unplayable!");
         }
         temp = f.getInt("wallThickness", 16);
-        if (wallThickness != temp) {                    //todo alert when changed or rebuild wall completely
+        if (wallThickness != temp) {
             if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "wallThickness = " + temp);
             wallThickness = temp;
+            if (firstRead)
+                LOG.warning("We recommend you to change world and restart server because after changing wallThickness game may be unplayable!");
         }
         temp = f.getInt("spotSize", 10);
         if (spotSize != temp) {
@@ -137,6 +143,8 @@ public class Cfg {
                 LOG.warning("Unknown item in start inventory: " + k);
             }
         }
+
+        firstRead = false;
     }
 
     //todo refactor with adequate reflection mthod

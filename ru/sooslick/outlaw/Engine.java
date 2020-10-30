@@ -246,6 +246,10 @@ public class Engine extends JavaPlugin {
         killCounter++;
     }
 
+    public int getHalfSize() {
+        return halfSize;
+    }
+
     public ChestTracker getChestTracker() {
         return chestTracker;
     }
@@ -270,8 +274,8 @@ public class Engine extends JavaPlugin {
                 gameTimer = 0;
                 killCounter = 0;
                 hunterAlert = false;
-                halfSize = Cfg.playzoneSize / 2;
-                escapeArea = halfSize + Cfg.wallThickness + 2;  //todo: +/- bug
+                halfSize = Cfg.playzoneSize / 2 + 1;
+                escapeArea = halfSize + Cfg.wallThickness + 1;  //todo: +/- bug
 
                 //reset players gamemode and achievements
                 for (Player p : Bukkit.getOnlinePlayers())
@@ -336,6 +340,7 @@ public class Engine extends JavaPlugin {
                 //join to team and hide nametag
                 teamVictim.addEntry(selectedPlayer.getName());
                 if (Bukkit.getOnlinePlayers().size() >= Cfg.hideNametagFrom) {
+                    Bukkit.broadcastMessage("§eVictim's nametag is invisible");
                     teamVictim.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
                 }
 

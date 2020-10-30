@@ -11,7 +11,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
@@ -21,13 +20,23 @@ public class Util {
 
     public static Random random = new Random();
     public static final List<Material> DANGERS;
-    private static Logger logger;
+    private static final Logger LOGGER;
 
     static {
-        logger = Bukkit.getLogger();
-        Material[] dgrs = {Material.FIRE, Material.CACTUS, Material.VINE, Material.LADDER, Material.COBWEB, Material.AIR,
-                Material.TRIPWIRE, Material.TRIPWIRE_HOOK, Material.SWEET_BERRY_BUSH, Material.MAGMA_BLOCK};
-        DANGERS = new ArrayList<>(Arrays.asList(dgrs));
+        LOGGER = Bukkit.getLogger();
+        DANGERS = new ArrayList<>();
+        DANGERS.add(Material.FIRE);
+        DANGERS.add(Material.CACTUS);
+        DANGERS.add(Material.VINE);
+        DANGERS.add(Material.LADDER);
+        DANGERS.add(Material.COBWEB);
+        DANGERS.add(Material.AIR);
+        DANGERS.add(Material.TRIPWIRE);
+        DANGERS.add(Material.TRIPWIRE_HOOK);
+        DANGERS.add(Material.SWEET_BERRY_BUSH);
+        DANGERS.add(Material.MAGMA_BLOCK);
+        DANGERS.add(Material.SEAGRASS);
+        DANGERS.add(Material.TALL_SEAGRASS);
     }
 
     public static <E> E getRandomOf(Collection<E> set) {
@@ -35,23 +44,32 @@ public class Util {
     }
 
     public static Location getRandomLocation(int bound) {
-        //todo: world?
         int dbound = bound * 2;
-        return new Location(Bukkit.getWorlds().get(0), random.nextInt(dbound) - bound, 64, random.nextInt(dbound) - bound);
+        int x = random.nextInt(dbound) - bound;
+        if (x >= Cfg.playzoneSize)
+            x = Cfg.playzoneSize - 1;
+        else if (x <= -Cfg.playzoneSize)
+            x = -Cfg.playzoneSize + 1;
+        int z = random.nextInt(dbound) - bound;
+        if (z >= Cfg.playzoneSize)
+            z = Cfg.playzoneSize - 1;
+        else if (z <= -Cfg.playzoneSize)
+            z = -Cfg.playzoneSize + 1;
+        return new Location(Bukkit.getWorlds().get(0), x, 64, z);
     }
 
     public static Location getSafeRandomLocation(int bound) {
-        World w = Bukkit.getWorlds().get(0);    //todo world?
+        World w = Bukkit.getWorlds().get(0);
         Location l = w.getSpawnLocation();  //spawn location will have never used. Init variable due to compile error
         for (int i = 0; i < 10; i++) {      //10 attempts to get safe loc
             l = getRandomLocation(bound);
             l.getChunk().load();
             if (isSafeLocation(l)) {
-                logger.info("getSafeRandomLocation - success");
+                LOGGER.info("getSafeRandomLocation - success");
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             }
         }
-        logger.info("getSafeRandomLocation - default");
+        LOGGER.info("getSafeRandomLocation - default");
         l = w.getHighestBlockAt(l).getLocation();
         safetizeLocation(l);
         return l.add(0.5, 1, 0.5);
@@ -59,23 +77,31 @@ public class Util {
 
     public static Location getDistanceLocation(Location src, int dist) {
         double angle = Math.random() * Math.PI * 2;
-        double x = Math.round(Math.cos(angle) * dist);
-        double z = Math.round(Math.sin(angle) * dist);
-        return new Location(src.getWorld(), src.getBlockX() + x, src.getBlockY(), src.getBlockZ() + z);
+        double x = src.getBlockX() + Math.round(Math.cos(angle) * dist);
+        if (x >= Cfg.playzoneSize)
+            x = Cfg.playzoneSize - 1;
+        else if (x <= -Cfg.playzoneSize)
+            x = -Cfg.playzoneSize + 1;
+        double z = src.getBlockZ() + Math.round(Math.sin(angle) * dist);
+        if (z >= Cfg.playzoneSize)
+            z = Cfg.playzoneSize - 1;
+        else if (z <= -Cfg.playzoneSize)
+            z = -Cfg.playzoneSize + 1;
+        return new Location(src.getWorld(), x, src.getBlockY(), z);
     }
 
     public static Location getSafeDistanceLocation(Location src, int dist) {
-        World w = Bukkit.getWorlds().get(0);        //todo world?
+        World w = Bukkit.getWorlds().get(0);
         Location l = src;               // init var with src value due to compile error
         for (int i = 0; i < 10; i++) {      //10 attempts to get safe loc
             l = getDistanceLocation(src, dist);
             l.getChunk().load();
             if (isSafeLocation(l)) {
-                logger.info("getSafeDistanceLocation - success");
+                LOGGER.info("getSafeDistanceLocation - success");
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             }
         }
-        logger.info("getSafeDistanceLocation - default");
+        LOGGER.info("getSafeDistanceLocation - default");
         l = w.getHighestBlockAt(l).getLocation();
         safetizeLocation(l);
         return l.add(0.5, 1, 0.5);
@@ -86,18 +112,18 @@ public class Util {
         Block b = l.getWorld().getHighestBlockAt(l);
         Material m = b.getType();
         if (b.isLiquid()) {
-            logger.info("isSafeLocation - fail, liquid // " + b.getLocation().toString());
+            LOGGER.info("isSafeLocation - fail, liquid // " + b.getLocation().toString());
             return false;
         }
         if (DANGERS.contains(m)) {
-            logger.info("isSafeLocation - fail, " + m.name() + " // " + b.getLocation().toString());
+            LOGGER.info("isSafeLocation - fail, " + m.name() + " // " + b.getLocation().toString());
             return false;
         }
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++)
                 for (int k = 1; k <= 2; k++)
                     if (!b.getRelative(i, k, j).getType().equals(Material.AIR)) {
-                        logger.info("isSafeLocation - fail, obstruction // " + b.getLocation().toString());
+                        LOGGER.info("isSafeLocation - fail, obstruction // " + b.getLocation().toString());
                         return false;
                     }
         return true;

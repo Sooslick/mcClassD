@@ -141,7 +141,8 @@ public class EventListener implements Listener {
         if (!p.equals(engine.getOutlaw().getPlayer()))
             return;
         Location l = e.getBlock().getLocation();
-        if ((Math.abs(l.getBlockX()) >= Wall.startWallCoord) || (Math.abs(l.getBlockZ()) >= Wall.startWallCoord)) {
+        int halfsize = engine.getHalfSize();
+        if ((Math.abs(l.getBlockX()) >= halfsize) || (Math.abs(l.getBlockZ()) >= halfsize)) {
             firstBlockAlerted = true;
             Bukkit.broadcastMessage("§cVictim is trying to break the Wall");       //todo refactor broadcast to broadcaster class
         }
@@ -159,7 +160,8 @@ public class EventListener implements Listener {
         //detect wall restoring
         Material m = b.getType();
         if (m == Material.OBSIDIAN || m == Material.NETHERITE_BLOCK || m == Material.CRYING_OBSIDIAN || m == Material.ANCIENT_DEBRIS) {
-            if ((Math.abs(b.getX()) >= Wall.startWallCoord - 1) || (Math.abs(b.getZ()) >= Wall.startWallCoord - 1)) {
+            int halfsize = engine.getHalfSize();
+            if ((Math.abs(b.getX()) >= halfsize - 1) || (Math.abs(b.getZ()) >= halfsize - 1)) {
                 e.setCancelled(true);
                 e.getPlayer().sendMessage("§4Obsidian is denied here");
             }

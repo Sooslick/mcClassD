@@ -20,7 +20,7 @@ public class Wall {
     private static int side;                        //current side of square
     private static int currentBlock;                //current block of side
     private static int limiter;
-    public static int startWallCoord;                    //todo private
+    private static int startWallCoord;
     private static int endWallCoord;
     private static boolean wallBuilt;
     private static boolean spotsQueued;
@@ -83,8 +83,6 @@ public class Wall {
         //todo debugMode check? + side fix
         //log.info("created spot at side " + side + ", center " + center);
     };
-
-    //todo rebuild wall method if thickness changed
 
     public static void buildWall() {
         //stop previous generator if it still working, clear
