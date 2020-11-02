@@ -81,7 +81,7 @@ public class ChestTracker {
         AtomicInteger ent = new AtomicInteger();
         trackedEntities.forEach(e -> {
             if (e != null) {
-                e.remove();
+                e.remove();             //todo still NPE???
                 ent.getAndIncrement();
             }
         });

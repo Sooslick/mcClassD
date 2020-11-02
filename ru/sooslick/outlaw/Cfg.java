@@ -5,12 +5,15 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
 public class Cfg {
 
     public static boolean firstRead = true;
+    public static boolean changeAlert = false;
+    public static FileConfiguration currentCfg;
 
     public static boolean debugMode;
     public static int minVotestarters;
@@ -36,97 +39,29 @@ public class Cfg {
     private static final Logger LOG = Bukkit.getLogger();
 
     public static void readConfig(FileConfiguration f) {
-        debugMode = f.getBoolean("debugMode", false);
-        int temp;
-        boolean b;
-        temp = f.getInt("minVotestarters", 1);
-        if (minVotestarters != temp) {
-            Bukkit.broadcastMessage(SET + "minVotestarters = " + temp);
-            minVotestarters = temp;
-        }
-        temp = f.getInt("votestartTimer", 60);
-        if (votestartTimer != temp) {
-            Bukkit.broadcastMessage(SET + "votestartTimer = " + temp);
-            votestartTimer = temp;
-        }
-        temp = f.getInt("spawnRadius", 300);
-        if (spawnRadius != temp) {
-            Bukkit.broadcastMessage(SET + "spawnRadius = " + temp);
-            spawnRadius = temp;
-        }
-        temp = f.getInt("spawnDistance", 240);
-        if (spawnDistance != temp) {
-            Bukkit.broadcastMessage(SET + "spawnDistance = " + temp);
-            spawnDistance = temp;
-        }
-        temp = f.getInt("alertRadius", 50);
-        if (alertRadius != temp) {
-            Bukkit.broadcastMessage(SET + "alertRadius = " + temp);
-            alertRadius = temp;
-        }
-        temp = f.getInt("alertTimeout", 60);
-        if (alertTimeout != temp) {
-            Bukkit.broadcastMessage(SET + "alertTimeout = " + temp);
-            alertTimeout = temp;
-        }
-        temp = f.getInt("hideNametagFrom", 4);
-        if (hideNametagFrom != temp) {
-            Bukkit.broadcastMessage(SET + "hideNametagFrom = " + temp);
-            hideNametagFrom = temp;
-        }
-        b = f.getBoolean("enablePotionHandicap", true);
-        if (enablePotionHandicap != b) {
-            Bukkit.broadcastMessage(SET + "enablePotionHandicap = " + b);
-            enablePotionHandicap = b;
-        }
-        b = f.getBoolean("enableStartInventory", false);
-        if (enableStartInventory != b) {
-            Bukkit.broadcastMessage(SET + "enableStartInventory = " + b);
-            enableStartInventory = b;
-        }
-        b = f.getBoolean("enableEscapeGamemode", false);
-        if (enableEscapeGamemode != b) {
-            Bukkit.broadcastMessage(SET + "enableEscapeGamemode = " + b);
-            enableEscapeGamemode = b;
-        }
-        temp = f.getInt("blocksPerSecondLimit", 100000);
-        if (blocksPerSecondLimit != temp) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "blocksPerSecondLimit = " + temp);
-            blocksPerSecondLimit = temp;
-        }
-        temp = f.getInt("playzoneSize", 1000);
-        if (playzoneSize != temp) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "playzoneSize = " + temp);
-            playzoneSize = temp;
-            if (firstRead)
-                LOG.warning("We recommend you to change world and restart server because after changing playzoneSize game may be unplayable!");
-        }
-        temp = f.getInt("wallThickness", 16);
-        if (wallThickness != temp) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "wallThickness = " + temp);
-            wallThickness = temp;
-            if (firstRead)
-                LOG.warning("We recommend you to change world and restart server because after changing wallThickness game may be unplayable!");
-        }
-        temp = f.getInt("spotSize", 10);
-        if (spotSize != temp) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "spotSize = " + temp);
-            spotSize = temp;
-        }
-        temp = f.getInt("groundSpotDensity", 3);
-        if (groundSpotDensity != temp) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "groundSpotDensity = " + temp);
-            groundSpotDensity = temp;
-        }
-        temp = f.getInt("airSpotDensity", 2);
-        if (airSpotDensity != temp) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "airSpotDensity = " + temp);
-            airSpotDensity = temp;
-        }
-        temp = f.getInt("undergroundSpotDensity", 5);
-        if (undergroundSpotDensity != temp) {
-            if (enableEscapeGamemode) Bukkit.broadcastMessage(SET + "undergroundSpotDensity = " + temp);
-            undergroundSpotDensity = temp;
+        changeAlert = false;
+        currentCfg = f;
+                      readValue("debugMode", false);
+                      readValue("minVotestarters", 2);
+                      readValue("votestartTimer", 60);
+                      readValue("spawnRadius", 250);
+                      readValue("spawnDistance", 240);
+                      readValue("alertRadius", 50);
+                      readValue("alertTimeout", 60);
+                      readValue("hideNametagFrom", 4);
+                      readValue("enablePotionHandicap", true);
+                      readValue("enableStartInventory", true);
+        changeAlert = readValue("enableEscapeGamemode", false);
+                      readValue("blocksPerSecondLimit", 100000);
+        changeAlert = readValue("playzoneSize", 1000);
+        changeAlert = readValue("wallThickness", 8);
+                      readValue("spotSize", 4);
+                      readValue("groundSpotDensity", 3);
+                      readValue("airSpotDensity", 2);
+                      readValue("undergroundSpotDensity", 5);
+
+        if (changeAlert && !firstRead) {
+            LOG.warning("Parameter responsible for world modifying is changed. We strongly recommend to recreate game world, otherwise it may be unplayable");
         }
 
         //start inventory
@@ -147,5 +82,38 @@ public class Cfg {
         firstRead = false;
     }
 
-    //todo refactor with adequate reflection mthod
+    //returns true only when field changed
+    private static boolean readValue(String key, Object defaultValue) {
+        //identify Cfg.class field
+        Field f;
+        try {
+            f = Cfg.class.getField(key);
+        } catch (Exception e) {
+            LOG.warning("Unknown cfg field " + key + "\n" + e.getMessage());
+            return false;
+        }
+
+        //read and set value
+        Object oldVal = null;
+        Object newVal = null;
+        try {
+            oldVal = f.get(null);
+            if (f.getType() == Integer.TYPE) {
+                f.set(null, currentCfg.getInt(key, (int) defaultValue));
+            } else if (f.getType() == Boolean.TYPE) {
+                f.set(null, currentCfg.getBoolean(key, (boolean) defaultValue));
+            }
+            newVal = f.get(null);
+        } catch (Exception e) {
+            LOG.warning("Cannot read value of field " + key + "\n" + e.getMessage());
+            return false;
+        }
+
+        //detect changes
+        if (oldVal != newVal) {
+            Bukkit.broadcastMessage(SET + key + " = " + newVal);
+            return true;
+        }
+        return false;
+    }
 }

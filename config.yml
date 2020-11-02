@@ -1,6 +1,6 @@
 debugMode: false
 #General parameters
-minVotestarters: 1
+minVotestarters: 2
 votestartTimer: 60
 spawnRadius: 250
 spawnDistance: 240
@@ -8,19 +8,19 @@ alertRadius: 50
 alertTimeout: 60
 hideNametagFrom: 4
 enablePotionHandicap: true
-enableStartInventory: false
+enableStartInventory: true
 #Escape the Wall gamemode
 enableEscapeGamemode: false
 #Wall generator performance
 blocksPerSecondLimit: 100000
 #Escape gamemode parameters
 playzoneSize: 1000
-wallThickness: 10
+wallThickness: 8
 spotSize: 4
 groundSpotDensity: 3
 airSpotDensity: 2
 undergroundSpotDensity: 5
 #Start inventory
 startInventory:
-  OAK_LOG: 5
-  COOKIE: 5
+  OAK_LOG: 3
+  COOKIE: 3
