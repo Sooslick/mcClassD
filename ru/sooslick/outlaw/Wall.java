@@ -58,18 +58,18 @@ public class Wall {
     private final static Runnable buildSpotTick = () -> {
         int center = spotPositions.getFirst();
         Filler f = getSideBasedFiller(side, center-spotSize, center+spotSize).setMaterial(Material.OBSIDIAN);
-        if (groundCurr < Cfg.groundSpotDensity) {
+        if (groundCurr < Cfg.groundSpotQty) {
             int h = getGroundLevel(side, center);
             f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
             groundCurr++;
-        } else if (airCurr < Cfg.airSpotDensity) {
+        } else if (airCurr < Cfg.airSpotQty) {
             int h = getAirLevel(side, center);
             f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
             airCurr++;
-        } else if (undergroundCurr < Cfg.undergroundSpotDensity) {
+        } else if (undergroundCurr < Cfg.undergroundSpotQty) {
             int h = getUndergroundLevel(side, center);
             f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
-            if (++undergroundCurr >= Cfg.undergroundSpotDensity) {
+            if (++undergroundCurr >= Cfg.undergroundSpotQty) {
                 groundCurr = 0;
                 airCurr = 0;
                 undergroundCurr = 0;
@@ -102,7 +102,7 @@ public class Wall {
 
         //launch
         generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(engine, buildWallTick, 1, 20);
-        log.info("Resetted wall generator and launched buildWallTick");
+        log.info("Reset wall generator and launched buildWallTick");
     }
 
     public static void launchBuildSpots() {
@@ -114,14 +114,14 @@ public class Wall {
 
         //pre-generate spots
         spotPositions = new LinkedList<>();
-        int total = (Cfg.airSpotDensity + Cfg.groundSpotDensity + Cfg.undergroundSpotDensity) * 4;
+        int total = (Cfg.airSpotQty + Cfg.groundSpotQty + Cfg.undergroundSpotQty) * 4;
         for (int i = 0; i < total; i++) {
             spotPositions.add(Util.random.nextInt(size) - halfSize);
         }
 
         //launch
         generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(engine, buildSpotTick, 1, 1);
-        log.info("Resetted and launched buildSpotTick");
+        log.info("Reset and launched buildSpotTick");
     }
 
     public static void buildSpots() {

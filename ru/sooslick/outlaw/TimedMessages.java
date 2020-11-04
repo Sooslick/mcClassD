@@ -31,8 +31,8 @@ public class TimedMessages {
                 sb.append("§e`Class D` Manhunt gamemode")
                         .append("\nType §6/manhunt help §efor more info")
                         .append("\nTry yourself: §6/manhunt suggest")
-                        .append("\n§eType §6/manhunt votestart §eto begin or simply §6/mh v")
-                        .append("\n§ePreffered gamemode: §c")
+                        .append("\n§eType §6/manhunt votestart §eor simply §6/mh v §eto begin")
+                        .append("\n§ePreferred gamemode: §c")
                         .append(Cfg.enableEscapeGamemode ? "The Wall" : "Minecraft Any%");
                 return sb.toString();
             case GAME:

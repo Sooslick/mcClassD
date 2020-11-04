@@ -79,9 +79,9 @@ public class ChestTracker {
 
     public void cleanupEntities() {
         AtomicInteger ent = new AtomicInteger();
-        trackedEntities.forEach(e -> {
+        trackedEntities.forEach(e -> {              //todo catch concurrent modification exception
             if (e != null) {
-                e.remove();             //todo still NPE???
+                e.remove();
                 ent.getAndIncrement();
             }
         });

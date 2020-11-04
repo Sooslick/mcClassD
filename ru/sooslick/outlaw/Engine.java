@@ -132,7 +132,7 @@ public class Engine extends JavaPlugin {
         }
         votestarters.add(name);
         Bukkit.broadcastMessage("§e" + name + " voted to start game");
-        if (votestarters.size() >= Cfg.minVotestarters && state == GameState.IDLE) {
+        if (votestarters.size() >= Cfg.minStartVotes && state == GameState.IDLE) {
             changeGameState(GameState.PRESTART);
             return;
         }
@@ -269,7 +269,7 @@ public class Engine extends JavaPlugin {
                 volunteers = new ArrayList<>();
                 hunters = new ArrayList<>();
                 joinRequests = new HashMap<>();
-                votestartCountdown = Cfg.votestartTimer;
+                votestartCountdown = Cfg.prestartTimer;
                 alertTimeoutTimer = 0;
                 gameTimer = 0;
                 killCounter = 0;
@@ -284,9 +284,9 @@ public class Engine extends JavaPlugin {
                 //regenerate wall
                 if (Cfg.enableEscapeGamemode) {
                     Wall.buildWall();
-                    Bukkit.broadcastMessage("§cPlz wait until the rebuild process ends...");
+                    Bukkit.broadcastMessage("§cPlz wait until the rebuild process is complete...");
                 } else {
-                    Bukkit.broadcastMessage("§eReady to the next game");
+                    Bukkit.broadcastMessage("§eReady for the next game");
                 }
                 break;
             case PRESTART:
@@ -301,7 +301,7 @@ public class Engine extends JavaPlugin {
 
                 //launch timer
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
-                Bukkit.broadcastMessage(Cfg.votestartTimer + " seconds to launch");
+                Bukkit.broadcastMessage(Cfg.prestartTimer + " seconds to launch");
                 break;
             case GAME:
                 //reinit variables and stop lobby timers
@@ -339,7 +339,7 @@ public class Engine extends JavaPlugin {
                 }
                 //join to team and hide nametag
                 teamVictim.addEntry(selectedPlayer.getName());
-                if (Bukkit.getOnlinePlayers().size() >= Cfg.hideNametagFrom) {
+                if (Bukkit.getOnlinePlayers().size() >= Cfg.hideVictimNametagAbovePlayers) {
                     Bukkit.broadcastMessage("§eVictim's nametag is invisible");
                     teamVictim.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
                 }
@@ -426,7 +426,7 @@ public class Engine extends JavaPlugin {
                 continue;
             if (Util.distance(h.getPlayer().getLocation(), outlawLocation) < Cfg.alertRadius) {
                 alertTimeoutTimer = Cfg.alertTimeout;
-                outlawPlayer.sendMessage("§cHunters near");
+                outlawPlayer.sendMessage("§cHunters nearby");
                 //glow placeholder entity if Outlaw player is offline
                 if (!(outlawPlayer instanceof Player)) {
                     outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout * 20, 3));
@@ -458,7 +458,7 @@ public class Engine extends JavaPlugin {
 
     private void applyPotionHandicap(LivingEntity selectedPlayer) {
         int x = Bukkit.getOnlinePlayers().size();
-        applyPotionHandicap(selectedPlayer, (int) (x*x/5 + 0.8) * 400);
+        applyPotionHandicap(selectedPlayer, (int) ((x*x/5 + 0.8) * 400));
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer, int duration) {

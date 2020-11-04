@@ -16,13 +16,13 @@ public class Cfg {
     public static FileConfiguration currentCfg;
 
     public static boolean debugMode;
-    public static int minVotestarters;
-    public static int votestartTimer;
+    public static int minStartVotes;
+    public static int prestartTimer;
     public static int spawnRadius;
     public static int spawnDistance;
     public static int alertRadius;
     public static int alertTimeout;
-    public static int hideNametagFrom;
+    public static int hideVictimNametagAbovePlayers;
     public static boolean enablePotionHandicap;
     public static boolean enableStartInventory;
     public static boolean enableEscapeGamemode;
@@ -30,9 +30,9 @@ public class Cfg {
     public static int playzoneSize;
     public static int wallThickness;
     public static int spotSize;
-    public static int groundSpotDensity;
-    public static int airSpotDensity;
-    public static int undergroundSpotDensity;
+    public static int groundSpotQty;
+    public static int airSpotQty;
+    public static int undergroundSpotQty;
     public static HashMap<Material, Integer> startInventory;
 
     private static final String SET = "§cGame parameter changed: §e";
@@ -42,13 +42,13 @@ public class Cfg {
         changeAlert = false;
         currentCfg = f;
                       readValue("debugMode", false);
-                      readValue("minVotestarters", 2);
-                      readValue("votestartTimer", 60);
+                      readValue("minStartVotes", 2);
+                      readValue("prestartTimer", 60);
                       readValue("spawnRadius", 250);
                       readValue("spawnDistance", 240);
                       readValue("alertRadius", 50);
                       readValue("alertTimeout", 60);
-                      readValue("hideNametagFrom", 4);
+                      readValue("hideVictimNametagAbovePlayers", 4);
                       readValue("enablePotionHandicap", true);
                       readValue("enableStartInventory", true);
         changeAlert = readValue("enableEscapeGamemode", false);
@@ -56,13 +56,9 @@ public class Cfg {
         changeAlert = readValue("playzoneSize", 1000);
         changeAlert = readValue("wallThickness", 8);
                       readValue("spotSize", 4);
-                      readValue("groundSpotDensity", 3);
-                      readValue("airSpotDensity", 2);
-                      readValue("undergroundSpotDensity", 5);
-
-        if (changeAlert && !firstRead) {
-            LOG.warning("Parameter responsible for world modifying is changed. We strongly recommend to recreate game world, otherwise it may be unplayable");
-        }
+                      readValue("groundSpotQty", 3);
+                      readValue("airSpotQty", 2);
+                      readValue("undergroundSpotQty", 5);
 
         //start inventory
         startInventory = new HashMap<>();
@@ -79,17 +75,34 @@ public class Cfg {
             }
         }
 
+        if (changeAlert && !firstRead) {
+            LOG.warning("Parameter responsible for modifying world was changed. " +
+                    "We strongly recommend to generate a new game world, " +
+                    "otherwise it may be unplayable");
+        }
+
         firstRead = false;
+    }
+
+    //method can return value of any field in this class include non-config variables. Not a bug, f e a t u r e
+    public static String getValue(String key) {
+        Field f = getField(key);
+        if (f == null) {
+            return "Unknown parameter: " + key;
+        }
+        try {
+            return key + ": " + f.get(null);
+        } catch (Exception e) {
+            return "Cannot read parameter: " + key;
+        }
     }
 
     //returns true only when field changed
     private static boolean readValue(String key, Object defaultValue) {
         //identify Cfg.class field
-        Field f;
-        try {
-            f = Cfg.class.getField(key);
-        } catch (Exception e) {
-            LOG.warning("Unknown cfg field " + key + "\n" + e.getMessage());
+        Field f = getField(key);
+        if (f == null) {
+            LOG.warning("Unknown cfg field " + key);
             return false;
         }
 
@@ -110,10 +123,18 @@ public class Cfg {
         }
 
         //detect changes
-        if (oldVal != newVal) {
+        if (!oldVal.toString().equals(newVal.toString())) {         //WEIRD. FIXME PLZ?
             Bukkit.broadcastMessage(SET + key + " = " + newVal);
             return true;
         }
         return false;
+    }
+
+    private static Field getField(String key) {
+        try {
+            return Cfg.class.getField(key);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

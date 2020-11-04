@@ -12,6 +12,7 @@ public class CommandListener implements CommandExecutor {
     private final String COMMAND_SUGGEST = "suggest";
     private final String COMMAND_JOIN_REQUEST = "joinrequest";
     private final String COMMAND_ACCEPT = "accept";
+    private final String COMMAND_CFG = "cfg";
     private final String COMMAND_HELP = "help";
 
     Engine engine;
@@ -61,6 +62,13 @@ public class CommandListener implements CommandExecutor {
                     engine.acceptJoinRequest((Player) sender);
                 else
                     printConsoleInfo(sender);
+                break;
+            case COMMAND_CFG:
+                if (args.length == 1) {
+                    sender.sendMessage("/manhunt cfg <parameter>");
+                } else {
+                    sender.sendMessage(Cfg.getValue(args[1]));
+                }
                 break;
             case COMMAND_HELP:
                 printHelpInfo(sender);
