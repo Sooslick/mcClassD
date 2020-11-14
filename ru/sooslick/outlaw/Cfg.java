@@ -60,6 +60,21 @@ public class Cfg {
                       readValue("airSpotQty", 2);
                       readValue("undergroundSpotQty", 5);
 
+        //validate
+        if (prestartTimer <= 0) prestartTimer = 10;
+        if (spawnRadius <= 0) spawnRadius = 10;
+        if (spawnDistance <= 0) spawnDistance = 10;
+        if (alertRadius <= 0) alertRadius = 10;
+        if (alertTimeout <= 0) alertTimeout = 10;
+        if (blocksPerSecondLimit < 10000) blocksPerSecondLimit = 10000;
+        if (playzoneSize < spawnRadius + spawnDistance) playzoneSize = spawnRadius + spawnDistance + 10;
+        if (wallThickness <= 0) wallThickness = 1;
+        if (spotSize <= 0) spotSize = 1;
+        if (groundSpotQty < 0) groundSpotQty = 0;
+        if (airSpotQty < 0) airSpotQty = 0;
+        if (undergroundSpotQty < 0) undergroundSpotQty = 0;
+        if (groundSpotQty + airSpotQty + undergroundSpotQty <= 0) groundSpotQty = 1;
+
         //start inventory
         startInventory = new HashMap<>();
         ConfigurationSection cs = f.getConfigurationSection("startInventory");
