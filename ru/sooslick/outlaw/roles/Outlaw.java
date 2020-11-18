@@ -9,11 +9,11 @@ public class Outlaw extends AbstractPlayer {
 
     Location lastWorldPos;
     Location lastNetherPos;
-    LivingEntity placeholder;
+    LivingEntity placeholder;               //todo is possible to remove getRepresentative?
     boolean offline;
 
     public Outlaw(Player p) {
-        player = p;
+        super(p);
         lastWorldPos = p.getLocation();     //todo: rework, add null check to updateCompass method
         lastNetherPos = p.getLocation();
         placeholder = null;                 //todo refactor: single field for player and placeholder

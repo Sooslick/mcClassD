@@ -67,6 +67,7 @@ public class EventListener implements Listener {
             if (outlaw instanceof Player) {
                 Location l = outlaw.getLocation();
                 Util.invToChest(((Player) outlaw).getInventory(), l);
+                //todo is possible to steal inventory while outlaw is offline?
                 engine.getChestTracker().detectBlock(l.getBlock());
                 engine.getChestTracker().detectBlock(l.add(0, 1, 0).getBlock());
             }

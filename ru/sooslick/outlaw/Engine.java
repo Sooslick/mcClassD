@@ -203,9 +203,9 @@ public class Engine extends JavaPlugin {
                 Player p = Bukkit.getPlayer(e.getKey());
                 if (p != null) {
                     //todo copypasted from changeGameState - Game, refactor to method
-                    Hunter h = new Hunter(p);
-                    hunters.add(h);
-                    preparePlayer(p, Bukkit.getWorlds().get(0).getSpawnLocation());
+                    Hunter currentHunter = new Hunter(p);
+                    hunters.add(currentHunter);
+                    currentHunter.preparePlayer(Bukkit.getWorlds().get(0).getSpawnLocation());
                     p.getInventory().addItem(new ItemStack(Material.COMPASS));
 
                     acceptedRequests++;
@@ -312,7 +312,7 @@ public class Engine extends JavaPlugin {
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
-                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();          //todo NPE check
                 Team teamVictim = scoreboard.registerNewTeam("Victim");
                 Team teamHunter = scoreboard.registerNewTeam("Hunter");
 
@@ -332,12 +332,13 @@ public class Engine extends JavaPlugin {
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
                 Location outlawLocation = Util.getSafeRandomLocation(Cfg.spawnRadius);
-                preparePlayer(selectedPlayer, outlawLocation);
+                outlaw.preparePlayer(outlawLocation);
                 //give handicap effects
                 if (Cfg.enablePotionHandicap) {
                     applyPotionHandicap(selectedPlayer);
                 }
                 //join to team and hide nametag
+                selectedPlayer.setScoreboard(scoreboard);
                 teamVictim.addEntry(selectedPlayer.getName());
                 if (Bukkit.getOnlinePlayers().size() >= Cfg.hideVictimNametagAbovePlayers) {
                     Bukkit.broadcastMessage("§eVictim's nametag is invisible");
@@ -352,9 +353,10 @@ public class Engine extends JavaPlugin {
                     if (p.equals(selectedPlayer))
                         continue;
                     //add others to hunter team
-                    Hunter h = new Hunter(p);
-                    hunters.add(h);
-                    preparePlayer(p, hunterLocation);
+                    Hunter currentHunter = new Hunter(p);
+                    hunters.add(currentHunter);
+                    currentHunter.preparePlayer(hunterLocation);
+                    p.setScoreboard(scoreboard);
                     teamHunter.addEntry(p.getName());
                     p.getInventory().addItem(new ItemStack(Material.COMPASS));
                 }
@@ -367,7 +369,7 @@ public class Engine extends JavaPlugin {
 
                 //debug: check distance btw runner and hunters
                 if (hunters.size() > 0) {
-                    Bukkit.broadcastMessage("§eSpawn handicap: " + Util.distance(outlaw.getPlayer().getLocation(), hunters.get(0).getPlayer().getLocation()));
+                    Bukkit.broadcastMessage("§eSpawn handicap: " + Util.distance(outlaw.getLocation(), hunters.get(0).getLocation()));
                 }
 
                 //run game
@@ -379,33 +381,8 @@ public class Engine extends JavaPlugin {
         }
     }
 
-    private void preparePlayer(Player p, Location dest) {
-        p.setScoreboard(scoreboard);
-        p.teleport(dest);
-        p.setHealth(20);
-        p.setFoodLevel(20);
-        p.setSaturation(5);
-        p.setExhaustion(0);
-        p.setTotalExperience(0);
-        p.setExp(0);
-        p.setLevel(0);
-        p.getInventory().clear();
-        p.getActivePotionEffects().clear();
-        p.setBedSpawnLocation(dest);
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke " + p.getName() + " everything");
-        p.setGameMode(GameMode.SURVIVAL);
-        if (Cfg.enableStartInventory)
-            giveStartInventory(p);
-    }
-
-    private void giveStartInventory(Player p) {
-        for (Map.Entry<Material, Integer> e : Cfg.startInventory.entrySet()) {
-            p.getInventory().addItem(new ItemStack(e.getKey(), e.getValue()));
-        }
-    }
-
     private void updateCompass() {
-        Location l = outlaw.getPlayer().getLocation();
+        Location l = outlaw.getLocation();
         World w = l.getWorld();
         for (Hunter h : hunters) {
             Player p = h.getPlayer();
@@ -424,7 +401,7 @@ public class Engine extends JavaPlugin {
         for (Hunter h : hunters) {
             if (!h.getPlayer().getWorld().equals(outlawLocation.getWorld()))
                 continue;
-            if (Util.distance(h.getPlayer().getLocation(), outlawLocation) < Cfg.alertRadius) {
+            if (Util.distance(h.getLocation(), outlawLocation) < Cfg.alertRadius) {
                 alertTimeoutTimer = Cfg.alertTimeout;
                 outlawPlayer.sendMessage("§cHunters nearby");
                 //glow placeholder entity if Outlaw player is offline
@@ -437,7 +414,7 @@ public class Engine extends JavaPlugin {
     }
 
     private void alertHunter() {
-        Location l = outlaw.getPlayer().getLocation();
+        Location l = outlaw.getLocation();
         if (isOutside(l)) {
             hunterAlert = true;
             Bukkit.broadcastMessage("§cVictim is breaking through the Wall");
@@ -445,7 +422,7 @@ public class Engine extends JavaPlugin {
     }
 
     private void checkEscape() {
-        Location l = outlaw.getPlayer().getLocation();
+        Location l = outlaw.getLocation();
         if ((Math.abs(l.getX()) > escapeArea) || (Math.abs(l.getZ()) > escapeArea)) {
             Bukkit.broadcastMessage("§eVictim escaped!");
             changeGameState(GameState.IDLE);
@@ -472,8 +449,10 @@ public class Engine extends JavaPlugin {
     //todo
     //  refactor code
     //  more stats
-    //  command alias: manhunt
     //  rm debugmode param and debug outputs
+    //  countdown gamemode
+    //  victim glowing param
+    //  wall progbar feature
 
     //todo: re-organize gamemodes impl
 
