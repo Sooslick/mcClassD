@@ -38,7 +38,7 @@ public class TimedMessages {
             case GAME:
                 Duration duration = Duration.ofSeconds(engine.getGameTimer());
                 Outlaw o = engine.getOutlaw();
-                String outlawString = o.getRepresentative() instanceof Player ? "Victim" : "Victim Chicken";
+                String outlawString = o.getEntity() instanceof Player ? "Victim" : "Victim Chicken";
                 sb = new StringBuilder();
                 sb.append("§eGame timer: ").append(Util.formatDuration(duration))
                         .append("\nDeath counter: ").append(engine.getKillCounter())

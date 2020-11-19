@@ -234,6 +234,14 @@ public class Engine extends JavaPlugin {
         return hunters;
     }
 
+    public Hunter getHunter(Player p) {
+        for (Hunter h : hunters) {
+            if (h.getPlayer().equals(p))
+                return h;
+        }
+        return null;
+    }
+
     public long getGameTimer() {
         return gameTimer;
     }
@@ -358,7 +366,6 @@ public class Engine extends JavaPlugin {
                     currentHunter.preparePlayer(hunterLocation);
                     p.setScoreboard(scoreboard);
                     teamHunter.addEntry(p.getName());
-                    p.getInventory().addItem(new ItemStack(Material.COMPASS));
                 }
 
                 if (Cfg.enableEscapeGamemode) {
@@ -396,7 +403,7 @@ public class Engine extends JavaPlugin {
     }
 
     private void alertOutlaw() {
-        LivingEntity outlawPlayer = outlaw.getRepresentative();
+        LivingEntity outlawPlayer = outlaw.getEntity();
         Location outlawLocation = outlawPlayer.getLocation();
         for (Hunter h : hunters) {
             if (!h.getPlayer().getWorld().equals(outlawLocation.getWorld()))

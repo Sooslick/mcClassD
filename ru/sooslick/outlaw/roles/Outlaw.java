@@ -50,7 +50,8 @@ public class Outlaw extends AbstractPlayer {
         Bukkit.broadcastMessage("§cVictim returns back to the game.");
     }
 
-    public LivingEntity getRepresentative() {
+    @Override
+    public LivingEntity getEntity() {
         return offline ? placeholder : player;
     }
 

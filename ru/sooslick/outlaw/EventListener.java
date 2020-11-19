@@ -59,7 +59,7 @@ public class EventListener implements Listener {
         }
 
         //check if outlaw dead
-        LivingEntity outlaw = engine.getOutlaw().getRepresentative();
+        LivingEntity outlaw = engine.getOutlaw().getEntity();
         if (!e.getEntity().equals(outlaw))
             return;
         if (outlaw.getHealth() - e.getFinalDamage() <= 0) {
@@ -85,7 +85,7 @@ public class EventListener implements Listener {
 
         //check outlaw
         Entity eventEntity = e.getEntity();
-        LivingEntity outlaw = engine.getOutlaw().getRepresentative();
+        LivingEntity outlaw = engine.getOutlaw().getEntity();
         if (e.getEntity().equals(outlaw))
             return;
 
@@ -96,8 +96,10 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {
-        e.getPlayer().getInventory().addItem(new ItemStack(Material.COMPASS));
-        //todo adequate fix
+        Hunter h = engine.getHunter(e.getPlayer());
+        if (h != null) {
+            h.onRespawn();
+        }
     }
 
     @EventHandler

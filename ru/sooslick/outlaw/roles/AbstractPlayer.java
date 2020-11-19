@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.Cfg;
@@ -13,6 +14,7 @@ import java.util.Map;
 public abstract class AbstractPlayer {
 
     protected Player player;
+    protected boolean firstRespawn = true;
 
     public AbstractPlayer(Player p) {
         player = p;
@@ -23,6 +25,10 @@ public abstract class AbstractPlayer {
     }
 
     public Player getPlayer() {
+        return player;
+    }
+
+    public LivingEntity getEntity() {
         return player;
     }
 
@@ -51,7 +57,11 @@ public abstract class AbstractPlayer {
         player.setGameMode(GameMode.SURVIVAL);
         if (Cfg.enableStartInventory)
             giveStartInventory();
-        //todo trigger onRespawn()
+        onRespawn();
+    }
+
+    public void onRespawn() {
+        firstRespawn = false;
     }
 
     private void giveStartInventory() {
