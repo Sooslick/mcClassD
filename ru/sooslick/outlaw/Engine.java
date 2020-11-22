@@ -65,7 +65,9 @@ public class Engine extends JavaPlugin {
             alertOutlaw();
 
         //change compass direction to actual victim's position every second
-        updateCompass();
+        for (Hunter h : hunters) {
+            h.updateCompass(outlaw);
+        }
 
         //check if Victim's position is inside or outside the wall
         if (Cfg.enableEscapeGamemode) {
@@ -385,20 +387,6 @@ public class Engine extends JavaPlugin {
                 break;
             default:
                 log.warning("Game state is not implemented: " + state.toString());
-        }
-    }
-
-    private void updateCompass() {
-        Location l = outlaw.getLocation();
-        World w = l.getWorld();
-        for (Hunter h : hunters) {
-            Player p = h.getPlayer();
-            if (p.getWorld().equals(w))
-                p.setCompassTarget(l);
-            else if (p.getWorld().getEnvironment().equals(World.Environment.NORMAL))
-                p.setCompassTarget(outlaw.getLastWorldPos());
-            else if (p.getWorld().getEnvironment().equals(World.Environment.NETHER))
-                p.setCompassTarget(outlaw.getLastNetherPos());
         }
     }
 

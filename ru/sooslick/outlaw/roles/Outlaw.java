@@ -2,6 +2,7 @@ package ru.sooslick.outlaw.roles;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
@@ -9,14 +10,14 @@ public class Outlaw extends AbstractPlayer {
 
     Location lastWorldPos;
     Location lastNetherPos;
-    LivingEntity placeholder;               //todo is possible to remove getRepresentative?
+    LivingEntity placeholder;
     boolean offline;
 
     public Outlaw(Player p) {
         super(p);
         lastWorldPos = p.getLocation();     //todo: rework, add null check to updateCompass method
         lastNetherPos = p.getLocation();
-        placeholder = null;                 //todo refactor: single field for player and placeholder
+        placeholder = null;
         offline = false;
     }
 
@@ -24,16 +25,29 @@ public class Outlaw extends AbstractPlayer {
         lastWorldPos = l;
     }
 
-    public Location getLastWorldPos() {
-        return lastWorldPos;
-    }
-
     public void setLastNetherPos(Location l) {
         lastNetherPos = l;
     }
 
-    public Location getLastNetherPos() {
-        return lastNetherPos;
+    public Location getTrackedLocation(World from) {
+        //method doesn't work correctly with custom worlds?
+
+        //check if victim's and hunter's worlds equals
+        Location here = getLocation();
+        if (here.getWorld().equals(from))
+            return here;
+
+        //else return last tracked position (i.e. portal position) in this world
+        World.Environment env = from.getEnvironment();
+        switch (env) {
+            case NORMAL:
+                return lastWorldPos;
+            case NETHER:
+                return lastNetherPos;
+            default:
+                return here;
+        }
+
     }
 
     public void goOffline(LivingEntity e) {

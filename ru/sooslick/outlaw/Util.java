@@ -170,6 +170,10 @@ public class Util {
 
     public static void invToChest(Inventory inv, Location l) {
         World w = l.getWorld();
+        //prevent attempts to create chests outside the world
+        if (l.getY() < 0 || l.getY() > w.getMaxHeight())
+            return;
+
         Block b = w.getBlockAt(l);
         int slots = 0;
         b.setType(Material.CHEST);

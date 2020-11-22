@@ -112,11 +112,14 @@ public class EventListener implements Listener {
         if (!e.getPlayer().equals(o.getPlayer()))
             return;
         Location from = e.getFrom();
-        World.Environment env = from.getWorld().getEnvironment();
-        if (env.equals(World.Environment.NORMAL))
-            o.setLastWorldPos(from);
-        else if (env.equals(World.Environment.NETHER))
-            o.setLastNetherPos(from);
+        //todo move this switch to Outlaw and make lastPos fields private
+        switch (from.getWorld().getEnvironment()) {
+            case NORMAL:
+                o.setLastWorldPos(from);
+                break;
+            case NETHER:
+                o.setLastNetherPos(from);
+        }
     }
 
     @EventHandler
