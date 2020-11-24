@@ -35,7 +35,7 @@ public class Hunter extends AbstractPlayer {
         Inventory inv = player.getInventory();
         ItemStack is = null;
         for (ItemStack current : inv.getContents()) {
-            if (current.getType() == Material.COMPASS) {
+            if (current != null && current.getType() == Material.COMPASS) {
                 is = current;
                 break;
             }
@@ -57,11 +57,18 @@ public class Hunter extends AbstractPlayer {
 
         //finally: update meta
         if (trackedLocation.getWorld().getEnvironment() == World.Environment.NETHER) {
+            //create lodestone (VERY WEIRD SOLUTION BUT WORKS ONLY)
+            trackedLocation.setY(128);
+            trackedLocation.getBlock().setType(Material.LODESTONE);
+            //todo: uneffective setBlock: called every updateCompass for every hunter
+
+            //and finally set meta
             meta.setLodestone(trackedLocation);
             meta.setLodestoneTracked(true);
             is.setItemMeta(meta);
             //Bukkit.getLogger().info("Cross-world update compass. Set meta for player " + player.getName());
         } else {
+            meta.setLodestone(null);
             meta.setLodestoneTracked(false);
             is.setItemMeta(meta);
             //Bukkit.getLogger().info("Cross-world update compass. Reset meta for player " + player.getName());

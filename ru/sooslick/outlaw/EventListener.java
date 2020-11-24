@@ -4,7 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -14,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -135,6 +135,17 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
+    public void onPistonMove(BlockPistonExtendEvent e) {
+        ChestTracker ct = engine.getChestTracker();
+        for (Block b : e.getBlocks()) {
+            Block moved = b.getRelative(e.getDirection(), 1);
+            ct.detectBlock(moved, true);
+            if (Cfg.enableEscapeGamemode)
+                engine.generateBarrier(moved);
+        }
+    }
+
+    @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
         if (!Cfg.enableEscapeGamemode)
             return;
@@ -174,16 +185,7 @@ public class EventListener implements Listener {
         }
 
         //detect towering escape attempts
-        if (b.getY() > 240) {
-            //generate weird barrier for wall gamemode to prevent escape over the wall
-            World w = b.getWorld();
-            w.getBlockAt(b.getX(), 255, b.getZ()).setType(Material.BARRIER);
-            w.getBlockAt(b.getX() - 1, 255, b.getZ()).setType(Material.BARRIER);
-            w.getBlockAt(b.getX(), 255, b.getZ() - 1).setType(Material.BARRIER);
-            w.getBlockAt(b.getX() + 1, 255, b.getZ()).setType(Material.BARRIER);
-            w.getBlockAt(b.getX(), 255, b.getZ() + 1).setType(Material.BARRIER);
-            //todo: piston exploit
-        }
+        engine.generateBarrier(b);
     }
 
     @EventHandler
@@ -206,6 +208,7 @@ public class EventListener implements Listener {
     public void onJoin(PlayerJoinEvent e) {
         if (!engine.getGameState().equals(GameState.GAME)) {
             //todo infomessages
+            engine.unvote(e.getPlayer());
             e.getPlayer().setGameMode(GameMode.SPECTATOR);
             return;
         }

@@ -47,7 +47,6 @@ public class Outlaw extends AbstractPlayer {
             default:
                 return here;
         }
-
     }
 
     public void goOffline(LivingEntity e) {

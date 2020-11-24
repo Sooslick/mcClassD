@@ -5,6 +5,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -122,6 +123,18 @@ public class Engine extends JavaPlugin {
         }
     }
 
+    public void unvote(Player p) {
+        String name = p.getName();
+        if (volunteers.remove(name)) {
+            Bukkit.broadcastMessage("§c" + name + " left and removed from Victim suggesters");
+        }
+        if (state == GameState.IDLE) {
+            if (votestarters.remove(name)) {
+                Bukkit.broadcastMessage("§eCounted " + votestarters.size() + " / " + Cfg.minStartVotes + " votes to start");
+            }
+        }
+    }
+
     public void voteStart(Player p) {
         if (state == GameState.GAME) {
             p.sendMessage("§cCannot votestart while game is running");
@@ -134,9 +147,11 @@ public class Engine extends JavaPlugin {
         }
         votestarters.add(name);
         Bukkit.broadcastMessage("§e" + name + " voted to start game");
-        if (votestarters.size() >= Cfg.minStartVotes && state == GameState.IDLE) {
+        if (state == GameState.IDLE &&
+                (votestarters.size() >= Bukkit.getOnlinePlayers().size() || votestarters.size() >= Cfg.minStartVotes)) {
             changeGameState(GameState.PRESTART);
-            return;
+        } else {
+            Bukkit.broadcastMessage("§eCounted " + votestarters.size() + " / " + Cfg.minStartVotes + " votes to start");
         }
     }
 
@@ -403,7 +418,7 @@ public class Engine extends JavaPlugin {
                 if (!(outlawPlayer instanceof Player)) {
                     outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout * 20, 3));
                 }
-                break;
+                return;
             }
         }
     }
@@ -437,6 +452,19 @@ public class Engine extends JavaPlugin {
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
+    }
+
+    //todo move this method and other world-modifying to world utils
+    public void generateBarrier(Block b) {
+        if (b.getY() > 245) {
+            //generate weird barrier for wall gamemode to prevent escape over the wall
+            World w = b.getWorld();
+            w.getBlockAt(b.getX(), 255, b.getZ()).setType(Material.BARRIER);
+            w.getBlockAt(b.getX() - 1, 255, b.getZ()).setType(Material.BARRIER);
+            w.getBlockAt(b.getX(), 255, b.getZ() - 1).setType(Material.BARRIER);
+            w.getBlockAt(b.getX() + 1, 255, b.getZ()).setType(Material.BARRIER);
+            w.getBlockAt(b.getX(), 255, b.getZ() + 1).setType(Material.BARRIER);
+        }
     }
 
     //todo refactor wall methods from Engine
