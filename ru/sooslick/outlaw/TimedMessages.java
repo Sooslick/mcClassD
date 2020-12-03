@@ -8,7 +8,6 @@ import java.time.Duration;
 
 public class TimedMessages {
 
-    private Engine engine;
     private int delay;
     private int timer;
     private int timerTaskId;
@@ -18,12 +17,12 @@ public class TimedMessages {
             broadcast();
     };
 
-    public TimedMessages(Engine e) {
-        engine = e;
+    public TimedMessages() {
         reset();
     }
 
     public String getMessage() {
+        Engine engine = Engine.getInstance();
         switch (engine.getGameState()) {
             case IDLE:
             case PRESTART:
@@ -49,7 +48,7 @@ public class TimedMessages {
     }
 
     public TimedMessages launch() {
-        timerTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(engine, timerImpl, 1, 20);
+        timerTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), timerImpl, 1, 20);
         return this;
     }
 

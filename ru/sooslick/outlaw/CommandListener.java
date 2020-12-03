@@ -15,18 +15,12 @@ public class CommandListener implements CommandExecutor {
     private final String COMMAND_CFG = "cfg";
     private final String COMMAND_HELP = "help";
 
-    Engine engine;
-
-    public CommandListener(Engine e) {
-        engine = e;
-    }
-
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         //todo refactor to two methods for outlaw and for y command
         //y
         if (command.getName().equals("y")) {
             if (sender instanceof Player)
-                engine.acceptJoinRequest((Player) sender);
+                Engine.getInstance().acceptJoinRequest((Player) sender);
             else
                 printConsoleInfo(sender);
             return true;
@@ -41,25 +35,25 @@ public class CommandListener implements CommandExecutor {
             case COMMAND_VOTE:
             case COMMAND_VOTE_ALIAS:
                 if (sender instanceof Player)       //todo refactor: action else print
-                    engine.voteStart((Player) sender);  //todo: is possible refactor if sender instanceof Player to method and pass action as param?
+                    Engine.getInstance().voteStart((Player) sender);  //todo: is possible refactor if sender instanceof Player to method and pass action as param?
                 else
                     printConsoleInfo(sender);
                 break;
             case COMMAND_SUGGEST:
                 if (sender instanceof Player)
-                    engine.suggest((Player) sender);
+                    Engine.getInstance().suggest((Player) sender);
                 else
                     printConsoleInfo(sender);
                 break;
             case COMMAND_JOIN_REQUEST:
                 if (sender instanceof Player)
-                    engine.joinRequest((Player) sender);
+                    Engine.getInstance().joinRequest((Player) sender);
                 else
                     printConsoleInfo(sender);
                 break;
             case COMMAND_ACCEPT:
                 if (sender instanceof Player)
-                    engine.acceptJoinRequest((Player) sender);
+                    Engine.getInstance().acceptJoinRequest((Player) sender);
                 else
                     printConsoleInfo(sender);
                 break;
@@ -86,7 +80,7 @@ public class CommandListener implements CommandExecutor {
     private void printInfo(CommandSender s) {
         s.sendMessage("§6\nAvailable commands:\n/manhunt help");                 //always send help
         if (s instanceof Player) {
-            if (engine.getGameState().equals(GameState.GAME)) {
+            if (Engine.getInstance().getGameState().equals(GameState.GAME)) {
                 s.sendMessage("§6/manhunt joinrequest\n/manhunt accept §7(/y)");  //send req / accept while game is running
             } else {
                 s.sendMessage("§6/manhunt votestart §7(/manhunt v)\n§6/manhunt suggest");          //send vs / suggest otherwise

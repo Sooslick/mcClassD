@@ -35,17 +35,16 @@ import ru.sooslick.outlaw.roles.Outlaw;
 
 public class EventListener implements Listener {
 
-    private Engine engine;
     private boolean firstBlockAlerted;
     private boolean goldenPickaxeAlerted;
 
-    public EventListener(Engine engine) {
-        this.engine = engine;
+    public EventListener() {
         reset();
     }
 
     @EventHandler
     public void onDamage(EntityDamageEvent e) {
+        Engine engine = Engine.getInstance();
         if (!engine.getGameState().equals(GameState.GAME))
             return;
 
@@ -80,6 +79,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onDeath(EntityDeathEvent e) {
+        Engine engine = Engine.getInstance();
         if (!engine.getGameState().equals(GameState.GAME))
             return;
 
@@ -96,7 +96,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {
-        Hunter h = engine.getHunter(e.getPlayer());
+        Hunter h = Engine.getInstance().getHunter(e.getPlayer());
         if (h != null) {
             h.onRespawn();
         }
@@ -108,7 +108,7 @@ public class EventListener implements Listener {
             e.setCancelled(true);
             return;
         }
-        Outlaw o = engine.getOutlaw();
+        Outlaw o = Engine.getInstance().getOutlaw();
         if (!e.getPlayer().equals(o.getPlayer()))
             return;
         Location from = e.getFrom();
@@ -129,13 +129,14 @@ public class EventListener implements Listener {
         }
         if (e.getCause().equals(PlayerTeleportEvent.TeleportCause.ENDER_PEARL)) {
             Location l = e.getTo();
-            if (engine.isOutside(l))
+            if (Engine.getInstance().isOutside(l))
                 e.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onPistonMove(BlockPistonExtendEvent e) {
+        Engine engine = Engine.getInstance();
         ChestTracker ct = engine.getChestTracker();
         for (Block b : e.getBlocks()) {
             Block moved = b.getRelative(e.getDirection(), 1);
@@ -147,6 +148,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
+        Engine engine = Engine.getInstance();
         if (!Cfg.enableEscapeGamemode)
             return;
         if (!engine.getGameState().equals(GameState.GAME))
@@ -167,6 +169,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
+        Engine engine = Engine.getInstance();
         //detect beds and chests
         Block b = e.getBlockPlaced();
         engine.getChestTracker().detectBlock(b);
@@ -190,6 +193,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onInteractBlock(PlayerInteractEvent e) {
+        Engine engine = Engine.getInstance();
         if (engine.getGameState() != GameState.GAME)
             return;
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK)
@@ -199,6 +203,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onInteractEntity(PlayerInteractEntityEvent e) {
+        Engine engine = Engine.getInstance();
         if (engine.getGameState() != GameState.GAME)
             return;
         engine.getChestTracker().detectEntity(e.getRightClicked());
@@ -206,9 +211,9 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
+        Engine engine = Engine.getInstance();
         if (!engine.getGameState().equals(GameState.GAME)) {
             //todo infomessages
-            engine.unvote(e.getPlayer());
             e.getPlayer().setGameMode(GameMode.SPECTATOR);
             return;
         }
@@ -235,9 +240,11 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onLeave(PlayerQuitEvent e) {
-        if (!engine.getGameState().equals(GameState.GAME))
-            //todo: remove from vs / suggest
+        Engine engine = Engine.getInstance();
+        if (!engine.getGameState().equals(GameState.GAME)) {
+            engine.unvote(e.getPlayer());
             return;
+        }
         Player p = e.getPlayer();
         Outlaw o = engine.getOutlaw();
         if (o.getPlayer().equals(p)) {
@@ -261,7 +268,9 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onEntitySpawn(EntitySpawnEvent e) {
-        //ALWAYS detect entities!
+        // Constantly detects entities!
+        //todo onEntitySpawn and onVehicleSpawn - same code. Move to method?
+        Engine engine = Engine.getInstance();
         //ChestTracker created after changeGameState - Game and its value is null before first game
         ChestTracker ct = engine.getChestTracker();
         if (ct != null)
@@ -270,7 +279,8 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onVehicleSpawn(VehicleCreateEvent e) {
-        //ALWAYS detect entities!
+        // Constantly detects entities!
+        Engine engine = Engine.getInstance();
         //ChestTracker created after changeGameState - Game and its value is null before first game
         ChestTracker ct = engine.getChestTracker();
         if (ct != null)
@@ -283,6 +293,9 @@ public class EventListener implements Listener {
     }
 
     private void detectGoldPickaxe() {
+        if (!Cfg.enableEscapeGamemode)
+            return;
+        Engine engine = Engine.getInstance();
         if (!engine.getGameState().equals(GameState.GAME))
             return;
         if (goldenPickaxeAlerted)

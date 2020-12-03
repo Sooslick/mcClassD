@@ -38,6 +38,9 @@ public class Cfg {
     private static final String SET = "§cGame parameter changed: §e";
     private static final Logger LOG = Bukkit.getLogger();
 
+    //disable constructor for utility class
+    private Cfg() {}
+
     public static void readConfig(FileConfiguration f) {
         changeAlert = false;
         currentCfg = f;

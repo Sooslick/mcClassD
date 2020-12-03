@@ -25,7 +25,6 @@ public class Wall {
     private static boolean wallBuilt;
     private static boolean spotsQueued;
     private static World w;
-    private static Engine engine;
 
     private final static Logger log = Bukkit.getLogger();
     private final static Runnable buildWallTick = () -> {
@@ -84,6 +83,9 @@ public class Wall {
         //log.info("created spot at side " + side + ", center " + center);
     };
 
+    //disable constructor for utility class
+    private Wall() {}
+
     public static void buildWall() {
         //stop previous generator if it still working, clear
         Bukkit.getScheduler().cancelTask(generatorTimerId);
@@ -101,7 +103,7 @@ public class Wall {
         w = Bukkit.getWorlds().get(0);
 
         //launch
-        generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(engine, buildWallTick, 1, 20);
+        generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), buildWallTick, 1, 20);
         log.info("Reset wall generator and launched buildWallTick");
     }
 
@@ -120,7 +122,7 @@ public class Wall {
         }
 
         //launch
-        generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(engine, buildSpotTick, 1, 1);
+        generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), buildSpotTick, 1, 1);
         log.info("Reset and launched buildSpotTick");
     }
 
@@ -131,10 +133,6 @@ public class Wall {
         } else {
             spotsQueued = true;
         }
-    }
-
-    public static void setEngine(Engine engine) {
-        Wall.engine = engine;
     }
 
     private static class Filler {

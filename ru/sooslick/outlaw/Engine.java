@@ -26,6 +26,8 @@ import java.util.logging.Logger;
 
 public class Engine extends JavaPlugin {
 
+    private static Engine instance;
+
     private List<Hunter> hunters;
     private Outlaw outlaw;
     private List<String> volunteers;
@@ -89,6 +91,8 @@ public class Engine extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        instance = this;
+
         //init working folder and config file
         log = Bukkit.getLogger();
         log.info("Init Class D Plugin");
@@ -102,16 +106,15 @@ public class Engine extends JavaPlugin {
         }
 
         //register commands and events
-        Wall.setEngine(this);
-        CommandListener cmdListener = new CommandListener(this);
+        CommandListener cmdListener = new CommandListener();
         getCommand("manhunt").setExecutor(cmdListener);
         getCommand("y").setExecutor(cmdListener);
-        eventListener = new EventListener(this);
+        eventListener = new EventListener();
         getServer().getPluginManager().registerEvents(eventListener, this);
 
         //init game variables
         changeGameState(GameState.IDLE);
-        timedMessages = new TimedMessages(this).launch();
+        timedMessages = new TimedMessages().launch();
         log.info("Init Class D Plugin - success");
     }
 
@@ -121,6 +124,10 @@ public class Engine extends JavaPlugin {
             chestTracker.cleanupBlocks();
             chestTracker.cleanupEntities();
         }
+    }
+
+    public static Engine getInstance() {
+        return instance;
     }
 
     public void unvote(Player p) {

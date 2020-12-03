@@ -7,8 +7,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CompassMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class Hunter extends AbstractPlayer {
+
+    private static final String COMPASS_NAME = "Victim Tracker";
 
     public Hunter(Player p) {
         super(p);
@@ -34,10 +37,17 @@ public class Hunter extends AbstractPlayer {
         //first: find Compass item in inventory
         Inventory inv = player.getInventory();
         ItemStack is = null;
+        boolean updateName = false;
+        //find any compass in inventory, preferably compass given by plugin (Victim Tracker)
         for (ItemStack current : inv.getContents()) {
             if (current != null && current.getType() == Material.COMPASS) {
                 is = current;
-                break;
+                ItemMeta ism = is.getItemMeta();
+                if (ism != null) {
+                    updateName = true;
+                    if (ism.getDisplayName().equals(COMPASS_NAME))
+                        break;
+                }
             }
         }
         if (is == null) {
@@ -54,6 +64,10 @@ public class Hunter extends AbstractPlayer {
             //Bukkit.getLogger().info("Cross-world update compass. Compass meta not found, player " + player.getName());
             return;
         }
+
+        //optional: set name to compass
+        if (updateName)
+            meta.setDisplayName(COMPASS_NAME);
 
         //finally: update meta
         if (trackedLocation.getWorld().getEnvironment() == World.Environment.NETHER) {
