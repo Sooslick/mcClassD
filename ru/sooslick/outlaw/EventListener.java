@@ -32,6 +32,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
+import ru.sooslick.outlaw.util.CommonUtil;
 
 public class EventListener implements Listener {
 
@@ -65,7 +66,7 @@ public class EventListener implements Listener {
             e.setCancelled(true);
             if (outlaw instanceof Player) {
                 Location l = outlaw.getLocation();
-                Util.invToChest(((Player) outlaw).getInventory(), l);
+                CommonUtil.invToChest(((Player) outlaw).getInventory(), l);
                 //todo is possible to steal inventory while outlaw is offline?
                 engine.getChestTracker().detectBlock(l.getBlock());
                 engine.getChestTracker().detectBlock(l.add(0, 1, 0).getBlock());

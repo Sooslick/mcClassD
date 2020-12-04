@@ -4,9 +4,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import ru.sooslick.outlaw.util.CommonUtil;
+import ru.sooslick.outlaw.util.LoggerUtil;
 
 import java.util.LinkedList;
-import java.util.logging.Logger;
 
 public class Wall {
     private static int generatorTimerId;
@@ -26,9 +27,8 @@ public class Wall {
     private static boolean spotsQueued;
     private static World w;
 
-    private final static Logger log = Bukkit.getLogger();
     private final static Runnable buildWallTick = () -> {
-        log.info("buildWallTick, side=" + side + ", currentBlock=" + currentBlock);
+        LoggerUtil.debug("buildWallTick, side=" + side + ", currentBlock=" + currentBlock);
         int from = currentBlock;
         int to = currentBlock + limiter;
         if (to > endWallCoord)
@@ -44,7 +44,7 @@ public class Wall {
                 side++;
                 if (side > 3) {
                     Bukkit.getScheduler().cancelTask(generatorTimerId);
-                    log.info("buildWall finished, spotsQueued = " + spotsQueued);
+                    LoggerUtil.debug("buildWall finished, spotsQueued = " + spotsQueued);
                     wallBuilt = true;
                     if (spotsQueued) {
                         launchBuildSpots();
@@ -74,13 +74,12 @@ public class Wall {
                 undergroundCurr = 0;
                 if (++side > 3) {
                     Bukkit.getScheduler().cancelTask(generatorTimerId);
-                    log.info("buildSpots finished");
+                    LoggerUtil.debug("buildSpots finished");
                 }
             }
         }
         spotPositions.removeFirst();
-        //todo debugMode check? + side fix
-        //log.info("created spot at side " + side + ", center " + center);
+        LoggerUtil.debug("created spot at side " + side + ", center " + center);
     };
 
     //disable constructor for utility class
@@ -104,7 +103,7 @@ public class Wall {
 
         //launch
         generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), buildWallTick, 1, 20);
-        log.info("Reset wall generator and launched buildWallTick");
+        LoggerUtil.debug("Reset wall generator and launched buildWallTick");
     }
 
     public static void launchBuildSpots() {
@@ -118,16 +117,16 @@ public class Wall {
         spotPositions = new LinkedList<>();
         int total = (Cfg.airSpotQty + Cfg.groundSpotQty + Cfg.undergroundSpotQty) * 4;
         for (int i = 0; i < total; i++) {
-            spotPositions.add(Util.random.nextInt(size) - halfSize);
+            spotPositions.add(CommonUtil.random.nextInt(size) - halfSize);
         }
 
         //launch
         generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), buildSpotTick, 1, 1);
-        log.info("Reset and launched buildSpotTick");
+        LoggerUtil.debug("Reset and launched buildSpotTick");
     }
 
     public static void buildSpots() {
-        log.info("buildSpots queued, wallBuilt = " + wallBuilt);
+        LoggerUtil.debug("buildSpots queued, wallBuilt = " + wallBuilt);
         if (wallBuilt) {
             launchBuildSpots();
         } else {
@@ -183,10 +182,10 @@ public class Wall {
             //validate size
             int volume = (endX - startX) * (endY - startY) * (endZ - startZ);
             if (Math.abs(volume) > Cfg.blocksPerSecondLimit) {
-                log.warning("fill cancelled, blocks limit exceed");
+                LoggerUtil.warn("Wall - fill operation cancelled, blocks limit exceed");
                 return false;
             } else if (volume == 0) {
-                log.warning("fill cancelled, empty area");
+                LoggerUtil.warn("Wall - fill operation cancelled, empty area");
                 return false;
             }
             //validate material
@@ -247,11 +246,11 @@ public class Wall {
 
     private static int getAirLevel(int side, int center) {
         int groundLevel = getGroundLevel(side, center);
-        return Util.random.nextInt(240 - groundLevel) + groundLevel + spotSize;
+        return CommonUtil.random.nextInt(240 - groundLevel) + groundLevel + spotSize;
     }
 
     private static int getUndergroundLevel(int side, int center) {
         int groundLevel = getGroundLevel(side, center);
-        return Util.random.nextInt(groundLevel - spotSize) + spotSize;
+        return CommonUtil.random.nextInt(groundLevel - spotSize) + spotSize;
     }
 }

@@ -16,13 +16,14 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
+import ru.sooslick.outlaw.util.CommonUtil;
+import ru.sooslick.outlaw.util.LoggerUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class Engine extends JavaPlugin {
 
@@ -45,7 +46,6 @@ public class Engine extends JavaPlugin {
     private Scoreboard scoreboard;
     private GameState state;
     private EventListener eventListener;
-    private Logger log;
     private TimedMessages timedMessages;
     private ChestTracker chestTracker;
 
@@ -94,14 +94,13 @@ public class Engine extends JavaPlugin {
         instance = this;
 
         //init working folder and config file
-        log = Bukkit.getLogger();
-        log.info("Init Class D Plugin");
+        LoggerUtil.info("Init ClassD Plugin");
         if (!(getDataFolder().exists())) {
             if (getDataFolder().mkdir()) {
-                log.info("Created plugin data folder");
+                LoggerUtil.info("Created plugin data folder");
                 saveDefaultConfig();
             } else {
-                log.warning("§eCannot create plugin data folder. Default config will be loaded.\n Do you have correct rights?");
+                LoggerUtil.warn("§eCannot create plugin data folder. Default config will be loaded.\n Do you have correct rights?");
             }
         }
 
@@ -115,15 +114,17 @@ public class Engine extends JavaPlugin {
         //init game variables
         changeGameState(GameState.IDLE);
         timedMessages = new TimedMessages().launch();
-        log.info("Init Class D Plugin - success");
+        LoggerUtil.info("Init ClassD Plugin - success");
     }
 
     @Override
     public void onDisable() {
+        LoggerUtil.info("Disable ClassD Plugin");
         if (chestTracker != null) {
             chestTracker.cleanupBlocks();
             chestTracker.cleanupEntities();
         }
+        LoggerUtil.info("Disable ClassD Plugin - success");
     }
 
     public static Engine getInstance() {
@@ -138,6 +139,10 @@ public class Engine extends JavaPlugin {
         if (state == GameState.IDLE) {
             if (votestarters.remove(name)) {
                 Bukkit.broadcastMessage("§eCounted " + votestarters.size() + " / " + Cfg.minStartVotes + " votes to start");
+            }
+            //todo same code in voteStart. Refactor to method
+            if (votestarters.size() >= Bukkit.getOnlinePlayers().size()) {
+                changeGameState(GameState.PRESTART);
             }
         }
     }
@@ -173,7 +178,7 @@ public class Engine extends JavaPlugin {
             return;
         }
         volunteers.add(name);
-        Bukkit.broadcastMessage("§e" + name + " suggested yourself as Victim");
+        Bukkit.broadcastMessage("§e" + name + " offered himself as a Victim");
     }
 
     public void joinRequest(Player sender) {
@@ -259,11 +264,7 @@ public class Engine extends JavaPlugin {
     }
 
     public Hunter getHunter(Player p) {
-        for (Hunter h : hunters) {
-            if (h.getPlayer().equals(p))
-                return h;
-        }
-        return null;
+        return hunters.stream().filter(h -> h.getPlayer().equals(p)).findFirst().orElse(null);
     }
 
     public long getGameTimer() {
@@ -288,7 +289,7 @@ public class Engine extends JavaPlugin {
 
     protected void changeGameState(GameState state) {
         this.state = state;
-        log.info("Outlaw game state changed. New state: " + state.toString());
+        LoggerUtil.info("Outlaw game state changed. New state: " + state.toString());
         switch (state) {
             case IDLE:
                 //stop game and read cfg
@@ -306,10 +307,12 @@ public class Engine extends JavaPlugin {
                 gameTimer = 0;
                 killCounter = 0;
                 hunterAlert = false;
+                //todo move gamemode's variables to gamemode
                 halfSize = Cfg.playzoneSize / 2 + 1;
                 escapeArea = halfSize + Cfg.wallThickness + 1;  //todo: +/- bug
+                LoggerUtil.debug("halfSize = " + halfSize + "; escapeArea = " + escapeArea);
 
-                //reset players gamemode and achievements
+                //reset players gamemode
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
 
@@ -333,7 +336,7 @@ public class Engine extends JavaPlugin {
 
                 //launch timer
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
-                Bukkit.broadcastMessage(Cfg.prestartTimer + " seconds to launch");
+                Bukkit.broadcastMessage("§c" + Cfg.prestartTimer + " seconds to start");
                 break;
             case GAME:
                 //reinit variables and stop lobby timers
@@ -355,15 +358,15 @@ public class Engine extends JavaPlugin {
 
                 //select outlaw entity
                 if (volunteers.isEmpty()) {
-                    selectedPlayer = Util.getRandomOf(onlinePlayers);
+                    selectedPlayer = CommonUtil.getRandomOf(onlinePlayers);
                 } else {
-                    selectedPlayer = Bukkit.getPlayer(Util.getRandomOf(volunteers));
+                    selectedPlayer = Bukkit.getPlayer(CommonUtil.getRandomOf(volunteers));
                 }
                 Bukkit.broadcastMessage("§eSelected Victim: §c" + selectedPlayer.getName());
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
-                Location outlawLocation = Util.getSafeRandomLocation(Cfg.spawnRadius);
+                Location outlawLocation = CommonUtil.getSafeRandomLocation(Cfg.spawnRadius);
                 outlaw.preparePlayer(outlawLocation);
                 //give handicap effects
                 if (Cfg.enablePotionHandicap) {
@@ -378,7 +381,7 @@ public class Engine extends JavaPlugin {
                 }
 
                 //process others
-                Location hunterLocation = Util.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
+                Location hunterLocation = CommonUtil.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
                 Bukkit.getWorlds().get(0).setSpawnLocation(hunterLocation);
                 for (Player p : onlinePlayers) {
                     //skip outlaw
@@ -393,14 +396,14 @@ public class Engine extends JavaPlugin {
                 }
 
                 if (Cfg.enableEscapeGamemode) {
-                    Bukkit.broadcastMessage("§eVictim's target: §cESCAPE");
+                    Bukkit.broadcastMessage("§eVictim's objective: §cESCAPE");
                 } else {
-                    Bukkit.broadcastMessage("§eVictim's target: §cKILL DRAGON");
+                    Bukkit.broadcastMessage("§eVictim's objective: §cKILL ENDER DRAGON");
                 }
 
                 //debug: check distance btw runner and hunters
                 if (hunters.size() > 0) {
-                    Bukkit.broadcastMessage("§eSpawn handicap: " + Util.distance(outlaw.getLocation(), hunters.get(0).getLocation()));
+                    Bukkit.broadcastMessage("§eDistance handicap: " + CommonUtil.distance(outlaw.getLocation(), hunters.get(0).getLocation()));
                 }
 
                 //run game
@@ -408,7 +411,7 @@ public class Engine extends JavaPlugin {
                 Bukkit.broadcastMessage("§eGame started. Run!");
                 break;
             default:
-                log.warning("Game state is not implemented: " + state.toString());
+                LoggerUtil.warn("Suspicious game state: " + state.toString());
         }
     }
 
@@ -418,7 +421,7 @@ public class Engine extends JavaPlugin {
         for (Hunter h : hunters) {
             if (!h.getPlayer().getWorld().equals(outlawLocation.getWorld()))
                 continue;
-            if (Util.distance(h.getLocation(), outlawLocation) < Cfg.alertRadius) {
+            if (CommonUtil.distance(h.getLocation(), outlawLocation) < Cfg.alertRadius) {
                 alertTimeoutTimer = Cfg.alertTimeout;
                 outlawPlayer.sendMessage("§cHunters nearby");
                 //glow placeholder entity if Outlaw player is offline

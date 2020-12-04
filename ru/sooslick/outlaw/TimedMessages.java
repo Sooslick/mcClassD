@@ -3,6 +3,7 @@ package ru.sooslick.outlaw;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.sooslick.outlaw.roles.Outlaw;
+import ru.sooslick.outlaw.util.CommonUtil;
 
 import java.time.Duration;
 
@@ -39,7 +40,7 @@ public class TimedMessages {
                 Outlaw o = engine.getOutlaw();
                 String outlawString = o.getEntity() instanceof Player ? "Victim" : "Victim Chicken";
                 sb = new StringBuilder();
-                sb.append("§eGame timer: ").append(Util.formatDuration(duration))
+                sb.append("§eGame timer: ").append(CommonUtil.formatDuration(duration))
                         .append("\nDeath counter: ").append(engine.getKillCounter())
                         .append("\nCompass is pointing to §c").append(outlawString).append(" §o").append(o.getName());
                 return sb.toString();

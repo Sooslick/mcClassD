@@ -10,6 +10,7 @@ public class CommandListener implements CommandExecutor {
     private final String COMMAND_VOTE = "votestart";
     private final String COMMAND_VOTE_ALIAS = "v";
     private final String COMMAND_SUGGEST = "suggest";
+    private final String COMMAND_SUGGEST_ALIAS = "s";
     private final String COMMAND_JOIN_REQUEST = "joinrequest";
     private final String COMMAND_ACCEPT = "accept";
     private final String COMMAND_CFG = "cfg";
@@ -40,6 +41,7 @@ public class CommandListener implements CommandExecutor {
                     printConsoleInfo(sender);
                 break;
             case COMMAND_SUGGEST:
+            case COMMAND_SUGGEST_ALIAS:
                 if (sender instanceof Player)
                     Engine.getInstance().suggest((Player) sender);
                 else
@@ -83,7 +85,7 @@ public class CommandListener implements CommandExecutor {
             if (Engine.getInstance().getGameState().equals(GameState.GAME)) {
                 s.sendMessage("§6/manhunt joinrequest\n/manhunt accept §7(/y)");  //send req / accept while game is running
             } else {
-                s.sendMessage("§6/manhunt votestart §7(/manhunt v)\n§6/manhunt suggest");          //send vs / suggest otherwise
+                s.sendMessage("§6/manhunt votestart §7(/mh v)\n§6/manhunt suggest §7(/mh s)");          //send vs / suggest otherwise
             }
         }
     }

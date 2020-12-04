@@ -8,6 +8,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import ru.sooslick.outlaw.Engine;
+import ru.sooslick.outlaw.util.CommonUtil;
+
+import java.time.Duration;
 
 public class Hunter extends AbstractPlayer {
 
@@ -20,10 +24,9 @@ public class Hunter extends AbstractPlayer {
     @Override
     public void onRespawn() {
         if (!firstRespawn) {
-            //player.sendMessage(); todo send message who is victim and etc.
-            //                          I can get this messages only by callin Engine
-            //                          It's easier just implement INSTANCE field in Engine
-            //                          and refactor all constructors with Engine param
+            Engine e = Engine.getInstance();
+            player.sendMessage("§eVictim is still §c" + e.getOutlaw().getName() +
+                    "\n§eTime elapsed: §c" + CommonUtil.formatDuration(Duration.ofSeconds(e.getGameTimer())));
         }
         player.getInventory().addItem(new ItemStack(Material.COMPASS));
         firstRespawn = false;
@@ -37,22 +40,21 @@ public class Hunter extends AbstractPlayer {
         //first: find Compass item in inventory
         Inventory inv = player.getInventory();
         ItemStack is = null;
-        boolean updateName = false;
+        boolean updateName = true;
         //find any compass in inventory, preferably compass given by plugin (Victim Tracker)
         for (ItemStack current : inv.getContents()) {
             if (current != null && current.getType() == Material.COMPASS) {
                 is = current;
                 ItemMeta ism = is.getItemMeta();
                 if (ism != null) {
-                    updateName = true;
-                    if (ism.getDisplayName().equals(COMPASS_NAME))
+                    if (ism.getDisplayName().equals(COMPASS_NAME)) {
+                        updateName = false;
                         break;
+                    }
                 }
             }
         }
         if (is == null) {
-            //todo check debug
-            //Bukkit.getLogger().info("Cross-world update compass. Item not found, player " + player.getName());
             return;
         }
 
@@ -61,7 +63,6 @@ public class Hunter extends AbstractPlayer {
         if (is.getItemMeta() instanceof CompassMeta)
             meta = (CompassMeta) is.getItemMeta();
         else {
-            //Bukkit.getLogger().info("Cross-world update compass. Compass meta not found, player " + player.getName());
             return;
         }
 
@@ -85,7 +86,6 @@ public class Hunter extends AbstractPlayer {
             meta.setLodestone(null);
             meta.setLodestoneTracked(false);
             is.setItemMeta(meta);
-            //Bukkit.getLogger().info("Cross-world update compass. Reset meta for player " + player.getName());
         }
     }
 }

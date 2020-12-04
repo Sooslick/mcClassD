@@ -1,21 +1,19 @@
 package ru.sooslick.outlaw;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.InventoryHolder;
+import ru.sooslick.outlaw.util.CommonUtil;
+import ru.sooslick.outlaw.util.LoggerUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 public class ChestTracker {
-
-    private static final Logger LOG = Bukkit.getLogger();
     private static final ArrayList<EntityType> TRACKED_ENTITY_TYPES;
     private static final ArrayList<Material> TRACKED_BLOCKS;
 
@@ -34,6 +32,7 @@ public class ChestTracker {
         TRACKED_ENTITY_TYPES.add(EntityType.HORSE);
         TRACKED_ENTITY_TYPES.add(EntityType.MULE);
         TRACKED_ENTITY_TYPES.add(EntityType.DONKEY);
+        TRACKED_ENTITY_TYPES.add(EntityType.BOAT);
 
         TRACKED_BLOCKS = new ArrayList<>();
         TRACKED_BLOCKS.add(Material.IRON_ORE);
@@ -61,26 +60,25 @@ public class ChestTracker {
     public void detectBlock(Block b, boolean force) {
         if (force) {
             if (trackedBlocks.add(b))
-                LOG.info("Force tracking block at " + b.getLocation().toString());
+                LoggerUtil.debug("Force tracking block at " + CommonUtil.formatLocation(b.getLocation()));
             return;
         }
         if (b.getState() instanceof InventoryHolder) {
             if (trackedContainers.add(b))
-                LOG.info("Tracked container at " + b.getLocation().toString());
+                LoggerUtil.debug("Tracked container " + b.getType() + " at " + CommonUtil.formatLocation(b.getLocation()));
         } else if (b.getBlockData() instanceof Bed) {
             if (trackedBeds.add(b))
-                LOG.info("Tracked bed at " + b.getLocation().toString());
+                LoggerUtil.debug("Tracked bed at " + CommonUtil.formatLocation(b.getLocation()));
         } else if (TRACKED_BLOCKS.contains(b.getType())) {
             if (trackedBlocks.add(b))
-                LOG.info("Tracked block at " + b.getLocation().toString());
+                LoggerUtil.debug("Tracked block " + b.getType() + " at " + CommonUtil.formatLocation(b.getLocation()));
         }
     }
 
     public void detectEntity(Entity e) {
         if (TRACKED_ENTITY_TYPES.contains(e.getType()))
             if (trackedEntities.add(e)) {
-                //todo if debug mode
-                //LOG.info("tracked entity at " + e.getLocation());
+                LoggerUtil.debug("tracked entity " + e.getType() + " at " + CommonUtil.formatLocation(e.getLocation()));
             }
     }
 
@@ -105,7 +103,7 @@ public class ChestTracker {
             b.setType(Material.AIR);
             blocks.getAndIncrement();
         });
-        LOG.info("ChestTracker cleanup report:\nContainers: " + chests.toString() +
+        LoggerUtil.info("ChestTracker cleanup report:\nContainers: " + chests.toString() +
                                              "\n      Beds: " + beds.toString() +
                                              "\n    Blocks: " + blocks.toString());
     }
@@ -118,7 +116,7 @@ public class ChestTracker {
                 ent.getAndIncrement();
             }
         });
-        LOG.info("ChestTracker cleanup report: Entities: " + ent.toString());
+        LoggerUtil.info("ChestTracker cleanup report: Entities: " + ent.toString());
     }
 
 }

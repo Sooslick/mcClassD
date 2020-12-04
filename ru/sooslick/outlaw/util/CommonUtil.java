@@ -1,4 +1,4 @@
-package ru.sooslick.outlaw;
+package ru.sooslick.outlaw.util;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -8,22 +8,21 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import ru.sooslick.outlaw.Cfg;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
 
-public class Util {
+public class CommonUtil {
 
     public static Random random = new Random();
     public static final List<Material> DANGERS;
-    private static final Logger LOGGER;
+    public static final List<Material> EXCLUDES;
 
     static {
-        LOGGER = Bukkit.getLogger();
         DANGERS = new ArrayList<>();
         DANGERS.add(Material.FIRE);
         DANGERS.add(Material.CACTUS);
@@ -37,6 +36,30 @@ public class Util {
         DANGERS.add(Material.MAGMA_BLOCK);
         DANGERS.add(Material.SEAGRASS);
         DANGERS.add(Material.TALL_SEAGRASS);
+
+        EXCLUDES = new ArrayList<>();
+        EXCLUDES.add(Material.AIR);
+        EXCLUDES.add(Material.GRASS);
+        EXCLUDES.add(Material.TALL_GRASS);
+        EXCLUDES.add(Material.DANDELION);
+        EXCLUDES.add(Material.POPPY);
+        EXCLUDES.add(Material.BLUE_ORCHID);
+        EXCLUDES.add(Material.ALLIUM);
+        EXCLUDES.add(Material.AZURE_BLUET);
+        EXCLUDES.add(Material.RED_TULIP);
+        EXCLUDES.add(Material.WHITE_TULIP);
+        EXCLUDES.add(Material.ORANGE_TULIP);
+        EXCLUDES.add(Material.PINK_TULIP);
+        EXCLUDES.add(Material.OXEYE_DAISY);
+        EXCLUDES.add(Material.CORNFLOWER);
+        EXCLUDES.add(Material.LILY_OF_THE_VALLEY);
+        EXCLUDES.add(Material.SUNFLOWER);
+        EXCLUDES.add(Material.LILAC);
+        EXCLUDES.add(Material.ROSE_BUSH);
+        EXCLUDES.add(Material.PEONY);
+        EXCLUDES.add(Material.DEAD_BUSH);
+        EXCLUDES.add(Material.FERN);
+        EXCLUDES.add(Material.LARGE_FERN);
     }
 
     public static <E> E getRandomOf(Collection<E> set) {
@@ -65,11 +88,11 @@ public class Util {
             l = getRandomLocation(bound);
             l.getChunk().load();
             if (isSafeLocation(l)) {
-                LOGGER.info("getSafeRandomLocation - success");
+                LoggerUtil.debug("getSafeRandomLocation - success");
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             }
         }
-        LOGGER.info("getSafeRandomLocation - default");
+        LoggerUtil.debug("getSafeRandomLocation - default");
         l = w.getHighestBlockAt(l).getLocation();
         safetizeLocation(l);
         return l.add(0.5, 1, 0.5);
@@ -97,11 +120,11 @@ public class Util {
             l = getDistanceLocation(src, dist);
             l.getChunk().load();
             if (isSafeLocation(l)) {
-                LOGGER.info("getSafeDistanceLocation - success");
+                LoggerUtil.debug("getSafeDistanceLocation - success");
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             }
         }
-        LOGGER.info("getSafeDistanceLocation - default");
+        LoggerUtil.debug("getSafeDistanceLocation - default");
         l = w.getHighestBlockAt(l).getLocation();
         safetizeLocation(l);
         return l.add(0.5, 1, 0.5);
@@ -112,18 +135,18 @@ public class Util {
         Block b = l.getWorld().getHighestBlockAt(l);
         Material m = b.getType();
         if (b.isLiquid()) {
-            LOGGER.info("isSafeLocation - fail, liquid // " + b.getLocation().toString());
+            LoggerUtil.debug("isSafeLocation - fail, liquid // " + CommonUtil.formatLocation(b.getLocation()));
             return false;
         }
         if (DANGERS.contains(m)) {
-            LOGGER.info("isSafeLocation - fail, " + m.name() + " // " + b.getLocation().toString());
+            LoggerUtil.debug("isSafeLocation - fail, " + m.name() + " // " + CommonUtil.formatLocation(b.getLocation()));
             return false;
         }
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++)
                 for (int k = 1; k <= 2; k++)
-                    if (!b.getRelative(i, k, j).getType().equals(Material.AIR)) {
-                        LOGGER.info("isSafeLocation - fail, obstruction // " + b.getLocation().toString());
+                    if (!EXCLUDES.contains(b.getRelative(i, k, j).getType())) {
+                        LoggerUtil.debug("isSafeLocation - fail, obstruction // " + CommonUtil.formatLocation(b.getLocation()));
                         return false;
                     }
         return true;
@@ -150,6 +173,16 @@ public class Util {
                     (seconds % 3600) / 60,
                     seconds % 60);
         }
+    }
+
+    public static String formatLocation(Location l) {
+        String separator = ", ";
+        StringBuilder sb = new StringBuilder();
+        sb.append(l.getWorld().getName()).append(separator)
+                .append(l.getBlockX()).append(separator)
+                .append(l.getBlockY()).append(separator)
+                .append(l.getBlockZ());
+        return sb.toString();
     }
 
     public static void safetizeLocation(Location l) {
@@ -193,3 +226,5 @@ public class Util {
         }
     }
 }
+
+//todo: move methods to appropriate classes

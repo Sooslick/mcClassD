@@ -4,10 +4,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import ru.sooslick.outlaw.util.LoggerUtil;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 public class Cfg {
 
@@ -36,13 +36,12 @@ public class Cfg {
     public static HashMap<Material, Integer> startInventory;
 
     private static final String SET = "§cGame parameter changed: §e";
-    private static final Logger LOG = Bukkit.getLogger();
 
     //disable constructor for utility class
     private Cfg() {}
 
     public static void readConfig(FileConfiguration f) {
-        changeAlert = false;
+        changeAlert = false;    //todo change alert bug
         currentCfg = f;
                       readValue("debugMode", false);
                       readValue("minStartVotes", 2);
@@ -54,9 +53,9 @@ public class Cfg {
                       readValue("hideVictimNametagAbovePlayers", 4);
                       readValue("enablePotionHandicap", true);
                       readValue("enableStartInventory", true);
-        changeAlert = readValue("enableEscapeGamemode", false);
+        changeAlert = readValue("enableEscapeGamemode", false);     //todo bigfix
                       readValue("blocksPerSecondLimit", 100000);
-        changeAlert = readValue("playzoneSize", 1000);
+        changeAlert = readValue("playzoneSize", 1000);              //todo and here too
         changeAlert = readValue("wallThickness", 8);
                       readValue("spotSize", 4);
                       readValue("groundSpotQty", 3);
@@ -86,19 +85,23 @@ public class Cfg {
                 Material m = Material.valueOf(k);
                 int i = cs.getInt(k);
                 startInventory.put(m, i);
-                if (debugMode)
-                    LOG.info("startInventory.put: " + m.name() + " x " + i);
+                LoggerUtil.debug("startInventory.put: " + m.name() + " x " + i);
             } catch (IllegalArgumentException e) {
-                LOG.warning("Unknown item in start inventory: " + k);
+                LoggerUtil.warn("Unknown item in start inventory: " + k);
             }
         }
 
+        //switch log mode
+        LoggerUtil.setupLevel();
+
+        //change warnings
         if (changeAlert && !firstRead) {
-            LOG.warning("Parameter responsible for modifying world was changed. " +
+            LoggerUtil.warn("Parameter responsible for modifying world was changed. " +
                     "We strongly recommend to generate a new game world, " +
                     "otherwise it may be unplayable");
         }
 
+        //enable change warnings
         firstRead = false;
     }
 
@@ -120,7 +123,7 @@ public class Cfg {
         //identify Cfg.class field
         Field f = getField(key);
         if (f == null) {
-            LOG.warning("Unknown cfg field " + key);
+            LoggerUtil.warn("Unknown cfg field " + key);
             return false;
         }
 
@@ -136,7 +139,7 @@ public class Cfg {
             }
             newVal = f.get(null);
         } catch (Exception e) {
-            LOG.warning("Cannot read value of field " + key + "\n" + e.getMessage());
+            LoggerUtil.warn("Cannot read value of field " + key + "\n" + e.getMessage());
             return false;
         }
 
