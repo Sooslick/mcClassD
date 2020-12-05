@@ -60,7 +60,7 @@ public class ChestTracker {
     public void detectBlock(Block b, boolean force) {
         if (force) {
             if (trackedBlocks.add(b))
-                LoggerUtil.debug("Force tracking block at " + CommonUtil.formatLocation(b.getLocation()));
+                LoggerUtil.debug("Force tracking on block " + CommonUtil.formatLocation(b.getLocation()));
             return;
         }
         if (b.getState() instanceof InventoryHolder) {
@@ -78,7 +78,7 @@ public class ChestTracker {
     public void detectEntity(Entity e) {
         if (TRACKED_ENTITY_TYPES.contains(e.getType()))
             if (trackedEntities.add(e)) {
-                LoggerUtil.debug("tracked entity " + e.getType() + " at " + CommonUtil.formatLocation(e.getLocation()));
+                LoggerUtil.debug("Tracked entity " + e.getType() + " at " + CommonUtil.formatLocation(e.getLocation()));
             }
     }
 

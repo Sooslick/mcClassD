@@ -30,7 +30,7 @@ public class TimedMessages {
                 StringBuilder sb = new StringBuilder();
                 sb.append("§e`Class D` Manhunt gamemode")
                         .append("\nType §6/manhunt help §efor more info")
-                        .append("\nTry yourself: §6/manhunt suggest")
+                        .append("\nSuggest yourself as Victim: §6/manhunt suggest")
                         .append("\n§eType §6/manhunt votestart §eor simply §6/mh v §eto begin")
                         .append("\n§ePreferred gamemode: §c")
                         .append(Cfg.enableEscapeGamemode ? "The Wall" : "Minecraft Any%");

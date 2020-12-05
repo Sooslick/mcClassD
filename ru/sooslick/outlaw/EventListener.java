@@ -52,7 +52,7 @@ public class EventListener implements Listener {
         //check if dragon dead
         if (e.getEntity().getType().equals(EntityType.ENDER_DRAGON)) {
             if (((LivingEntity) e.getEntity()).getHealth() - e.getFinalDamage() <= 0) {
-                Bukkit.broadcastMessage("§cDragon died. §eVictim escaped!");            //todo: impl method victory in Engine
+                Bukkit.broadcastMessage("§cDragon died. §eVictim won the game!");            //todo: impl method victory in Engine
                 engine.changeGameState(GameState.IDLE);
             }
             return;
@@ -184,7 +184,7 @@ public class EventListener implements Listener {
             int halfsize = engine.getHalfSize();
             if ((Math.abs(b.getX()) >= halfsize - 1) || (Math.abs(b.getZ()) >= halfsize - 1)) {
                 e.setCancelled(true);
-                e.getPlayer().sendMessage("§4Obsidian is denied here");
+                e.getPlayer().sendMessage("§4Obsidian is restricted here");
             }
         }
 

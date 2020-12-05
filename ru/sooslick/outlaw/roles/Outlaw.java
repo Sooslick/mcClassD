@@ -5,6 +5,11 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import ru.sooslick.outlaw.Cfg;
+import ru.sooslick.outlaw.Engine;
+import ru.sooslick.outlaw.util.CommonUtil;
 
 public class Outlaw extends AbstractPlayer {
 
@@ -12,6 +17,7 @@ public class Outlaw extends AbstractPlayer {
     Location lastNetherPos;
     LivingEntity placeholder;
     boolean offline;
+    int alertTimeoutTimer;
 
     public Outlaw(Player p) {
         super(p);
@@ -19,6 +25,12 @@ public class Outlaw extends AbstractPlayer {
         lastNetherPos = p.getLocation();
         placeholder = null;
         offline = false;
+        alertTimeoutTimer = 0;
+    }
+
+    @Override
+    public LivingEntity getEntity() {
+        return offline ? placeholder : player;
     }
 
     public void setLastWorldPos(Location l) {
@@ -60,13 +72,27 @@ public class Outlaw extends AbstractPlayer {
         player = p;
         offline = false;
         placeholder = null;
-        Bukkit.broadcastMessage("§cVictim returns back to the game.");
+        Bukkit.broadcastMessage("§cVictim is back to the game!");
     }
 
-    @Override
-    public LivingEntity getEntity() {
-        return offline ? placeholder : player;
-    }
+    public void huntersNearbyAlert() {
+        if (--alertTimeoutTimer > 0)
+            return;
 
-    //todo refactor notify mech
+        LivingEntity outlawPlayer = getEntity();
+        Location outlawLocation = outlawPlayer.getLocation();
+        for (Hunter h : Engine.getInstance().getHunters()) {
+            if (!h.getPlayer().getWorld().equals(outlawLocation.getWorld()))
+                continue;
+            if (CommonUtil.distance(h.getLocation(), outlawLocation) < Cfg.alertRadius) {
+                alertTimeoutTimer = Cfg.alertTimeout;
+                outlawPlayer.sendMessage("§cHunters nearby");
+                //glow placeholder entity if Outlaw player is offline
+                if (!(outlawPlayer instanceof Player)) {
+                    outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout * 20, 3));
+                }
+                return;
+            }
+        }
+    }
 }

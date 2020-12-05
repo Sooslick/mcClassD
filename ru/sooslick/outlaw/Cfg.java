@@ -35,13 +35,13 @@ public class Cfg {
     public static int undergroundSpotQty;
     public static HashMap<Material, Integer> startInventory;
 
-    private static final String SET = "§cGame parameter changed: §e";
+    private static final String SET = "§cGame parameter modified: §e";
 
     //disable constructor for utility class
     private Cfg() {}
 
     public static void readConfig(FileConfiguration f) {
-        changeAlert = false;    //todo change alert bug
+        changeAlert = false;
         currentCfg = f;
                       readValue("debugMode", false);
                       readValue("minStartVotes", 2);
@@ -53,10 +53,10 @@ public class Cfg {
                       readValue("hideVictimNametagAbovePlayers", 4);
                       readValue("enablePotionHandicap", true);
                       readValue("enableStartInventory", true);
-        changeAlert = readValue("enableEscapeGamemode", false);     //todo bigfix
+        changeAlert = readValue("enableEscapeGamemode", false) || changeAlert;
                       readValue("blocksPerSecondLimit", 100000);
-        changeAlert = readValue("playzoneSize", 1000);              //todo and here too
-        changeAlert = readValue("wallThickness", 8);
+        changeAlert = readValue("playzoneSize", 1000) || changeAlert;
+        changeAlert = readValue("wallThickness", 8) || changeAlert;
                       readValue("spotSize", 4);
                       readValue("groundSpotQty", 3);
                       readValue("airSpotQty", 2);

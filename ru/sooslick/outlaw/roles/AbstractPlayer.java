@@ -38,7 +38,6 @@ public abstract class AbstractPlayer {
 
     public Location getLocation() {
         return player.getLocation();
-        //todo: test method with offline players
     }
 
     public void preparePlayer(Location dest) {
