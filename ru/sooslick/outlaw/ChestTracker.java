@@ -108,15 +108,18 @@ public class ChestTracker {
                                              "\n    Blocks: " + blocks.toString());
     }
 
+    //todo needs more tests after concurrent modification bugfix
     public void cleanupEntities() {
-        AtomicInteger ent = new AtomicInteger();
-        trackedEntities.forEach(e -> {              //todo catch concurrent modification exception
+        int ent = 0;
+        Entity[] trackerEntitiesArray = new Entity[trackedEntities.size()];
+        trackerEntitiesArray = trackedEntities.toArray(trackerEntitiesArray);
+        for (Entity e : trackerEntitiesArray) {
             if (e != null) {
                 e.remove();
-                ent.getAndIncrement();
+                ent++;
             }
-        });
-        LoggerUtil.info("ChestTracker cleanup report: Entities: " + ent.toString());
+        }
+        LoggerUtil.info("ChestTracker cleanup report: Entities: " + ent);
     }
 
 }

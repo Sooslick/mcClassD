@@ -30,6 +30,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scoreboard.Scoreboard;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 import ru.sooslick.outlaw.util.CommonUtil;
@@ -231,6 +232,10 @@ public class EventListener implements Listener {
         for (Hunter h : engine.getHunters()) {
             if (h.getPlayer().getName().equals(p.getName())) {
                 h.setPlayer(p);
+                //nametag bugfix
+                Scoreboard scoreboard = engine.getScoreboard();
+                p.setScoreboard(scoreboard);
+                scoreboard.getTeam("Hunter").addEntry(p.getName());
                 return;
             }
         }

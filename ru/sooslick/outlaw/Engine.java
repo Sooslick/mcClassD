@@ -175,7 +175,7 @@ public class Engine extends JavaPlugin {
             return;
         }
         volunteers.add(name);
-        Bukkit.broadcastMessage("§e" + name + " proposed themselves as a Victim");
+        Bukkit.broadcastMessage("§e" + name + " proposed himself as a Victim");
     }
 
     public void joinRequest(Player sender) {
@@ -228,6 +228,9 @@ public class Engine extends JavaPlugin {
                 req.deactivate();
                 Player p = Bukkit.getPlayer(e.getKey());
                 if (p != null) {
+                    //nametag bugfix
+                    p.setScoreboard(scoreboard);
+                    scoreboard.getTeam("Hunter").addEntry(p.getName());
                     //todo copypasted from changeGameState - Game, refactor to method
                     Hunter currentHunter = new Hunter(p);
                     hunters.add(currentHunter);
@@ -282,6 +285,10 @@ public class Engine extends JavaPlugin {
 
     public ChestTracker getChestTracker() {
         return chestTracker;
+    }
+
+    public Scoreboard getScoreboard() {
+        return scoreboard;
     }
 
     protected void changeGameState(GameState state) {

@@ -130,12 +130,20 @@ public class Cfg {
         //read and set value
         Object oldVal = null;
         Object newVal = null;
+        boolean modified;
         try {
             oldVal = f.get(null);
             if (f.getType() == Integer.TYPE) {
-                f.set(null, currentCfg.getInt(key, (int) defaultValue));
+                int cfgVal = currentCfg.getInt(key, (int) defaultValue);
+                modified = cfgVal != (int) oldVal;
+                f.set(null, cfgVal);
             } else if (f.getType() == Boolean.TYPE) {
-                f.set(null, currentCfg.getBoolean(key, (boolean) defaultValue));
+                boolean cfgVal = currentCfg.getBoolean(key, (boolean) defaultValue);
+                modified = cfgVal != (boolean) oldVal;
+                f.set(null, cfgVal);
+            } else {
+                //currently this else-branch is unreachable
+                throw new Exception();
             }
             newVal = f.get(null);
         } catch (Exception e) {
@@ -144,11 +152,10 @@ public class Cfg {
         }
 
         //detect changes
-        if (!oldVal.toString().equals(newVal.toString())) {         //WEIRD. FIXME PLZ?
+        if (modified) {
             Bukkit.broadcastMessage(SET + key + " = " + newVal);
-            return true;
         }
-        return false;
+        return modified;
     }
 
     private static Field getField(String key) {
