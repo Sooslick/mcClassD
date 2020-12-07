@@ -8,7 +8,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -229,14 +228,7 @@ public class Engine extends JavaPlugin {
                 Player p = Bukkit.getPlayer(e.getKey());
                 if (p != null) {
                     //nametag bugfix
-                    p.setScoreboard(scoreboard);
-                    scoreboard.getTeam("Hunter").addEntry(p.getName());
-                    //todo copypasted from changeGameState - Game, refactor to method
-                    Hunter currentHunter = new Hunter(p);
-                    hunters.add(currentHunter);
-                    currentHunter.preparePlayer(Bukkit.getWorlds().get(0).getSpawnLocation());
-                    p.getInventory().addItem(new ItemStack(Material.COMPASS));
-
+                    joinHunter(p);
                     acceptedRequests++;
                     Bukkit.broadcastMessage("§e" + p.getName() + " §cjoined the game as Hunter");
                 }
@@ -385,17 +377,13 @@ public class Engine extends JavaPlugin {
 
                 //process others
                 Location hunterLocation = CommonUtil.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
-                Bukkit.getWorlds().get(0).setSpawnLocation(hunterLocation);
+                Hunter.setupTeam(teamHunter, hunterLocation);
                 for (Player p : onlinePlayers) {
                     //skip outlaw
                     if (p.equals(selectedPlayer))
                         continue;
                     //add others to hunter team
-                    Hunter currentHunter = new Hunter(p);
-                    hunters.add(currentHunter);
-                    currentHunter.preparePlayer(hunterLocation);
-                    p.setScoreboard(scoreboard);
-                    teamHunter.addEntry(p.getName());
+                    joinHunter(p);
                 }
 
                 if (Cfg.enableEscapeGamemode) {
@@ -416,6 +404,14 @@ public class Engine extends JavaPlugin {
             default:
                 LoggerUtil.warn("Suspicious game state: " + state.toString());
         }
+    }
+
+    private void joinHunter(Player p) {
+        Hunter currentHunter = new Hunter(p);
+        hunters.add(currentHunter);
+        currentHunter.preparePlayer(Hunter.getSpawnLocation());
+        p.setScoreboard(scoreboard);
+        Hunter.getTeam().addEntry(p.getName());
     }
 
     private void alertHunter() {

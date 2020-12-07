@@ -8,6 +8,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scoreboard.Team;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.util.CommonUtil;
 
@@ -16,6 +17,23 @@ import java.time.Duration;
 public class Hunter extends AbstractPlayer {
 
     private static final String COMPASS_NAME = "Victim Tracker";
+
+    private static Location spawnLocation;
+    private static Team huntersTeam;
+
+    public static void setupTeam(Team team, Location spawn) {
+        spawnLocation = spawn;
+        huntersTeam = team;
+        spawnLocation.getWorld().setSpawnLocation(spawnLocation); //for new players and respawns
+    }
+
+    public static Team getTeam() {
+        return huntersTeam;
+    }
+
+    public static Location getSpawnLocation() {
+        return spawnLocation;
+    }
 
     public Hunter(Player p) {
         super(p);
