@@ -9,6 +9,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.Engine;
+import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.util.CommonUtil;
 
 public class Outlaw extends AbstractPlayer {
@@ -64,7 +65,7 @@ public class Outlaw extends AbstractPlayer {
     public void goOffline(LivingEntity e) {
         offline = true;
         placeholder = e;
-        Bukkit.broadcastMessage("§cVictim left the game, but there is §eVictim Chicken§c. Kill it!");
+        Bukkit.broadcastMessage(Messages.VICTIM_OFFLINE);
     }
 
     public void goOnline(Player p) {
@@ -72,7 +73,7 @@ public class Outlaw extends AbstractPlayer {
         player = p;
         offline = false;
         placeholder = null;
-        Bukkit.broadcastMessage("§cVictim is back to the game!");
+        Bukkit.broadcastMessage(Messages.VICTIM_ONLINE);
     }
 
     public void huntersNearbyAlert() {
@@ -86,7 +87,7 @@ public class Outlaw extends AbstractPlayer {
                 continue;
             if (CommonUtil.distance(h.getLocation(), outlawLocation) < Cfg.alertRadius) {
                 alertTimeoutTimer = Cfg.alertTimeout;
-                outlawPlayer.sendMessage("§cHunters nearby");
+                outlawPlayer.sendMessage(Messages.HUNTERS_NEARBY);
                 //glow placeholder entity if Outlaw player is offline
                 if (!(outlawPlayer instanceof Player)) {
                     outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout * 20, 3));

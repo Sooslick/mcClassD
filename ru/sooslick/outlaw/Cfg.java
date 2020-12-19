@@ -11,9 +11,16 @@ import java.util.HashMap;
 
 public class Cfg {
 
-    public static boolean firstRead = true;
-    public static boolean changeAlert = false;
-    public static FileConfiguration currentCfg;
+    private static final String CANNOT_READ_PARAMETER = "Cannot read parameter %s";
+    private static final String READ_STARTINV_ENTRY = "read startInventory entry: %s x %s";
+    private static final String UNKNOWN_ITEM = "Unknown item in start inventory: %s";
+    private static final String UNKNOWN_PARAMETER = "Unknown parameter: %s";
+    private static final String UNPLAYABLE_WORLD_WARNING = "Parameter responsible for modifying world was changed. We strongly recommend to generate a new game world, otherwise it may be unplayable";
+    private static final String VALUE_TEMPLATE = "%s: %s";
+
+    private static boolean firstRead = true;
+    private static boolean changeAlert = false;
+    private static FileConfiguration currentCfg;
 
     public static boolean debugMode;
     public static int minStartVotes;
@@ -34,8 +41,6 @@ public class Cfg {
     public static int airSpotQty;
     public static int undergroundSpotQty;
     public static HashMap<Material, Integer> startInventory;
-
-    private static final String SET = "§cGame parameter modified: §e";
 
     //disable constructor for utility class
     private Cfg() {}
@@ -80,14 +85,16 @@ public class Cfg {
         //start inventory
         startInventory = new HashMap<>();
         ConfigurationSection cs = f.getConfigurationSection("startInventory");
-        for (String k : cs.getKeys(false)) {
+        for (String itemName : cs.getKeys(false)) {
             try {
-                Material m = Material.valueOf(k);
-                int i = cs.getInt(k);
-                startInventory.put(m, i);
-                LoggerUtil.debug("startInventory.put: " + m.name() + " x " + i);
+                Material m = Material.valueOf(itemName);
+                int qty = cs.getInt(itemName);
+                if (qty > 0) {
+                    startInventory.put(m, qty);
+                    LoggerUtil.debug(String.format(READ_STARTINV_ENTRY, m.name(), qty));
+                }
             } catch (IllegalArgumentException e) {
-                LoggerUtil.warn("Unknown item in start inventory: " + k);
+                LoggerUtil.warn(String.format(UNKNOWN_ITEM, itemName));
             }
         }
 
@@ -96,9 +103,7 @@ public class Cfg {
 
         //change warnings
         if (changeAlert && !firstRead) {
-            LoggerUtil.warn("Parameter responsible for modifying world was changed. " +
-                    "We strongly recommend to generate a new game world, " +
-                    "otherwise it may be unplayable");
+            LoggerUtil.warn(UNPLAYABLE_WORLD_WARNING);
         }
 
         //enable change warnings
@@ -109,12 +114,12 @@ public class Cfg {
     public static String getValue(String key) {
         Field f = getField(key);
         if (f == null) {
-            return "Unknown parameter: " + key;
+            return String.format(UNKNOWN_PARAMETER, key);
         }
         try {
-            return key + ": " + f.get(null);
+            return String.format(VALUE_TEMPLATE, key, f.get(null));
         } catch (Exception e) {
-            return "Cannot read parameter: " + key;
+            return String.format(CANNOT_READ_PARAMETER, key);
         }
     }
 
@@ -123,13 +128,13 @@ public class Cfg {
         //identify Cfg.class field
         Field f = getField(key);
         if (f == null) {
-            LoggerUtil.warn("Unknown cfg field " + key);
+            LoggerUtil.warn(String.format(UNKNOWN_PARAMETER, key));
             return false;
         }
 
         //read and set value
-        Object oldVal = null;
-        Object newVal = null;
+        Object oldVal;
+        Object newVal;
         boolean modified;
         try {
             oldVal = f.get(null);
@@ -147,13 +152,13 @@ public class Cfg {
             }
             newVal = f.get(null);
         } catch (Exception e) {
-            LoggerUtil.warn("Cannot read value of field " + key + "\n" + e.getMessage());
+            LoggerUtil.warn(String.format(CANNOT_READ_PARAMETER, key));
             return false;
         }
 
         //detect changes
         if (modified) {
-            Bukkit.broadcastMessage(SET + key + " = " + newVal);
+            Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, key, newVal));
         }
         return modified;
     }

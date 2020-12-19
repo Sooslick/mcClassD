@@ -10,6 +10,14 @@ import ru.sooslick.outlaw.util.LoggerUtil;
 import java.util.LinkedList;
 
 public class Wall {
+    private static final String DEBUG_RESET_SPOTS = "Reset and launched buildSpotTick";
+    private static final String DEBUG_RESET_WALL = "Reset wall generator and launched buildWallTick";
+    private static final String DEBUG_SPOT_CREATED = "created spot at side %s, center %s";
+    private static final String DEBUG_SPOTS_FINISHED = "buildSpots finished";
+    private static final String DEBUG_SPOTS_QUEUED = "buildSpots queued, wallBuilt = ";
+    private static final String DEBUG_WALL_TICK = "buildWallTick, side=%s, currentBlock=%s";
+    private static final String DEBUG_WALL_FINISHED = "buildWall finished, spotsQueued = ";
+
     private static int generatorTimerId;
     private static LinkedList<Integer> spotPositions;
     private static int groundCurr;
@@ -28,7 +36,7 @@ public class Wall {
     private static World w;
 
     private final static Runnable buildWallTick = () -> {
-        LoggerUtil.debug("buildWallTick, side=" + side + ", currentBlock=" + currentBlock);
+        LoggerUtil.debug(String.format(DEBUG_WALL_TICK, side, currentBlock));
         int from = currentBlock;
         int to = currentBlock + limiter;
         if (to > endWallCoord)
@@ -44,7 +52,7 @@ public class Wall {
                 side++;
                 if (side > 3) {
                     Bukkit.getScheduler().cancelTask(generatorTimerId);
-                    LoggerUtil.debug("buildWall finished, spotsQueued = " + spotsQueued);
+                    LoggerUtil.debug(DEBUG_WALL_FINISHED + spotsQueued);
                     wallBuilt = true;
                     if (spotsQueued) {
                         launchBuildSpots();
@@ -74,12 +82,12 @@ public class Wall {
                 undergroundCurr = 0;
                 if (++side > 3) {
                     Bukkit.getScheduler().cancelTask(generatorTimerId);
-                    LoggerUtil.debug("buildSpots finished");
+                    LoggerUtil.debug(DEBUG_SPOTS_FINISHED);
                 }
             }
         }
         spotPositions.removeFirst();
-        LoggerUtil.debug("created spot at side " + side + ", center " + center);
+        LoggerUtil.debug(String.format(DEBUG_SPOT_CREATED, side, center));
     };
 
     //disable constructor for utility class
@@ -103,7 +111,7 @@ public class Wall {
 
         //launch
         generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), buildWallTick, 1, 20);
-        LoggerUtil.debug("Reset wall generator and launched buildWallTick");
+        LoggerUtil.debug(DEBUG_RESET_WALL);
     }
 
     public static void launchBuildSpots() {
@@ -122,11 +130,11 @@ public class Wall {
 
         //launch
         generatorTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), buildSpotTick, 1, 1);
-        LoggerUtil.debug("Reset and launched buildSpotTick");
+        LoggerUtil.debug(DEBUG_RESET_SPOTS);
     }
 
     public static void buildSpots() {
-        LoggerUtil.debug("buildSpots queued, wallBuilt = " + wallBuilt);
+        LoggerUtil.debug(DEBUG_SPOTS_QUEUED + wallBuilt);
         if (wallBuilt) {
             launchBuildSpots();
         } else {
@@ -135,6 +143,9 @@ public class Wall {
     }
 
     private static class Filler {
+        private static final String FILL_EMPTY = "Wall - fill operation cancelled, empty area";
+        private static final String FILL_SIZE_EXCEED = "Wall - fill operation cancelled, blocks limit exceed";
+
         private int startX;
         private int startY;
         private int startZ;
@@ -182,10 +193,10 @@ public class Wall {
             //validate size
             int volume = (endX - startX) * (endY - startY) * (endZ - startZ);
             if (Math.abs(volume) > Cfg.blocksPerSecondLimit) {
-                LoggerUtil.warn("Wall - fill operation cancelled, blocks limit exceed");
+                LoggerUtil.warn(FILL_SIZE_EXCEED);
                 return false;
             } else if (volume == 0) {
-                LoggerUtil.warn("Wall - fill operation cancelled, empty area");
+                LoggerUtil.warn(FILL_EMPTY);
                 return false;
             }
             //validate material

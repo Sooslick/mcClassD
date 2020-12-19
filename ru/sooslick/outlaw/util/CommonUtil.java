@@ -17,6 +17,14 @@ import java.util.List;
 import java.util.Random;
 
 public class CommonUtil {
+    private static final String COMMA = ", ";
+    private static final String DURATION_DEFAULT = "%d:%02d";
+    private static final String DURATION_HOURS = "%d:%02d:%02d";
+    private static final String SAFELOC_DEFAULT = "getSafeRandomLocation - default";
+    private static final String SAFELOC_SUCCESS = "getSafeRandomLocation - success";
+    private static final String SAFELOC_FAIL = "getSafeRandomLocation - fail, reason: %s | %s";
+    private static final String SAFELOC_FAIL_LIQUID = "liquid";
+    private static final String SAFELOC_FAIL_OBSTRUCTION = "obstruction";
 
     public static Random random = new Random();
     public static final List<Material> DANGERS;
@@ -88,11 +96,11 @@ public class CommonUtil {
             l = getRandomLocation(bound);
             l.getChunk().load();
             if (isSafeLocation(l)) {
-                LoggerUtil.debug("getSafeRandomLocation - success");
+                LoggerUtil.debug(SAFELOC_SUCCESS);
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             }
         }
-        LoggerUtil.debug("getSafeRandomLocation - default");
+        LoggerUtil.debug(SAFELOC_DEFAULT);
         l = w.getHighestBlockAt(l).getLocation();
         safetizeLocation(l);
         return l.add(0.5, 1, 0.5);
@@ -120,11 +128,11 @@ public class CommonUtil {
             l = getDistanceLocation(src, dist);
             l.getChunk().load();
             if (isSafeLocation(l)) {
-                LoggerUtil.debug("getSafeDistanceLocation - success");
+                LoggerUtil.debug(SAFELOC_SUCCESS);
                 return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
             }
         }
-        LoggerUtil.debug("getSafeDistanceLocation - default");
+        LoggerUtil.debug(SAFELOC_DEFAULT);
         l = w.getHighestBlockAt(l).getLocation();
         safetizeLocation(l);
         return l.add(0.5, 1, 0.5);
@@ -135,18 +143,18 @@ public class CommonUtil {
         Block b = l.getWorld().getHighestBlockAt(l);
         Material m = b.getType();
         if (b.isLiquid()) {
-            LoggerUtil.debug("isSafeLocation - fail, liquid // " + CommonUtil.formatLocation(b.getLocation()));
+            LoggerUtil.debug(String.format(SAFELOC_FAIL, SAFELOC_FAIL_LIQUID, CommonUtil.formatLocation(b.getLocation())));
             return false;
         }
         if (DANGERS.contains(m)) {
-            LoggerUtil.debug("isSafeLocation - fail, " + m.name() + " // " + CommonUtil.formatLocation(b.getLocation()));
+            LoggerUtil.debug(String.format(SAFELOC_FAIL, m.name(), CommonUtil.formatLocation(b.getLocation())));
             return false;
         }
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++)
                 for (int k = 1; k <= 2; k++)
                     if (!EXCLUDES.contains(b.getRelative(i, k, j).getType())) {
-                        LoggerUtil.debug("isSafeLocation - fail, obstruction // " + CommonUtil.formatLocation(b.getLocation()));
+                        LoggerUtil.debug(String.format(SAFELOC_FAIL, SAFELOC_FAIL_OBSTRUCTION, CommonUtil.formatLocation(b.getLocation())));
                         return false;
                     }
         return true;
@@ -163,26 +171,23 @@ public class CommonUtil {
         long h = seconds / 3600;
         if (h > 0) {
             return String.format(
-                    "%d:%02d:%02d",
+                    DURATION_HOURS,
                     seconds / 3600,
                     (seconds % 3600) / 60,
                     seconds % 60);
         } else {
             return String.format(
-                    "%d:%02d",
+                    DURATION_DEFAULT,
                     (seconds % 3600) / 60,
                     seconds % 60);
         }
     }
 
     public static String formatLocation(Location l) {
-        String separator = ", ";
-        StringBuilder sb = new StringBuilder();
-        sb.append(l.getWorld().getName()).append(separator)
-                .append(l.getBlockX()).append(separator)
-                .append(l.getBlockY()).append(separator)
-                .append(l.getBlockZ());
-        return sb.toString();
+        return l.getWorld().getName() + COMMA +
+                l.getBlockX() + COMMA +
+                l.getBlockY() + COMMA +
+                l.getBlockZ();
     }
 
     public static void safetizeLocation(Location l) {

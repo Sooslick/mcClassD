@@ -27,25 +27,18 @@ public class TimedMessages {
         switch (engine.getGameState()) {
             case IDLE:
             case PRESTART:
-                StringBuilder sb = new StringBuilder();
-                sb.append("§e`Class D` Manhunt gamemode")
-                        .append("\nType §6/manhunt help §efor more info")
-                        .append("\nSuggest yourself as Victim: §6/manhunt suggest")
-                        .append("\n§eType §6/manhunt votestart §eor simply §6/mh v §eto begin")
-                        .append("\n§ePreferred gamemode: §c")
-                        .append(Cfg.enableEscapeGamemode ? "The Wall" : "Minecraft Any%");
-                return sb.toString();
+                //todo: gamemode impl
+                return String.format(Messages.TIMED_MESSAGE_RULES, Cfg.enableEscapeGamemode ? "The Wall" : "Minecraft Any%");
             case GAME:
                 Duration duration = Duration.ofSeconds(engine.getGameTimer());
                 Outlaw o = engine.getOutlaw();
-                String outlawString = o.getEntity() instanceof Player ? "Victim" : "Victim Chicken";
-                sb = new StringBuilder();
-                sb.append("§eGame timer: ").append(CommonUtil.formatDuration(duration))
-                        .append("\nDeath counter: ").append(engine.getKillCounter())
-                        .append("\nCompass is pointing to §c").append(outlawString).append(" §o").append(o.getName());
-                return sb.toString();
+                String outlawString = o.getEntity() instanceof Player ? Messages.VICTIM : Messages.VICTIM_CHICKEN;
+                return String.format(Messages.TIMED_MESSAGE_STATS,
+                        CommonUtil.formatDuration(duration),        //Time elapsed
+                        engine.getKillCounter(),                    //Death counter
+                        outlawString, o.getName());                 //Victim Entity + name
         }
-        return "§4Error: TimedMessages.getMessage() returned nothing";
+        return null;
     }
 
     public TimedMessages launch() {

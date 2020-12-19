@@ -13,6 +13,8 @@ import java.util.Map;
 
 public abstract class AbstractPlayer {
 
+    private static final String ADVANCEMENT_REVOKE = "advancement revoke %s everything";
+
     protected Player player;
     protected boolean firstRespawn = true;
 
@@ -51,8 +53,8 @@ public abstract class AbstractPlayer {
         player.setLevel(0);
         player.getInventory().clear();
         player.getActivePotionEffects().clear();
-        player.setBedSpawnLocation(dest);
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "advancement revoke " + player.getName() + " everything");
+        player.setBedSpawnLocation(null);
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), String.format(ADVANCEMENT_REVOKE, player.getName()));
         player.setGameMode(GameMode.SURVIVAL);
         if (Cfg.enableStartInventory)
             giveStartInventory();

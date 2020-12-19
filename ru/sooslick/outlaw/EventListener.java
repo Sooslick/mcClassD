@@ -51,9 +51,10 @@ public class EventListener implements Listener {
             return;
 
         //check if dragon dead
+        //todo: GAMEMODE IMPL
         if (e.getEntity().getType().equals(EntityType.ENDER_DRAGON)) {
             if (((LivingEntity) e.getEntity()).getHealth() - e.getFinalDamage() <= 0) {
-                Bukkit.broadcastMessage("§cDragon died. §eVictim won the game!");            //todo: impl method victory in Engine
+                Bukkit.broadcastMessage(Messages.VICTIM_ESCAPED);            //todo: impl method victory in Engine
                 engine.changeGameState(GameState.IDLE);
             }
             return;
@@ -72,7 +73,7 @@ public class EventListener implements Listener {
                 engine.getChestTracker().detectBlock(l.getBlock());
                 engine.getChestTracker().detectBlock(l.add(0, 1, 0).getBlock());
             }
-            Bukkit.broadcastMessage("§cVictim died. §eHunters win!");   //todo: impl method victory in Engine
+            Bukkit.broadcastMessage(Messages.VICTIM_DEAD);   //todo: impl method victory in Engine
             engine.changeGameState(GameState.IDLE);
         }
 
@@ -148,6 +149,7 @@ public class EventListener implements Listener {
         }
     }
 
+    //todo: gamemode listener
     @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
         Engine engine = Engine.getInstance();
@@ -235,7 +237,7 @@ public class EventListener implements Listener {
                 //nametag bugfix
                 Scoreboard scoreboard = engine.getScoreboard();
                 p.setScoreboard(scoreboard);
-                scoreboard.getTeam("Hunter").addEntry(p.getName());
+                scoreboard.getTeam(Engine.TEAM_HUNTER_NAME).addEntry(p.getName());
                 return;
             }
         }
@@ -298,6 +300,7 @@ public class EventListener implements Listener {
         goldenPickaxeAlerted = false;
     }
 
+    //todo: Gamemode
     private void detectGoldPickaxe() {
         if (!Cfg.enableEscapeGamemode)
             return;

@@ -10,13 +10,12 @@ import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scoreboard.Team;
 import ru.sooslick.outlaw.Engine;
+import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.util.CommonUtil;
 
 import java.time.Duration;
 
 public class Hunter extends AbstractPlayer {
-
-    private static final String COMPASS_NAME = "Victim Tracker";
 
     private static Location spawnLocation;
     private static Team huntersTeam;
@@ -43,8 +42,7 @@ public class Hunter extends AbstractPlayer {
     public void onRespawn() {
         if (!firstRespawn) {
             Engine e = Engine.getInstance();
-            player.sendMessage("§eVictim is still §c" + e.getOutlaw().getName() +
-                    "\n§eTime elapsed: §c" + CommonUtil.formatDuration(Duration.ofSeconds(e.getGameTimer())));
+            player.sendMessage(String.format(Messages.HUNTER_RESPAWN, e.getOutlaw().getName(), CommonUtil.formatDuration(Duration.ofSeconds(e.getGameTimer()))));
         }
         player.getInventory().addItem(new ItemStack(Material.COMPASS));
         firstRespawn = false;
@@ -65,7 +63,7 @@ public class Hunter extends AbstractPlayer {
                 is = current;
                 ItemMeta ism = is.getItemMeta();
                 if (ism != null) {
-                    if (ism.getDisplayName().equals(COMPASS_NAME)) {
+                    if (ism.getDisplayName().equals(Messages.COMPASS_NAME)) {
                         updateName = false;
                         break;
                     }
@@ -86,7 +84,7 @@ public class Hunter extends AbstractPlayer {
 
         //optional: set name to compass
         if (updateName)
-            meta.setDisplayName(COMPASS_NAME);
+            meta.setDisplayName(Messages.COMPASS_NAME);
 
         //finally: update meta
         if (trackedLocation.getWorld().getEnvironment() == World.Environment.NETHER) {

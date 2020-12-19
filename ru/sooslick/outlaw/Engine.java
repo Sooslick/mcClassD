@@ -26,6 +26,17 @@ import java.util.Map;
 
 public class Engine extends JavaPlugin {
 
+    private static final String GAME_STATE_CHANGED = "ClassD game state has changed. New state: ";
+    private static final String GAME_STATE_UNKNOWN = "Suspicious game state: ";
+    private static final String PLUGIN_CREATE_DATAFOLDER = "Created plugin data folder";
+    private static final String PLUGIN_CREATE_DATAFOLDER_FAILED = "§eCannot create plugin data folder. Default config will be loaded.\n Do you have sufficient rights?";
+    private static final String PLUGIN_DISABLE = "Disable ClassD Plugin";
+    private static final String PLUGIN_DISABLE_SUCCESS = "Disable ClassD Plugin - success";
+    private static final String PLUGIN_INIT = "Init ClassD Plugin";
+    private static final String PLUGIN_INIT_SUCCESS = "Init ClassD Plugin - success";
+    public static final String TEAM_HUNTER_NAME = "Hunter";
+    public static final String TEAM_VICTIM_NAME = "Victim";
+
     private static Engine instance;
 
     private List<Hunter> hunters;
@@ -52,7 +63,7 @@ public class Engine extends JavaPlugin {
             if (votestartCountdown <= 0)
                 changeGameState(GameState.GAME);
             else
-                Bukkit.broadcastMessage("§c" + votestartCountdown + " seconds to start");
+                Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, votestartCountdown));
         }
     };
 
@@ -80,7 +91,7 @@ public class Engine extends JavaPlugin {
             if (e.getValue().tick()) {
                 Player p = Bukkit.getPlayer(e.getKey());
                 if (p != null)
-                    p.sendMessage("Your request has expired");
+                    p.sendMessage(Messages.JOIN_REQUEST_EXPIRED);
             }
         }
     };
@@ -90,37 +101,37 @@ public class Engine extends JavaPlugin {
         instance = this;
 
         //init working folder and config file
-        LoggerUtil.info("Init ClassD Plugin");
+        LoggerUtil.info(PLUGIN_INIT);
         if (!(getDataFolder().exists())) {
             if (getDataFolder().mkdir()) {
-                LoggerUtil.info("Created plugin data folder");
+                LoggerUtil.info(PLUGIN_CREATE_DATAFOLDER);
                 saveDefaultConfig();
             } else {
-                LoggerUtil.warn("§eCannot create plugin data folder. Default config will be loaded.\n Do you have sufficient rights?");
+                LoggerUtil.warn(PLUGIN_CREATE_DATAFOLDER_FAILED);
             }
         }
 
         //register commands and events
         CommandListener cmdListener = new CommandListener();
-        getCommand("manhunt").setExecutor(cmdListener);
-        getCommand("y").setExecutor(cmdListener);
+        getCommand(CommandListener.COMMAND_MANHUNT).setExecutor(cmdListener);
+        getCommand(CommandListener.COMMAND_ACCEPT_ALIAS).setExecutor(cmdListener);
         eventListener = new EventListener();
         getServer().getPluginManager().registerEvents(eventListener, this);
 
         //init game variables
         changeGameState(GameState.IDLE);
         timedMessages = new TimedMessages().launch();
-        LoggerUtil.info("Init ClassD Plugin - success");
+        LoggerUtil.info(PLUGIN_INIT_SUCCESS);
     }
 
     @Override
     public void onDisable() {
-        LoggerUtil.info("Disable ClassD Plugin");
+        LoggerUtil.info(PLUGIN_DISABLE);
         if (chestTracker != null) {
             chestTracker.cleanupBlocks();
             chestTracker.cleanupEntities();
         }
-        LoggerUtil.info("Disable ClassD Plugin - success");
+        LoggerUtil.info(PLUGIN_DISABLE_SUCCESS);
     }
 
     public static Engine getInstance() {
@@ -130,11 +141,11 @@ public class Engine extends JavaPlugin {
     public void unvote(Player p) {
         String name = p.getName();
         if (volunteers.remove(name)) {
-            Bukkit.broadcastMessage("§c" + name + " left and was removed from Victim suggesters");
+            Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_LEFT, name));
         }
         if (state == GameState.IDLE) {
             if (votestarters.remove(name)) {
-                Bukkit.broadcastMessage(votestarters.size() + " / " + Cfg.minStartVotes + " votes to start");
+                Bukkit.broadcastMessage(String.format(Messages.START_VOTES_COUNT, votestarters.size(), Cfg.minStartVotes));
             }
             //todo same code in voteStart. Refactor to method
             if (votestarters.size() >= Bukkit.getOnlinePlayers().size()) {
@@ -145,78 +156,78 @@ public class Engine extends JavaPlugin {
 
     public void voteStart(Player p) {
         if (state == GameState.GAME) {
-            p.sendMessage("§cCannot votestart while game is running");
+            p.sendMessage(Messages.START_VOTE_INGAME);
             return;
         }
         String name = p.getName();
         if (votestarters.contains(name)) {
-            p.sendMessage("§cCannot votestart twice");
+            p.sendMessage(Messages.START_VOTE_TWICE);
             return;
         }
         votestarters.add(name);
-        Bukkit.broadcastMessage("§e" + name + " voted to start game");
+        Bukkit.broadcastMessage(String.format(Messages.START_VOTE, name));
         if (state == GameState.IDLE &&
                 (votestarters.size() >= Bukkit.getOnlinePlayers().size() || votestarters.size() >= Cfg.minStartVotes)) {
             changeGameState(GameState.PRESTART);
         } else {
-            Bukkit.broadcastMessage(votestarters.size() + " / " + Cfg.minStartVotes + " votes to start");
+            Bukkit.broadcastMessage(String.format(Messages.START_VOTES_COUNT, votestarters.size(), Cfg.minStartVotes));
         }
     }
 
     public void suggest(Player p) {
         if (state == GameState.GAME) {
-            p.sendMessage("§cCannot suggest while game is running");
+            p.sendMessage(Messages.VOLUNTEER_SUGGEST_INGAME);
             return;
         }
         String name = p.getName();
         if (volunteers.contains(name)) {
-            p.sendMessage("§cCannot suggest twice");
+            p.sendMessage(Messages.VOLUNTEER_SUGGEST_TWICE);
             return;
         }
         volunteers.add(name);
-        Bukkit.broadcastMessage("§e" + name + " proposed himself as a Victim");
+        Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_SUGGEST, name));
     }
 
     public void joinRequest(Player sender) {
         //allow command only in game
         if (state != GameState.GAME) {
-            sender.sendMessage("§cGame is not running, use §e/manhunt votestart §cinstead");
+            sender.sendMessage(Messages.JOIN_REQUEST_LOBBY);
             return;
         }
         //check outlaw
         if (outlaw.getPlayer().equals(sender)) {
-            sender.sendMessage("§cYou are the Victim. Nice try :P");
+            sender.sendMessage(Messages.JOIN_REQUEST_VICTIM);
             return;
         }
         //check hunters
         for (Hunter h : hunters) {
             if (h.getPlayer().equals(sender)) {
-                sender.sendMessage("§cYou are a Hunter");
+                sender.sendMessage(Messages.JOIN_REQUEST_HUNTER);
                 return;
             }
         }
         //check requests
         for (Map.Entry<String, TimedRequest> e : joinRequests.entrySet()) {
             if (e.getKey().equals(sender.getName())) {
-                sender.sendMessage("§cYou have sent the request already");
+                sender.sendMessage(Messages.JOIN_REQUEST_EXISTS);
                 return;
             }
         }
         //then create new request and alert Victim
         joinRequests.put(sender.getName(), new TimedRequest());
-        sender.sendMessage("§cJoin request has been sent");
-        outlaw.getPlayer().sendMessage("§e" + sender.getName() + " §cwants to join the game. Type §e/y §cto accept or just ignore them");
+        sender.sendMessage(Messages.JOIN_REQUEST_SENT);
+        outlaw.getPlayer().sendMessage(String.format(Messages.JOIN_REQUEST_NOTIFICATION, sender.getName()));
     }
 
     public void acceptJoinRequest(Player sender) {
         //allow command only in game
         if (state != GameState.GAME) {
-            sender.sendMessage("§cGame is not running.");
+            sender.sendMessage(Messages.GAME_IS_NOT_RUNNING);
             return;
         }
         //allow only for outlaw
         if (!sender.equals(outlaw.getPlayer())) {
-            sender.sendMessage("§cOnly Victim can use this command");
+            sender.sendMessage(Messages.ONLY_VICTIM_ALLOWED);
             return;
         }
         //accept all active requests
@@ -230,7 +241,7 @@ public class Engine extends JavaPlugin {
                     //nametag bugfix
                     joinHunter(p);
                     acceptedRequests++;
-                    Bukkit.broadcastMessage("§e" + p.getName() + " §cjoined the game as Hunter");
+                    Bukkit.broadcastMessage(String.format(Messages.JOIN_REQUEST_ACCEPTED, p.getName()));
                 }
             }
         }
@@ -239,7 +250,7 @@ public class Engine extends JavaPlugin {
             if (Cfg.enablePotionHandicap)
                 applyPotionHandicap(sender, 400);
         } else {
-            sender.sendMessage("§cYou have no join requests");
+            sender.sendMessage(Messages.JOIN_REQUEST_NOT_EXISTS);
         }
     }
 
@@ -285,7 +296,7 @@ public class Engine extends JavaPlugin {
 
     protected void changeGameState(GameState state) {
         this.state = state;
-        LoggerUtil.info("ClassD game state has changed. New state: " + state.toString());
+        LoggerUtil.info(GAME_STATE_CHANGED + state.toString());
         switch (state) {
             case IDLE:
                 //stop game and read cfg
@@ -304,8 +315,7 @@ public class Engine extends JavaPlugin {
                 hunterAlert = false;
                 //todo move gamemode's variables to gamemode
                 halfSize = Cfg.playzoneSize / 2 + 1;
-                escapeArea = halfSize + Cfg.wallThickness + 1;  //todo: +/- bug
-                LoggerUtil.debug("halfSize = " + halfSize + "; escapeArea = " + escapeArea);
+                escapeArea = halfSize + Cfg.wallThickness;
 
                 //reset players gamemode
                 for (Player p : Bukkit.getOnlinePlayers())
@@ -314,9 +324,9 @@ public class Engine extends JavaPlugin {
                 //regenerate wall
                 if (Cfg.enableEscapeGamemode) {
                     Wall.buildWall();
-                    Bukkit.broadcastMessage("§c[Escape gamemode] Please wait until the Wall is rebuilt");
+                    Bukkit.broadcastMessage("§cPlease wait until the Wall is rebuilt"); //todo mooveee
                 } else {
-                    Bukkit.broadcastMessage("§eReady for the next game");
+                    Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
                 }
                 break;
             case PRESTART:
@@ -331,7 +341,7 @@ public class Engine extends JavaPlugin {
 
                 //launch timer
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
-                Bukkit.broadcastMessage("§c" + Cfg.prestartTimer + " seconds to start");
+                Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, Cfg.prestartTimer));
                 break;
             case GAME:
                 //reinit variables and stop lobby timers
@@ -343,8 +353,8 @@ public class Engine extends JavaPlugin {
                 Player selectedPlayer;
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
                 scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();          //todo NPE check
-                Team teamVictim = scoreboard.registerNewTeam("Victim");
-                Team teamHunter = scoreboard.registerNewTeam("Hunter");
+                Team teamVictim = scoreboard.registerNewTeam(TEAM_VICTIM_NAME);
+                Team teamHunter = scoreboard.registerNewTeam(TEAM_HUNTER_NAME);
 
                 //prepare environment
                 World w = Bukkit.getWorlds().get(0);
@@ -357,7 +367,7 @@ public class Engine extends JavaPlugin {
                 } else {
                     selectedPlayer = Bukkit.getPlayer(CommonUtil.getRandomOf(volunteers));
                 }
-                Bukkit.broadcastMessage("§eChosen Victim: §c" + selectedPlayer.getName());
+                Bukkit.broadcastMessage(String.format(Messages.SELECTED_VICTIM, selectedPlayer.getName()));
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
@@ -371,7 +381,7 @@ public class Engine extends JavaPlugin {
                 selectedPlayer.setScoreboard(scoreboard);
                 teamVictim.addEntry(selectedPlayer.getName());
                 if (Bukkit.getOnlinePlayers().size() >= Cfg.hideVictimNametagAbovePlayers) {
-                    Bukkit.broadcastMessage("§eVictim's nametag is §cINVISIBLE");
+                    Bukkit.broadcastMessage(Messages.NAMETAG_IS_INVISIBLE);
                     teamVictim.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
                 }
 
@@ -386,23 +396,22 @@ public class Engine extends JavaPlugin {
                     joinHunter(p);
                 }
 
-                if (Cfg.enableEscapeGamemode) {
-                    Bukkit.broadcastMessage("§eVictim's objective: §cESCAPE");
-                } else {
-                    Bukkit.broadcastMessage("§eVictim's objective: §cKILL ENDER DRAGON");
-                }
+                //todo: GAMEMODE.GETOBJECTIVE()
+                String objective = Cfg.enableEscapeGamemode ? "ESCAPE" : "KILL ENDER DRAGON";
+                Bukkit.broadcastMessage(String.format(Messages.SELECTED_OBJECTIVE, objective));
 
                 //debug: check distance btw runner and hunters
                 if (hunters.size() > 0) {
-                    Bukkit.broadcastMessage("§eDistance handicap: " + CommonUtil.distance(outlaw.getLocation(), hunters.get(0).getLocation()));
+                    Bukkit.broadcastMessage(String.format(Messages.SELECTED_HANDICAP,
+                            CommonUtil.distance(outlaw.getLocation(), hunters.get(0).getLocation())));
                 }
 
                 //run game
                 gameTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, gameProcessor, 1, 20);
-                Bukkit.broadcastMessage("§eGame started. Run!");
+                Bukkit.broadcastMessage(Messages.GAME_STARTED);
                 break;
             default:
-                LoggerUtil.warn("Suspicious game state: " + state.toString());
+                LoggerUtil.warn(GAME_STATE_UNKNOWN + state.toString());
         }
     }
 
@@ -414,6 +423,7 @@ public class Engine extends JavaPlugin {
         Hunter.getTeam().addEntry(p.getName());
     }
 
+    //todo: gamemode
     private void alertHunter() {
         Location l = outlaw.getLocation();
         if (isOutside(l)) {
@@ -422,10 +432,11 @@ public class Engine extends JavaPlugin {
         }
     }
 
+    //todo: gamemode
     private void checkEscape() {
-        Location l = outlaw.getLocation();
+        Location l = outlaw.getLocation().add(-0.5, 0, -0.5);
         if ((Math.abs(l.getX()) > escapeArea) || (Math.abs(l.getZ()) > escapeArea)) {
-            Bukkit.broadcastMessage("§eVictim escaped!");
+            Bukkit.broadcastMessage(Messages.VICTIM_ESCAPED);
             changeGameState(GameState.IDLE);
         }
     }
@@ -463,12 +474,9 @@ public class Engine extends JavaPlugin {
     //todo
     //  refactor code
     //  more stats
-    //  rm debugmode param and debug outputs
     //  countdown gamemode
     //  victim glowing param
     //  wall progbar feature
 
     //todo: re-organize gamemodes impl
-
-    //todo debug: check all location.add() usages
 }
