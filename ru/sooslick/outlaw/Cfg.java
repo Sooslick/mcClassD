@@ -29,7 +29,7 @@ public class Cfg {
     public static int spawnDistance;
     public static int alertRadius;
     public static int alertTimeout;
-    public static int hideVictimNametagAbovePlayers;
+    public static int hideVictimNametagAboveHunters;
     public static boolean enablePotionHandicap;
     public static boolean enableStartInventory;
     public static boolean enableEscapeGamemode;
@@ -55,7 +55,7 @@ public class Cfg {
                       readValue("spawnDistance", 240);
                       readValue("alertRadius", 50);
                       readValue("alertTimeout", 60);
-                      readValue("hideVictimNametagAbovePlayers", 4);
+                      readValue("hideVictimNametagAboveHunters", 2);
                       readValue("enablePotionHandicap", true);
                       readValue("enableStartInventory", true);
         changeAlert = readValue("enableEscapeGamemode", false) || changeAlert;

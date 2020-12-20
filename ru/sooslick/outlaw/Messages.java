@@ -21,6 +21,7 @@ public class Messages {
     public static final String JOIN_REQUEST_SENT = "§cJoin request has been sent";
     public static final String JOIN_REQUEST_VICTIM = "§cYou are the Victim. Nice try :P";
     public static final String NAMETAG_IS_INVISIBLE = "§eVictim's nametag is §cINVISIBLE";
+    public static final String NAMETAG_IS_VISIBLE = "§eVictim's nametag is §cVISIBLE";
     public static final String ONLY_VICTIM_ALLOWED = "§cOnly Victim can use this command";
     public static final String READY_FOR_GAME = "§eReady for the next game";
     public static final String RULES_GAMEMODE = "§6\nMinecraft Manhunt gamemode\n§eIn this game one of players starts as §cVictim§e and others become §cHunters§e.\nVictim has to complete the gamemode's objective avoiding Hunters and loses on death.\nHunters must prevent Victim from reaching their objective by any means. They have unlimited respawns and spawn with compasses that always point to Victim's location.";

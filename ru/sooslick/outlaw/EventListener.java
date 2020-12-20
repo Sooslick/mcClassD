@@ -30,7 +30,6 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scoreboard.Scoreboard;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 import ru.sooslick.outlaw.util.CommonUtil;
@@ -223,6 +222,8 @@ public class EventListener implements Listener {
         }
         Player p = e.getPlayer();
         Outlaw o = engine.getOutlaw();
+        //nametag bugfix
+        engine.getScoreboardHolder().setPlayerScoreboard(p);
 
         //check Outlaw
         if (p.getName().equals(o.getPlayer().getName())) {
@@ -234,10 +235,6 @@ public class EventListener implements Listener {
         for (Hunter h : engine.getHunters()) {
             if (h.getPlayer().getName().equals(p.getName())) {
                 h.setPlayer(p);
-                //nametag bugfix
-                Scoreboard scoreboard = engine.getScoreboard();
-                p.setScoreboard(scoreboard);
-                scoreboard.getTeam(Engine.TEAM_HUNTER_NAME).addEntry(p.getName());
                 return;
             }
         }
@@ -255,6 +252,7 @@ public class EventListener implements Listener {
         }
         Player p = e.getPlayer();
         Outlaw o = engine.getOutlaw();
+        //todo move spawn and assignments to goOffline
         if (o.getPlayer().equals(p)) {
             LivingEntity entity = (LivingEntity) p.getWorld().spawnEntity(p.getLocation(), EntityType.CHICKEN);
             entity.setAI(false);

@@ -11,8 +11,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 import ru.sooslick.outlaw.util.CommonUtil;
@@ -34,8 +32,6 @@ public class Engine extends JavaPlugin {
     private static final String PLUGIN_DISABLE_SUCCESS = "Disable ClassD Plugin - success";
     private static final String PLUGIN_INIT = "Init ClassD Plugin";
     private static final String PLUGIN_INIT_SUCCESS = "Init ClassD Plugin - success";
-    public static final String TEAM_HUNTER_NAME = "Hunter";
-    public static final String TEAM_VICTIM_NAME = "Victim";
 
     private static Engine instance;
 
@@ -52,7 +48,8 @@ public class Engine extends JavaPlugin {
     private boolean hunterAlert;
     private int halfSize;
     private int escapeArea;
-    private Scoreboard scoreboard;
+    private Location spawnLocation;
+    private ScoreboardHolder scoreboardHolder;
     private GameState state;
     private EventListener eventListener;
     private TimedMessages timedMessages;
@@ -238,10 +235,10 @@ public class Engine extends JavaPlugin {
                 req.deactivate();
                 Player p = Bukkit.getPlayer(e.getKey());
                 if (p != null) {
-                    //nametag bugfix
                     joinHunter(p);
                     acceptedRequests++;
                     Bukkit.broadcastMessage(String.format(Messages.JOIN_REQUEST_ACCEPTED, p.getName()));
+                    scoreboardHolder.recalculateNametagVisiblity(hunters.size());
                 }
             }
         }
@@ -290,8 +287,8 @@ public class Engine extends JavaPlugin {
         return chestTracker;
     }
 
-    public Scoreboard getScoreboard() {
-        return scoreboard;
+    public ScoreboardHolder getScoreboardHolder() {
+        return scoreboardHolder;
     }
 
     protected void changeGameState(GameState state) {
@@ -352,9 +349,7 @@ public class Engine extends JavaPlugin {
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 Player selectedPlayer;
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
-                scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();          //todo NPE check
-                Team teamVictim = scoreboard.registerNewTeam(TEAM_VICTIM_NAME);
-                Team teamHunter = scoreboard.registerNewTeam(TEAM_HUNTER_NAME);
+                scoreboardHolder = new ScoreboardHolder(Bukkit.getScoreboardManager());
 
                 //prepare environment
                 World w = Bukkit.getWorlds().get(0);
@@ -367,6 +362,7 @@ public class Engine extends JavaPlugin {
                 } else {
                     selectedPlayer = Bukkit.getPlayer(CommonUtil.getRandomOf(volunteers));
                 }
+                scoreboardHolder.addVictim(selectedPlayer);
                 Bukkit.broadcastMessage(String.format(Messages.SELECTED_VICTIM, selectedPlayer.getName()));
 
                 //process outlaw
@@ -377,17 +373,10 @@ public class Engine extends JavaPlugin {
                 if (Cfg.enablePotionHandicap) {
                     applyPotionHandicap(selectedPlayer);
                 }
-                //join to team and hide nametag
-                selectedPlayer.setScoreboard(scoreboard);
-                teamVictim.addEntry(selectedPlayer.getName());
-                if (Bukkit.getOnlinePlayers().size() >= Cfg.hideVictimNametagAbovePlayers) {
-                    Bukkit.broadcastMessage(Messages.NAMETAG_IS_INVISIBLE);
-                    teamVictim.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
-                }
 
                 //process others
-                Location hunterLocation = CommonUtil.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
-                Hunter.setupTeam(teamHunter, hunterLocation);
+                spawnLocation = CommonUtil.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
+                Bukkit.getWorlds().get(0).setSpawnLocation(spawnLocation);     //for new players and respawns
                 for (Player p : onlinePlayers) {
                     //skip outlaw
                     if (p.equals(selectedPlayer))
@@ -395,6 +384,9 @@ public class Engine extends JavaPlugin {
                     //add others to hunter team
                     joinHunter(p);
                 }
+
+                //set nametag visiblity
+                scoreboardHolder.recalculateNametagVisiblity(hunters.size());
 
                 //todo: GAMEMODE.GETOBJECTIVE()
                 String objective = Cfg.enableEscapeGamemode ? "ESCAPE" : "KILL ENDER DRAGON";
@@ -418,9 +410,8 @@ public class Engine extends JavaPlugin {
     private void joinHunter(Player p) {
         Hunter currentHunter = new Hunter(p);
         hunters.add(currentHunter);
-        currentHunter.preparePlayer(Hunter.getSpawnLocation());
-        p.setScoreboard(scoreboard);
-        Hunter.getTeam().addEntry(p.getName());
+        currentHunter.preparePlayer(spawnLocation);
+        scoreboardHolder.addHunter(p);
     }
 
     //todo: gamemode

@@ -1,14 +1,14 @@
 package ru.sooslick.outlaw.util;
 
-import org.bukkit.Bukkit;
 import ru.sooslick.outlaw.Cfg;
+import ru.sooslick.outlaw.Engine;
 
 import java.util.logging.Logger;
 
 public class LoggerUtil {
 
     private static final String PREFIX = "[DEBUG] ";
-    private static final Logger LOG = Bukkit.getLogger();
+    private static final Logger LOG = Engine.getInstance().getLogger();
     private static final DebugLogger DEBUG_NORMAL = LOG::fine;
     private static final DebugLogger DEBUG_FORCED = (msg) -> LOG.info(PREFIX + msg);
 
