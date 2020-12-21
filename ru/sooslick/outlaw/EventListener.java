@@ -32,7 +32,11 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
-import ru.sooslick.outlaw.util.CommonUtil;
+import ru.sooslick.outlaw.util.WorldUtil;
+
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 public class EventListener implements Listener {
 
@@ -67,7 +71,7 @@ public class EventListener implements Listener {
             e.setCancelled(true);
             if (outlaw instanceof Player) {
                 Location l = outlaw.getLocation();
-                CommonUtil.invToChest(((Player) outlaw).getInventory(), l);
+                WorldUtil.invToChest(((Player) outlaw).getInventory(), l);
                 //todo is possible to steal inventory while outlaw is offline?
                 engine.getChestTracker().detectBlock(l.getBlock());
                 engine.getChestTracker().detectBlock(l.add(0, 1, 0).getBlock());
@@ -140,12 +144,15 @@ public class EventListener implements Listener {
     public void onPistonMove(BlockPistonExtendEvent e) {
         Engine engine = Engine.getInstance();
         ChestTracker ct = engine.getChestTracker();
+        List<Block> movedBlocks = new LinkedList<>();
         for (Block b : e.getBlocks()) {
             Block moved = b.getRelative(e.getDirection(), 1);
             ct.detectBlock(moved, true);
-            if (Cfg.enableEscapeGamemode)
-                engine.generateBarrier(moved);
+            movedBlocks.add(moved);
         }
+        //todo gamemode
+        if (Cfg.enableEscapeGamemode)
+            WorldUtil.generateBarrier(movedBlocks);
     }
 
     //todo: gamemode listener
@@ -191,7 +198,7 @@ public class EventListener implements Listener {
         }
 
         //detect towering escape attempts
-        engine.generateBarrier(b);
+        WorldUtil.generateBarrier(Collections.singletonList(b));
     }
 
     @EventHandler

@@ -6,8 +6,8 @@ import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.InventoryHolder;
-import ru.sooslick.outlaw.util.CommonUtil;
 import ru.sooslick.outlaw.util.LoggerUtil;
+import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -70,25 +70,25 @@ public class ChestTracker {
     public void detectBlock(Block b, boolean force) {
         if (force) {
             if (trackedBlocks.add(b))
-                LoggerUtil.debug(String.format(TRACKED_FORCE, CommonUtil.formatLocation(b.getLocation())));
+                LoggerUtil.debug(String.format(TRACKED_FORCE, WorldUtil.formatLocation(b.getLocation())));
             return;
         }
         if (b.getState() instanceof InventoryHolder) {
             if (trackedContainers.add(b))
-                LoggerUtil.debug(String.format(TRACKED_CONTAINER, b.getType(), CommonUtil.formatLocation(b.getLocation())));
+                LoggerUtil.debug(String.format(TRACKED_CONTAINER, b.getType(), WorldUtil.formatLocation(b.getLocation())));
         } else if (b.getBlockData() instanceof Bed) {
             if (trackedBeds.add(b))
-                LoggerUtil.debug(String.format(TRACKED_BED, CommonUtil.formatLocation(b.getLocation())));
+                LoggerUtil.debug(String.format(TRACKED_BED, WorldUtil.formatLocation(b.getLocation())));
         } else if (TRACKED_BLOCKS.contains(b.getType())) {
             if (trackedBlocks.add(b))
-                LoggerUtil.debug(String.format(TRACKED_BLOCK, b.getType(), CommonUtil.formatLocation(b.getLocation())));
+                LoggerUtil.debug(String.format(TRACKED_BLOCK, b.getType(), WorldUtil.formatLocation(b.getLocation())));
         }
     }
 
     public void detectEntity(Entity e) {
         if (TRACKED_ENTITY_TYPES.contains(e.getType()))
             if (trackedEntities.add(e)) {
-                LoggerUtil.debug(String.format(TRACKED_ENTITY, e.getType(), CommonUtil.formatLocation(e.getLocation())));
+                LoggerUtil.debug(String.format(TRACKED_ENTITY, e.getType(), WorldUtil.formatLocation(e.getLocation())));
             }
     }
 

@@ -10,7 +10,7 @@ import org.bukkit.potion.PotionEffectType;
 import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.Messages;
-import ru.sooslick.outlaw.util.CommonUtil;
+import ru.sooslick.outlaw.util.WorldUtil;
 
 public class Outlaw extends AbstractPlayer {
 
@@ -85,7 +85,7 @@ public class Outlaw extends AbstractPlayer {
         for (Hunter h : Engine.getInstance().getHunters()) {
             if (!h.getPlayer().getWorld().equals(outlawLocation.getWorld()))
                 continue;
-            if (CommonUtil.distance(h.getLocation(), outlawLocation) < Cfg.alertRadius) {
+            if (WorldUtil.distance2d(h.getLocation(), outlawLocation) < Cfg.alertRadius) {
                 alertTimeoutTimer = Cfg.alertTimeout;
                 outlawPlayer.sendMessage(Messages.HUNTERS_NEARBY);
                 //glow placeholder entity if Outlaw player is offline

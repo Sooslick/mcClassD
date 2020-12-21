@@ -3,9 +3,7 @@ package ru.sooslick.outlaw;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -15,6 +13,7 @@ import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 import ru.sooslick.outlaw.util.CommonUtil;
 import ru.sooslick.outlaw.util.LoggerUtil;
+import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -367,7 +366,7 @@ public class Engine extends JavaPlugin {
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
-                Location outlawLocation = CommonUtil.getSafeRandomLocation(Cfg.spawnRadius);
+                Location outlawLocation = WorldUtil.getSafeRandomLocation(Cfg.spawnRadius);
                 outlaw.preparePlayer(outlawLocation);
                 //give handicap effects
                 if (Cfg.enablePotionHandicap) {
@@ -375,7 +374,7 @@ public class Engine extends JavaPlugin {
                 }
 
                 //process others
-                spawnLocation = CommonUtil.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
+                spawnLocation = WorldUtil.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
                 Bukkit.getWorlds().get(0).setSpawnLocation(spawnLocation);     //for new players and respawns
                 for (Player p : onlinePlayers) {
                     //skip outlaw
@@ -395,7 +394,7 @@ public class Engine extends JavaPlugin {
                 //debug: check distance btw runner and hunters
                 if (hunters.size() > 0) {
                     Bukkit.broadcastMessage(String.format(Messages.SELECTED_HANDICAP,
-                            CommonUtil.distance(outlaw.getLocation(), hunters.get(0).getLocation())));
+                            WorldUtil.distance2d(outlaw.getLocation(), hunters.get(0).getLocation())));
                 }
 
                 //run game
@@ -445,19 +444,6 @@ public class Engine extends JavaPlugin {
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
-    }
-
-    //todo move this method and other world-modifying to world utils
-    public void generateBarrier(Block b) {
-        if (b.getY() > 245) {
-            //generate weird barrier for wall gamemode to prevent escape over the wall
-            World w = b.getWorld();
-            w.getBlockAt(b.getX(), 255, b.getZ()).setType(Material.BARRIER);
-            w.getBlockAt(b.getX() - 1, 255, b.getZ()).setType(Material.BARRIER);
-            w.getBlockAt(b.getX(), 255, b.getZ() - 1).setType(Material.BARRIER);
-            w.getBlockAt(b.getX() + 1, 255, b.getZ()).setType(Material.BARRIER);
-            w.getBlockAt(b.getX(), 255, b.getZ() + 1).setType(Material.BARRIER);
-        }
     }
 
     //todo refactor wall methods from Engine
