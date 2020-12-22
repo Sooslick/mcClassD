@@ -5,8 +5,8 @@ import org.bukkit.World;
 import ru.sooslick.outlaw.Cfg;
 
 public class Filler {
-    private static final String FILL_EMPTY = "fill operation cancelled, empty area";
     private static final String FILL_SIZE_EXCEED = "fill operation cancelled, blocks limit exceed";
+    private static final String FILL_SUCCESS = "Filled area from %s, %s, %s to %s, %s, %s";
     private static final String WORLD_NOT_SPECIFIED = "fill operation cancelled, world not specified";
 
     private World world;
@@ -59,29 +59,27 @@ public class Filler {
     }
 
     public boolean fill() {
-        //validate size
-        int volume = (endX - startX) * (endY - startY) * (endZ - startZ);
-        if (Math.abs(volume) > Cfg.blocksPerSecondLimit) {
-            LoggerUtil.warn(FILL_SIZE_EXCEED);
+        // validate world
+        if (world == null) {
+            LoggerUtil.warn(WORLD_NOT_SPECIFIED);
             return false;
-        } else if (volume == 0) {
-            LoggerUtil.warn(FILL_EMPTY);
+        }
+        //validate size
+        int volume = (Math.abs(endX - startX) + 1) * (Math.abs(endY - startY) + 1) * (Math.abs(endZ - startZ) + 1);
+        if (volume > Cfg.blocksPerSecondLimit) {
+            LoggerUtil.warn(FILL_SIZE_EXCEED);
             return false;
         }
         //validate material
         if (material == null) {
             material = Material.AIR;
         }
-        // validate world
-        if (world == null) {
-            LoggerUtil.warn(WORLD_NOT_SPECIFIED);
-            return false;
-        }
         //proceed
         for (int x = startX; x <= endX; x++)
             for (int y = startY; y <= endY; y++)
                 for (int z = startZ; z <= endZ; z++)
                     world.getBlockAt(x, y, z).setType(material);
+        LoggerUtil.debug(String.format(FILL_SUCCESS, startX, startY, startZ, endX, endY, endZ));
         return true;
     }
 }

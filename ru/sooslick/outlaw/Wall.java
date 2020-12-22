@@ -13,11 +13,10 @@ import java.util.LinkedList;
 public class Wall {
     private static final String DEBUG_RESET_SPOTS = "Reset and launched buildSpotTick";
     private static final String DEBUG_RESET_WALL = "Reset wall generator and launched buildWallTick";
-    private static final String DEBUG_SPOT_CREATED = "created spot at side %s, center %s";
     private static final String DEBUG_SPOTS_FINISHED = "buildSpots finished";
     private static final String DEBUG_SPOTS_QUEUED = "buildSpots queued, wallBuilt = ";
-    private static final String DEBUG_WALL_TICK = "buildWallTick, side=%s, currentBlock=%s";
     private static final String DEBUG_WALL_FINISHED = "buildWall finished, spotsQueued = ";
+    private static final String WARN_BUILD_LIMIT_TOO_SMALL = "blocksPerSecondLimit value too small, fixed it";
 
     private static int generatorTimerId;
     private static LinkedList<Integer> spotPositions;
@@ -37,7 +36,6 @@ public class Wall {
     private static World w;
 
     private final static Runnable buildWallTick = () -> {
-        LoggerUtil.debug(String.format(DEBUG_WALL_TICK, side, currentBlock));
         int from = currentBlock;
         int to = currentBlock + limiter;
         if (to > endWallCoord)
@@ -54,6 +52,8 @@ public class Wall {
                 if (side > 3) {
                     Bukkit.getScheduler().cancelTask(generatorTimerId);
                     LoggerUtil.debug(DEBUG_WALL_FINISHED + spotsQueued);
+                    if (Engine.getInstance().getGameState() == GameState.IDLE)
+                        Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
                     wallBuilt = true;
                     if (spotsQueued) {
                         launchBuildSpots();
@@ -88,7 +88,6 @@ public class Wall {
             }
         }
         spotPositions.removeFirst();
-        LoggerUtil.debug(String.format(DEBUG_SPOT_CREATED, side, center));
     };
 
     //disable constructor for utility class
@@ -106,8 +105,11 @@ public class Wall {
         side = 0;
         currentBlock = -startWallCoord;         //from -start to +end
         limiter = Cfg.blocksPerSecondLimit / 256 / Cfg.wallThickness;
-        if (limiter == 0)
+        if (limiter == 0) {
             limiter = 1;
+            Cfg.blocksPerSecondLimit = Cfg.wallThickness * 256;
+            LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
+        }
         w = Bukkit.getWorlds().get(0);
 
         //launch
@@ -195,4 +197,6 @@ public class Wall {
         int groundLevel = getGroundLevel(side, center);
         return CommonUtil.random.nextInt(groundLevel - spotSize) + spotSize;
     }
+
+    //todo: adequate task queue + rollback feature
 }

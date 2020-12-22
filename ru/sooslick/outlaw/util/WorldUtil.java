@@ -210,6 +210,8 @@ public class WorldUtil {
     }
 
     public static void generateBarrier(List<Block> blocks) {
+        if (blocks.size() == 0)
+            return;
         Block b0 = blocks.get(0);
         int minX = b0.getX();
         int maxX = minX;
@@ -218,11 +220,14 @@ public class WorldUtil {
         int maxY = b0.getY();
         if (blocks.size() > 1)
             for (Block b : blocks.subList(1, blocks.size())) {
-                if (b.getX() < minX) minX = b.getX();
-                else if (b.getX() > maxX) maxX = b.getX();
-                if (b.getZ() < minZ) minZ = b.getZ();
-                else if (b.getZ() > maxZ) maxZ = b.getZ();
-                if (b.getY() > maxY) maxY = b.getY();
+                int bx = b.getX();
+                int by = b.getY();
+                int bz = b.getZ();
+                if (bx < minX) minX = bx;
+                else if (bx > maxX) maxX = bx;
+                if (bz < minZ) minZ = bz;
+                else if (bz > maxZ) maxZ = bz;
+                if (by > maxY) maxY = by;
             }
         if (maxY > 248) {
             new Filler().setWorld(b0.getWorld()).setMaterial(Material.BARRIER)
