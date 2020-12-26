@@ -30,8 +30,12 @@ public class Hunter extends AbstractPlayer {
         firstRespawn = false;
     }
 
+    @SuppressWarnings("ConstantConditions")
     public void updateCompass(Outlaw outlaw) {
         Location trackedLocation = outlaw.getTrackedLocation(player.getWorld());   //todo: uneffective (???) use of getTrackedLocation
+        //unusual scenario, e.g. hunters teleported to nether but victim not. Just do nothing
+        if (trackedLocation == null)
+            return;
         player.setCompassTarget(trackedLocation);
 
         //update Nbt
@@ -41,6 +45,7 @@ public class Hunter extends AbstractPlayer {
         boolean updateName = true;
         //find any compass in inventory, preferably compass given by plugin (Victim Tracker)
         for (ItemStack current : inv.getContents()) {
+            //suppressed warning. ItemStack current CAN be null
             if (current != null && current.getType() == Material.COMPASS) {
                 is = current;
                 ItemMeta ism = is.getItemMeta();
@@ -79,7 +84,6 @@ public class Hunter extends AbstractPlayer {
             meta.setLodestone(trackedLocation);
             meta.setLodestoneTracked(true);
             is.setItemMeta(meta);
-            //Bukkit.getLogger().info("Cross-world update compass. Set meta for player " + player.getName());
         } else {
             meta.setLodestone(null);
             meta.setLodestoneTracked(false);

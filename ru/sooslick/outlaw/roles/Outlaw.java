@@ -14,16 +14,16 @@ import ru.sooslick.outlaw.util.WorldUtil;
 
 public class Outlaw extends AbstractPlayer {
 
-    Location lastWorldPos;
-    Location lastNetherPos;
-    LivingEntity placeholder;       //todo: cleanup in Engine.onDisable
-    boolean offline;
-    int alertTimeoutTimer;
+    private Location lastWorldPos;
+    private Location lastNetherPos;
+    private LivingEntity placeholder;       //todo: cleanup in Engine.onDisable
+    private boolean offline;
+    private int alertTimeoutTimer;
 
     public Outlaw(Player p) {
         super(p);
-        lastWorldPos = p.getLocation();     //todo: rework, add null check to updateCompass method
-        lastNetherPos = p.getLocation();
+        lastWorldPos = p.getLocation();
+        lastNetherPos = null;
         placeholder = null;
         offline = false;
         alertTimeoutTimer = 0;
@@ -34,12 +34,12 @@ public class Outlaw extends AbstractPlayer {
         return offline ? placeholder : player;
     }
 
-    public void setLastWorldPos(Location l) {
-        lastWorldPos = l;
-    }
-
-    public void setLastNetherPos(Location l) {
-        lastNetherPos = l;
+    public void setTrackedLocation(Location l) {
+        World.Environment env = l.getWorld().getEnvironment();
+        if (env == World.Environment.NORMAL)
+            lastWorldPos = l;
+        else if (env == World.Environment.NETHER)
+            lastNetherPos = l;
     }
 
     public Location getTrackedLocation(World from) {

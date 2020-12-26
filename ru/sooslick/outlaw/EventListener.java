@@ -108,15 +108,7 @@ public class EventListener implements Listener {
         Outlaw o = Engine.getInstance().getOutlaw();
         if (!e.getPlayer().equals(o.getPlayer()))
             return;
-        Location from = e.getFrom();
-        //todo move this switch to Outlaw and make lastPos fields private
-        switch (from.getWorld().getEnvironment()) {
-            case NORMAL:
-                o.setLastWorldPos(from);
-                break;
-            case NETHER:
-                o.setLastNetherPos(from);
-        }
+        o.setTrackedLocation(e.getFrom());
     }
 
     @EventHandler

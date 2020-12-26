@@ -137,6 +137,7 @@ public class Engine extends JavaPlugin {
     public void triggerEndgame(boolean victimWin) {
         //send message
         Bukkit.broadcastMessage(victimWin ? Messages.VICTIM_ESCAPED : Messages.VICTIM_DEAD);
+        //todo: foreach players - endGameTrigger. InvToChest in abstract player + placeholder cleanup in outlaw
         //create inventory chest for Victim
         WorldUtil.invToChest(outlaw.getPlayer().getInventory(), outlaw.getEntity().getLocation());
         //create inventory chests for hunters
