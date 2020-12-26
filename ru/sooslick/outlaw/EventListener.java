@@ -57,8 +57,7 @@ public class EventListener implements Listener {
         //todo: GAMEMODE IMPL
         if (e.getEntity().getType().equals(EntityType.ENDER_DRAGON)) {
             if (((LivingEntity) e.getEntity()).getHealth() - e.getFinalDamage() <= 0) {
-                Bukkit.broadcastMessage(Messages.VICTIM_ESCAPED);            //todo: impl method victory in Engine
-                engine.changeGameState(GameState.IDLE);
+                engine.triggerEndgame(true);
             }
             return;
         }
@@ -69,15 +68,7 @@ public class EventListener implements Listener {
             return;
         if (outlaw.getHealth() - e.getFinalDamage() <= 0) {
             e.setCancelled(true);
-            if (outlaw instanceof Player) {
-                Location l = outlaw.getLocation();
-                WorldUtil.invToChest(((Player) outlaw).getInventory(), l);
-                //todo is possible to steal inventory while outlaw is offline?
-                engine.getChestTracker().detectBlock(l.getBlock());
-                engine.getChestTracker().detectBlock(l.add(0, 1, 0).getBlock());
-            }
-            Bukkit.broadcastMessage(Messages.VICTIM_DEAD);   //todo: impl method victory in Engine
-            engine.changeGameState(GameState.IDLE);
+            engine.triggerEndgame(false);
         }
 
         //todo: check if hunter s ded

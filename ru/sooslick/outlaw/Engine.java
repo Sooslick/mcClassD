@@ -134,6 +134,17 @@ public class Engine extends JavaPlugin {
         return instance;
     }
 
+    public void triggerEndgame(boolean victimWin) {
+        //send message
+        Bukkit.broadcastMessage(victimWin ? Messages.VICTIM_ESCAPED : Messages.VICTIM_DEAD);
+        //create inventory chest for Victim
+        WorldUtil.invToChest(outlaw.getPlayer().getInventory(), outlaw.getEntity().getLocation());
+        //create inventory chests for hunters
+        hunters.forEach(h -> WorldUtil.invToChest(h.getPlayer().getInventory(), h.getEntity().getLocation()));
+        //finally change game state
+        changeGameState(GameState.IDLE);
+    }
+
     public void unvote(Player p) {
         String name = p.getName();
         if (volunteers.remove(name)) {
@@ -290,7 +301,7 @@ public class Engine extends JavaPlugin {
         return scoreboardHolder;
     }
 
-    protected void changeGameState(GameState state) {
+    private void changeGameState(GameState state) {
         this.state = state;
         LoggerUtil.info(GAME_STATE_CHANGED + state.toString());
         switch (state) {
@@ -426,8 +437,7 @@ public class Engine extends JavaPlugin {
     private void checkEscape() {
         Location l = outlaw.getLocation().add(-0.5, 0, -0.5);
         if ((Math.abs(l.getX()) > escapeArea) || (Math.abs(l.getZ()) > escapeArea)) {
-            Bukkit.broadcastMessage(Messages.VICTIM_ESCAPED);
-            changeGameState(GameState.IDLE);
+            triggerEndgame(true);
         }
     }
 
@@ -437,7 +447,7 @@ public class Engine extends JavaPlugin {
 
     private void applyPotionHandicap(LivingEntity selectedPlayer) {
         int x = Bukkit.getOnlinePlayers().size();
-        applyPotionHandicap(selectedPlayer, (int) ((x*x/5 + 0.8) * 400));
+        applyPotionHandicap(selectedPlayer, (int) ((x * x / 5 + 0.8) * 400));
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer, int duration) {

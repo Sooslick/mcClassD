@@ -9,6 +9,8 @@ import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.Cfg;
+import ru.sooslick.outlaw.ChestTracker;
+import ru.sooslick.outlaw.Engine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -184,7 +186,10 @@ public class WorldUtil {
         f.setMaterial(Material.AIR).setStartY(y + 1).setEndY(y + 3).fill();
     }
 
+    @SuppressWarnings("ConstantConditions")
     public static void invToChest(Inventory inv, Location l) {
+        //todo test: possible NPE, but chesttracker created after game start
+        ChestTracker ct = Engine.getInstance().getChestTracker();
         World w = l.getWorld();
         //prevent attempts to create chests outside the world
         if (l.getY() < 0 || l.getY() > w.getMaxHeight())
@@ -193,8 +198,10 @@ public class WorldUtil {
         Block b = w.getBlockAt(l);
         int slots = 0;
         b.setType(Material.CHEST);
+        ct.detectBlock(b);
         Inventory chestInv = ((Chest) b.getState()).getBlockInventory();
         for (ItemStack is : inv.getContents()) {
+            //suppressed warning here. ItemStack CAN be null!
             if (is != null) {
                 //switch to next chest when filled
                 if (slots == 27) {

@@ -5,7 +5,7 @@ import org.bukkit.World;
 import ru.sooslick.outlaw.Cfg;
 
 public class Filler {
-    private static final String FILL_SIZE_EXCEED = "fill operation cancelled, blocks limit exceed";
+    private static final String FILL_SIZE_EXCEED = "fill operation cancelled, blocks limit exceed. Actual size: ";
     private static final String FILL_SUCCESS = "Filled area from %s, %s, %s to %s, %s, %s";
     private static final String WORLD_NOT_SPECIFIED = "fill operation cancelled, world not specified";
 
@@ -67,7 +67,7 @@ public class Filler {
         //validate size
         int volume = (Math.abs(endX - startX) + 1) * (Math.abs(endY - startY) + 1) * (Math.abs(endZ - startZ) + 1);
         if (volume > Cfg.blocksPerSecondLimit) {
-            LoggerUtil.warn(FILL_SIZE_EXCEED);
+            LoggerUtil.warn(FILL_SIZE_EXCEED + volume);
             return false;
         }
         //validate material

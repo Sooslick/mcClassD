@@ -11,6 +11,7 @@ import ru.sooslick.outlaw.util.LoggerUtil;
 import java.util.LinkedList;
 
 public class Wall {
+    private static final String DEBUG_LIMITER = "Wall limiter is %s. Expected volume: %s";
     private static final String DEBUG_RESET_SPOTS = "Reset and launched buildSpotTick";
     private static final String DEBUG_RESET_WALL = "Reset wall generator and launched buildWallTick";
     private static final String DEBUG_SPOTS_FINISHED = "buildSpots finished";
@@ -37,7 +38,7 @@ public class Wall {
 
     private final static Runnable buildWallTick = () -> {
         int from = currentBlock;
-        int to = currentBlock + limiter;
+        int to = currentBlock + limiter - 1;
         if (to > endWallCoord)
             to = endWallCoord;
         Filler f = getSideBasedFiller(side, from, to)
@@ -105,6 +106,7 @@ public class Wall {
         side = 0;
         currentBlock = -startWallCoord;         //from -start to +end
         limiter = Cfg.blocksPerSecondLimit / 256 / Cfg.wallThickness;
+        LoggerUtil.debug(String.format(DEBUG_LIMITER, limiter, limiter*256*Cfg.wallThickness));
         if (limiter == 0) {
             limiter = 1;
             Cfg.blocksPerSecondLimit = Cfg.wallThickness * 256;
