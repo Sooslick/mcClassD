@@ -14,6 +14,7 @@ public class CommandListener implements CommandExecutor {
 
     private static final String MH_ACCEPT = "§6/manhunt accept §7(/y)";
     private static final String MH_CFG = "§7/manhunt cfg <parameter>";
+    private static final String MH_EXCLUDE = "§6/manhunt exclude §7(/mh e)";
     private static final String MH_HELP = "§6/manhunt help";
     private static final String MH_JOIN_REQUEST = "§6/manhunt joinrequest";
     private static final String MH_START = "§7/manhunt start";
@@ -25,6 +26,8 @@ public class CommandListener implements CommandExecutor {
     private static final String COMMAND_VOTE_ALIAS = "v";
     private static final String COMMAND_SUGGEST = "suggest";
     private static final String COMMAND_SUGGEST_ALIAS = "s";
+    private static final String COMMAND_EXCLUDE = "exclude";
+    private static final String COMMAND_EXCLUDE_ALIAS = "e";
     private static final String COMMAND_JOIN_REQUEST = "joinrequest";
     private static final String COMMAND_ACCEPT = "accept";
     public static final String COMMAND_ACCEPT_ALIAS = "y";
@@ -63,6 +66,14 @@ public class CommandListener implements CommandExecutor {
             case COMMAND_SUGGEST_ALIAS:
                 if (sender instanceof Player)
                     Engine.getInstance().suggest((Player) sender);
+                else
+                    printConsoleInfo(sender);
+                break;
+
+            case COMMAND_EXCLUDE:
+            case COMMAND_EXCLUDE_ALIAS:
+                if (sender instanceof Player)
+                    Engine.getInstance().exclude((Player) sender);
                 else
                     printConsoleInfo(sender);
                 break;
@@ -108,7 +119,7 @@ public class CommandListener implements CommandExecutor {
     }
 
     private void printConsoleInfo(CommandSender s) {
-        s.sendMessage("Console cannot do this. Try §6/manhunt help");
+        s.sendMessage(Messages.CONSOLE_CANNOT_DO_THIS);
     }
 
     private void printInfo(CommandSender s) {
@@ -123,7 +134,7 @@ public class CommandListener implements CommandExecutor {
         boolean joinRequestAvailable = isGame && isPlayer && ((Player) s).getGameMode() == GameMode.SPECTATOR;
         boolean canForceStart = !isGame && s.hasPermission(PERMISSION_START);
         if (cfgAvailable) major.add(MH_CFG); else minor.add(MH_CFG);
-        if (lobbyAvailable) { major.add(MH_VOTE); major.add(MH_SUGGEST); } else { minor.add(MH_VOTE); minor.add(MH_SUGGEST); }
+        if (lobbyAvailable) { major.add(MH_VOTE); major.add(MH_SUGGEST); major.add(MH_EXCLUDE); } else { minor.add(MH_VOTE); minor.add(MH_SUGGEST); minor.add(MH_EXCLUDE); }
         if (acceptAvailable) major.add(MH_ACCEPT); else minor.add(MH_ACCEPT);
         if (joinRequestAvailable) major.add(MH_JOIN_REQUEST); else minor.add(MH_JOIN_REQUEST);
         if (canForceStart) major.add(MH_START); else minor.add(MH_START);

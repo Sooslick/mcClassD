@@ -32,12 +32,16 @@ public class Engine extends JavaPlugin {
     private static final String PLUGIN_DISABLE_SUCCESS = "Disable ClassD Plugin - success";
     private static final String PLUGIN_INIT = "Init ClassD Plugin";
     private static final String PLUGIN_INIT_SUCCESS = "Init ClassD Plugin - success";
+    private static final String SELECTOR_EXCLUDE = "No suggesters, choices are %s/%s online players";
+    private static final String SELECTOR_ONLINE_PLAYERS = "Choosing victim through the whole online players";
+    private static final String SELECTOR_SUGGESTERS = "Choosing victim from one of suggested players";
 
     private static Engine instance;
 
     private List<Hunter> hunters;
     private Outlaw outlaw;
     private List<String> volunteers;
+    private List<String> excludes;
     private List<String> votestarters;
     private Map<String, TimedRequest> joinRequests;
     private int votestartCountdown;
@@ -52,7 +56,7 @@ public class Engine extends JavaPlugin {
     private ScoreboardHolder scoreboardHolder;
     private GameState state;
     private EventListener eventListener;
-    private TimedMessages timedMessages;
+    private TimedMessages timedMessages;  //todo @SuppressWarnings("FieldCanBeLocal") ??
     private ChestTracker chestTracker;
 
     private final Runnable votestartTimerImpl = () -> {
@@ -205,7 +209,23 @@ public class Engine extends JavaPlugin {
             return;
         }
         volunteers.add(name);
+        excludes.remove(name);
         Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_SUGGEST, name));
+    }
+
+    public void exclude(Player p) {
+        if (state == GameState.GAME) {
+            p.sendMessage(Messages.VOLUNTEER_SUGGEST_INGAME);
+            return;
+        }
+        String name = p.getName();
+        if (excludes.contains(name)) {
+            p.sendMessage(Messages.VOLUNTEER_ALREADY_EXCLUDED);
+            return;
+        }
+        excludes.add(name);
+        volunteers.remove(name);
+        Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_EXCLUDED, name));
     }
 
     public void joinRequest(Player sender) {
@@ -326,6 +346,7 @@ public class Engine extends JavaPlugin {
 
                 //reinit game variables
                 votestarters = new ArrayList<>();
+                excludes = new ArrayList<>();
                 volunteers = new ArrayList<>();
                 hunters = new ArrayList<>();
                 joinRequests = new HashMap<>();
@@ -370,8 +391,6 @@ public class Engine extends JavaPlugin {
                 chestTracker = new ChestTracker();
                 eventListener.reset();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
-                Player selectedPlayer;
-                Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
                 scoreboardHolder = new ScoreboardHolder(Bukkit.getScoreboardManager());
 
                 //prepare environment
@@ -379,11 +398,25 @@ public class Engine extends JavaPlugin {
                 w.setTime(0);
                 w.setStorm(false);
 
+                //filter excludes
+                Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+                if (volunteers.isEmpty()) {
+                    onlinePlayers.forEach(p -> {
+                        String name = p.getName();
+                        if (!excludes.contains(name))
+                            volunteers.add(name);
+                    });
+                    LoggerUtil.debug(String.format(SELECTOR_EXCLUDE, volunteers.size(), onlinePlayers.size()));
+                }
+
                 //select outlaw entity
+                Player selectedPlayer;
                 if (volunteers.isEmpty()) {
                     selectedPlayer = CommonUtil.getRandomOf(onlinePlayers);
+                    LoggerUtil.debug(SELECTOR_ONLINE_PLAYERS);
                 } else {
                     selectedPlayer = Bukkit.getPlayer(CommonUtil.getRandomOf(volunteers));
+                    LoggerUtil.debug(SELECTOR_SUGGESTERS);
                 }
                 scoreboardHolder.addVictim(selectedPlayer);
                 Bukkit.broadcastMessage(String.format(Messages.SELECTED_VICTIM, selectedPlayer.getName()));

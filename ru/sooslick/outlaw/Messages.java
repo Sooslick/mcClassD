@@ -7,6 +7,7 @@ public class Messages {
     public static final String COMMANDS_UNAVAILABLE = "\n§e - Other commands:";
     public static final String COMPASS_NAME = "Victim Tracker";
     public static final String CONFIG_MODIFIED = "§cGame parameter modified: §e%s = %s";
+    public static final String CONSOLE_CANNOT_DO_THIS = "Console cannot do this. Try §6/manhunt help";
     public static final String GAME_IS_NOT_RUNNING = "§cGame is not running.";
     public static final String GAME_IS_RUNNING = "§cGame is running.";
     public static final String GAME_STARTED = "§eGame started. Run!";
@@ -44,6 +45,8 @@ public class Messages {
     public static final String VICTIM_ESCAPED = "§eVictim escaped and won the game!";
     public static final String VICTIM_OFFLINE = "§cVictim left the game, but there is §eVictim Chicken§c. Kill it!";
     public static final String VICTIM_ONLINE = "§cVictim is back to the game!";
+    public static final String VOLUNTEER_ALREADY_EXCLUDED = "§cYou have already excluded yourself from Victim list";
+    public static final String VOLUNTEER_EXCLUDED = "§e%s doesn't want to be a Victim";
     public static final String VOLUNTEER_LEFT = "§c%s left and was removed from Victim suggesters";
     public static final String VOLUNTEER_SUGGEST = "§e%s proposed himself as a Victim";
     public static final String VOLUNTEER_SUGGEST_INGAME = "§cCannot suggest while game is running";
