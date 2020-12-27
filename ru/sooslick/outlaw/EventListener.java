@@ -28,7 +28,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
@@ -251,15 +250,18 @@ public class EventListener implements Listener {
         }
     }
 
+    //todo: move to gamemode listener
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
-        //todo just understand how it works and do adequate impl
-        detectGoldPickaxe();
+        if (e.getWhoClicked().equals(Engine.getInstance().getOutlaw().getPlayer()))
+            detectGoldPickaxe(e.getCurrentItem());
     }
 
+    //todo: move to gamemode listener
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent e) {
-        detectGoldPickaxe();    //todo fix it too
+        if (e.getEntity().equals(Engine.getInstance().getOutlaw().getPlayer()))
+            detectGoldPickaxe(e.getItem().getItemStack());
     }
 
     @EventHandler
@@ -289,7 +291,7 @@ public class EventListener implements Listener {
     }
 
     //todo: Gamemode
-    private void detectGoldPickaxe() {
+    private void detectGoldPickaxe(ItemStack is) {
         if (!Cfg.enableEscapeGamemode)
             return;
         Engine engine = Engine.getInstance();
@@ -297,12 +299,9 @@ public class EventListener implements Listener {
             return;
         if (goldenPickaxeAlerted)
             return;
-        Inventory inv = engine.getOutlaw().getPlayer().getInventory();
-        for (ItemStack is : inv.getContents())
-            if (is != null)
-                if (is.getType() == Material.GOLDEN_PICKAXE) {
-                    goldenPickaxeAlerted = true;
-                    Bukkit.broadcastMessage("§cGolden pickaxe detected");       //todo refactor broadcast to broadcaster class
-                }
+        if (is.getType() == Material.GOLDEN_PICKAXE) {
+            goldenPickaxeAlerted = true;
+            Bukkit.broadcastMessage("§cGolden pickaxe detected");
+        }
     }
 }

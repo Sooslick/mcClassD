@@ -16,6 +16,7 @@ public class CommandListener implements CommandExecutor {
     private static final String MH_CFG = "§7/manhunt cfg <parameter>";
     private static final String MH_HELP = "§6/manhunt help";
     private static final String MH_JOIN_REQUEST = "§6/manhunt joinrequest";
+    private static final String MH_START = "§7/manhunt start";
     private static final String MH_SUGGEST = "§6/manhunt suggest §7(/mh s)";
     private static final String MH_VOTE = "§6/manhunt votestart §7(/mh v)";
 
@@ -28,7 +29,10 @@ public class CommandListener implements CommandExecutor {
     private static final String COMMAND_ACCEPT = "accept";
     public static final String COMMAND_ACCEPT_ALIAS = "y";
     private static final String COMMAND_CFG = "cfg";
+    private static final String COMMAND_START = "start";
     private static final String COMMAND_HELP = "help";
+
+    private static final String PERMISSION_START = "classd.force.start";
 
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         //todo refactor to two methods for outlaw and for y command
@@ -54,6 +58,7 @@ public class CommandListener implements CommandExecutor {
                 else
                     printConsoleInfo(sender);
                 break;
+
             case COMMAND_SUGGEST:
             case COMMAND_SUGGEST_ALIAS:
                 if (sender instanceof Player)
@@ -61,18 +66,21 @@ public class CommandListener implements CommandExecutor {
                 else
                     printConsoleInfo(sender);
                 break;
+
             case COMMAND_JOIN_REQUEST:
                 if (sender instanceof Player)
                     Engine.getInstance().joinRequest((Player) sender);
                 else
                     printConsoleInfo(sender);
                 break;
+
             case COMMAND_ACCEPT:
                 if (sender instanceof Player)
                     Engine.getInstance().acceptJoinRequest((Player) sender);
                 else
                     printConsoleInfo(sender);
                 break;
+
             case COMMAND_CFG:
                 if (args.length == 1) {
                     //todo available params?
@@ -81,6 +89,15 @@ public class CommandListener implements CommandExecutor {
                     sender.sendMessage(Cfg.getValue(args[1]));
                 }
                 break;
+
+            case COMMAND_START:
+                if (!sender.hasPermission(PERMISSION_START)) {
+                    sender.sendMessage(Messages.NOT_PERMITTED);
+                } else {
+                    Engine.getInstance().forceStartGame(sender);
+                }
+                break;
+
             case COMMAND_HELP:
                 printHelpInfo(sender);
                 //no break, print default info after rules
@@ -104,10 +121,12 @@ public class CommandListener implements CommandExecutor {
         boolean lobbyAvailable = !isGame && isPlayer;
         boolean acceptAvailable = isGame && e.getOutlaw().getPlayer().equals(s);
         boolean joinRequestAvailable = isGame && isPlayer && ((Player) s).getGameMode() == GameMode.SPECTATOR;
+        boolean canForceStart = !isGame && s.hasPermission(PERMISSION_START);
         if (cfgAvailable) major.add(MH_CFG); else minor.add(MH_CFG);
         if (lobbyAvailable) { major.add(MH_VOTE); major.add(MH_SUGGEST); } else { minor.add(MH_VOTE); minor.add(MH_SUGGEST); }
         if (acceptAvailable) major.add(MH_ACCEPT); else minor.add(MH_ACCEPT);
         if (joinRequestAvailable) major.add(MH_JOIN_REQUEST); else minor.add(MH_JOIN_REQUEST);
+        if (canForceStart) major.add(MH_START); else minor.add(MH_START);
 
         s.sendMessage(Messages.COMMANDS_AVAILABLE);
         s.sendMessage(MH_HELP);                     //always send help

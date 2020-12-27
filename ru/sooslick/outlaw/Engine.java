@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -55,11 +56,10 @@ public class Engine extends JavaPlugin {
     private ChestTracker chestTracker;
 
     private final Runnable votestartTimerImpl = () -> {
-        if (--votestartCountdown % 10 == 0) {
-            if (votestartCountdown <= 0)
-                changeGameState(GameState.GAME);
-            else
-                Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, votestartCountdown));
+        if (votestartCountdown <= 0)
+            changeGameState(GameState.GAME);
+        else if (--votestartCountdown % 10 == 0) {
+            Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, votestartCountdown));
         }
     };
 
@@ -132,6 +132,18 @@ public class Engine extends JavaPlugin {
 
     public static Engine getInstance() {
         return instance;
+    }
+
+    public void forceStartGame(CommandSender sender) {
+        if (state == GameState.GAME) {
+            sender.sendMessage(Messages.GAME_IS_RUNNING);
+        } else {
+            votestartCountdown = 0;
+            if (state == GameState.IDLE) {
+                changeGameState(GameState.PRESTART);
+            }
+            Bukkit.broadcastMessage(String.format(Messages.START_FORCED, sender.getName()));
+        }
     }
 
     public void triggerEndgame(boolean victimWin) {
@@ -349,7 +361,7 @@ public class Engine extends JavaPlugin {
 
                 //launch timer
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
-                Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, Cfg.prestartTimer));
+                Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, votestartCountdown));
                 break;
             case GAME:
                 //reinit variables and stop lobby timers

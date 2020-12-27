@@ -13,3 +13,7 @@ commands:
   y:
     description: alias for /manhunt accept command
     usage: /y
+permissions:
+  classd.force.start:
+    default: op
+    description: allows start game immediately
