@@ -36,6 +36,8 @@ public class Engine extends JavaPlugin {
     private static final String SELECTOR_ONLINE_PLAYERS = "Choosing victim through the whole online players";
     private static final String SELECTOR_SUGGESTERS = "Choosing victim from one of suggested players";
 
+    private static final int DEFAULT_REFRESH_TIMER = 10;
+
     private static Engine instance;
 
     private List<Hunter> hunters;
@@ -49,6 +51,7 @@ public class Engine extends JavaPlugin {
     private int gameTimerId;
     private long gameTimer;
     private int killCounter;
+    private int glowingRefreshTimer;
     private boolean hunterAlert;
     private int halfSize;
     private int escapeArea;
@@ -67,6 +70,13 @@ public class Engine extends JavaPlugin {
         }
     };
 
+    private final Runnable victimGlowingImpl = () -> {
+        if (--glowingRefreshTimer <= 0) {
+            outlaw.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, DEFAULT_REFRESH_TIMER*21, 1));
+            glowingRefreshTimer = DEFAULT_REFRESH_TIMER;
+        }
+    };
+
     private final Runnable gameProcessor = () -> {
         gameTimer++;
 
@@ -77,6 +87,9 @@ public class Engine extends JavaPlugin {
         for (Hunter h : hunters) {
             h.updateCompass(outlaw);
         }
+
+        if (Cfg.enableVictimGlowing)
+            victimGlowingImpl.run();
 
         //todo: move wall methods to gamemode
         //check if Victim's position is inside or outside the wall
@@ -127,6 +140,10 @@ public class Engine extends JavaPlugin {
     @Override
     public void onDisable() {
         LoggerUtil.info(PLUGIN_DISABLE);
+        if (state == GameState.GAME) {
+            outlaw.onEndGame();
+            hunters.forEach(Hunter::onEndGame);
+        }
         if (chestTracker != null) {
             chestTracker.cleanupBlocks();
             chestTracker.cleanupEntities();
@@ -151,14 +168,9 @@ public class Engine extends JavaPlugin {
     }
 
     public void triggerEndgame(boolean victimWin) {
-        //send message
         Bukkit.broadcastMessage(victimWin ? Messages.VICTIM_ESCAPED : Messages.VICTIM_DEAD);
-        //todo: foreach players - endGameTrigger. InvToChest in abstract player + placeholder cleanup in outlaw
-        //create inventory chest for Victim
-        WorldUtil.invToChest(outlaw.getPlayer().getInventory(), outlaw.getEntity().getLocation());
-        //create inventory chests for hunters
-        hunters.forEach(h -> WorldUtil.invToChest(h.getPlayer().getInventory(), h.getEntity().getLocation()));
-        //finally change game state
+        outlaw.onEndGame();
+        hunters.forEach(Hunter::onEndGame);
         changeGameState(GameState.IDLE);
     }
 
@@ -334,6 +346,10 @@ public class Engine extends JavaPlugin {
         return scoreboardHolder;
     }
 
+    public void setGlowingRefreshTimer(int glowingRefreshTimer) {
+        this.glowingRefreshTimer = glowingRefreshTimer;
+    }
+
     private void changeGameState(GameState state) {
         this.state = state;
         LoggerUtil.info(GAME_STATE_CHANGED + state.toString());
@@ -352,6 +368,7 @@ public class Engine extends JavaPlugin {
                 joinRequests = new HashMap<>();
                 votestartCountdown = Cfg.prestartTimer;
                 gameTimer = 0;
+                glowingRefreshTimer = 0;
                 killCounter = 0;
                 hunterAlert = false;
                 //todo move gamemode's variables to gamemode

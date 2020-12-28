@@ -34,6 +34,12 @@ public class Outlaw extends AbstractPlayer {
         return offline ? placeholder : player;
     }
 
+    @Override
+    public void onEndGame() {
+        super.onEndGame();
+        if (placeholder != null) placeholder.remove();
+    }
+
     public void setTrackedLocation(Location l) {
         World.Environment env = l.getWorld().getEnvironment();
         if (env == World.Environment.NORMAL)

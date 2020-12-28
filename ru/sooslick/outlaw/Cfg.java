@@ -30,6 +30,8 @@ public class Cfg {
     public static int alertRadius;
     public static int alertTimeout;
     public static int hideVictimNametagAboveHunters;
+    public static boolean enableVictimGlowing;
+    public static int milkGlowImmunityDuration;
     public static boolean enablePotionHandicap;
     public static boolean enableStartInventory;
     public static boolean enableEscapeGamemode;
@@ -56,6 +58,8 @@ public class Cfg {
                       readValue("alertRadius", 50);
                       readValue("alertTimeout", 60);
                       readValue("hideVictimNametagAboveHunters", 2);
+                      readValue("enableVictimGlowing", false);
+                      readValue("milkGlowImmunityDuration", 180);
                       readValue("enablePotionHandicap", true);
                       readValue("enableStartInventory", true);
         changeAlert = readValue("enableEscapeGamemode", false) || changeAlert;
@@ -73,6 +77,7 @@ public class Cfg {
         if (spawnDistance <= 0) spawnDistance = 10;
         if (alertRadius <= 0) alertRadius = 10;
         if (alertTimeout <= 0) alertTimeout = 10;
+        if (milkGlowImmunityDuration <= 0) milkGlowImmunityDuration = 10;
         if (blocksPerSecondLimit < 10000) blocksPerSecondLimit = 10000;
         if (playzoneSize < spawnRadius + spawnDistance) playzoneSize = spawnRadius + spawnDistance + 10;
         if (wallThickness <= 0) wallThickness = 1;

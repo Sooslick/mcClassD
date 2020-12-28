@@ -22,6 +22,7 @@ import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -143,7 +144,7 @@ public class EventListener implements Listener {
         Engine engine = Engine.getInstance();
         if (!Cfg.enableEscapeGamemode)
             return;
-        if (!engine.getGameState().equals(GameState.GAME))
+        if (engine.getGameState() != GameState.GAME)
             return;
         if (firstBlockAlerted)
             return;
@@ -164,7 +165,9 @@ public class EventListener implements Listener {
         Engine engine = Engine.getInstance();
         //detect beds and chests
         Block b = e.getBlockPlaced();
-        engine.getChestTracker().detectBlock(b);
+        ChestTracker ct = engine.getChestTracker();
+        if (ct != null)
+            ct.detectBlock(b);
 
         if (!Cfg.enableEscapeGamemode)
             return;
@@ -253,6 +256,8 @@ public class EventListener implements Listener {
     //todo: move to gamemode listener
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
+        if (Engine.getInstance().getGameState() != GameState.GAME)
+            return;
         if (e.getWhoClicked().equals(Engine.getInstance().getOutlaw().getPlayer()))
             detectGoldPickaxe(e.getCurrentItem());
     }
@@ -260,6 +265,8 @@ public class EventListener implements Listener {
     //todo: move to gamemode listener
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent e) {
+        if (Engine.getInstance().getGameState() != GameState.GAME)
+            return;
         if (e.getEntity().equals(Engine.getInstance().getOutlaw().getPlayer()))
             detectGoldPickaxe(e.getItem().getItemStack());
     }
@@ -285,6 +292,20 @@ public class EventListener implements Listener {
             engine.getChestTracker().detectEntity(e.getVehicle());
     }
 
+    @EventHandler
+    public void onConsume(PlayerItemConsumeEvent e) {
+        if (e.isCancelled())
+            return;
+        Engine engine = Engine.getInstance();
+        if (engine.getGameState() != GameState.GAME)
+            return;
+        if (!e.getPlayer().equals(engine.getOutlaw().getPlayer()))
+            return;
+        if (e.getItem().getType() == Material.MILK_BUCKET) {
+            engine.setGlowingRefreshTimer(Cfg.milkGlowImmunityDuration);
+        }
+    }
+
     public void reset() {
         firstBlockAlerted = false;
         goldenPickaxeAlerted = false;
@@ -295,8 +316,6 @@ public class EventListener implements Listener {
         if (!Cfg.enableEscapeGamemode)
             return;
         Engine engine = Engine.getInstance();
-        if (!engine.getGameState().equals(GameState.GAME))
-            return;
         if (goldenPickaxeAlerted)
             return;
         if (is.getType() == Material.GOLDEN_PICKAXE) {

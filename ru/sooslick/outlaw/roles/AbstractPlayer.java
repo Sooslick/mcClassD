@@ -8,6 +8,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.Cfg;
+import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.Map;
 
@@ -63,6 +64,11 @@ public abstract class AbstractPlayer {
 
     public void onRespawn() {
         firstRespawn = false;
+    }
+
+    public void onEndGame() {
+        player.setGameMode(GameMode.SPECTATOR);
+        WorldUtil.invToChest(getPlayer().getInventory(), getEntity().getLocation());
     }
 
     private void giveStartInventory() {

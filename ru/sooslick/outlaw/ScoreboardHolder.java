@@ -27,7 +27,7 @@ public class ScoreboardHolder {
             teamHunter = scoreboard.registerNewTeam(TEAM_HUNTER_NAME);
 
             //pre-setup
-            teamVictim.setColor(ChatColor.RED);
+            teamVictim.setColor(ChatColor.GOLD);
             teamHunter.setColor(ChatColor.WHITE);
         } else
             enabled = false;
