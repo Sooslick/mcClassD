@@ -8,6 +8,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CompassMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import ru.sooslick.outlaw.Cfg;
+import ru.sooslick.outlaw.CompassUpdates;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.util.CommonUtil;
@@ -15,9 +17,25 @@ import ru.sooslick.outlaw.util.CommonUtil;
 import java.time.Duration;
 
 public class Hunter extends AbstractPlayer {
+    private static Outlaw outlaw;
+    private static CompassUpdates.CompassUpdateMethod compassUpdateMethod;
+
+    public static void setupHunter(Outlaw o) {
+        outlaw = o;
+        compassUpdateMethod = Cfg.compassUpdates.getCompassUpdateMethod();
+    }
+
+    private int compassCooldown;
 
     public Hunter(Player p) {
         super(p);
+        compassCooldown = 0;
+    }
+
+    @Override
+    public void preparePlayer(Location dest) {
+        super.preparePlayer(dest);
+        updateCompass();            //todo first update dont reset cooldown
     }
 
     @Override
@@ -26,17 +44,32 @@ public class Hunter extends AbstractPlayer {
             Engine e = Engine.getInstance();
             player.sendMessage(String.format(Messages.HUNTER_RESPAWN, e.getOutlaw().getName(), CommonUtil.formatDuration(Duration.ofSeconds(e.getGameTimer()))));
         }
-        player.getInventory().addItem(new ItemStack(Material.COMPASS));
+        if (Cfg.compassUpdates != CompassUpdates.NEVER)
+            player.getInventory().addItem(new ItemStack(Material.COMPASS));
         firstRespawn = false;
     }
 
-    @SuppressWarnings("ConstantConditions")
-    public void updateCompass(Outlaw outlaw) {
+    public void triggerCompassUpdateTick() {
+        compassUpdateMethod.tick(this);
+    }
+
+    public void cooldownTick() {
+        compassCooldown--;
+    }
+
+    public boolean updateCompass() {
+        if (compassCooldown > 0) {
+            return false;
+        }
+
         Location trackedLocation = outlaw.getTrackedLocation(player.getWorld());   //todo: uneffective (???) use of getTrackedLocation
         //unusual scenario, e.g. hunters teleported to nether but victim not. Just do nothing
-        if (trackedLocation == null)
-            return;
+        if (trackedLocation == null) {
+            return false;
+        }
         player.setCompassTarget(trackedLocation);
+        //ignore the fact that compass or lodestone may lack, force cooldown here
+        compassCooldown = Cfg.compassUpdatesPeriod;
 
         //update Nbt
         //first: find Compass item in inventory
@@ -45,7 +78,8 @@ public class Hunter extends AbstractPlayer {
         boolean updateName = true;
         //find any compass in inventory, preferably compass given by plugin (Victim Tracker)
         for (ItemStack current : inv.getContents()) {
-            //suppressed warning. ItemStack current CAN be null
+            //ItemStack current CAN be null
+            //noinspection ConstantConditions
             if (current != null && current.getType() == Material.COMPASS) {
                 is = current;
                 ItemMeta ism = is.getItemMeta();
@@ -58,7 +92,7 @@ public class Hunter extends AbstractPlayer {
             }
         }
         if (is == null) {
-            return;
+            return false;
         }
 
         //second: get compass meta
@@ -66,28 +100,29 @@ public class Hunter extends AbstractPlayer {
         if (is.getItemMeta() instanceof CompassMeta)
             meta = (CompassMeta) is.getItemMeta();
         else {
-            return;
+            return false;
         }
 
         //optional: set name to compass
         if (updateName)
             meta.setDisplayName(Messages.COMPASS_NAME);
 
-        //finally: update meta
+        //third: update meta
         if (trackedLocation.getWorld().getEnvironment() == World.Environment.NETHER) {
-            //create lodestone (VERY WEIRD SOLUTION BUT WORKS ONLY)
+            //create lodestone in nether (VERY WEIRD SOLUTION BUT WORKS ONLY)
             trackedLocation.setY(128);
             trackedLocation.getBlock().setType(Material.LODESTONE);
             //todo: uneffective setBlock: called every updateCompass for every hunter
-
-            //and finally set meta
             meta.setLodestone(trackedLocation);
             meta.setLodestoneTracked(true);
-            is.setItemMeta(meta);
         } else {
+            //or reset for overworld
             meta.setLodestone(null);
             meta.setLodestoneTracked(false);
-            is.setItemMeta(meta);
         }
+        //and finally set meta
+        is.setItemMeta(meta);
+        return true;
     }
+
 }

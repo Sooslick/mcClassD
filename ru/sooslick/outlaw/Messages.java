@@ -6,6 +6,7 @@ public class Messages {
     public static final String COMMANDS_AVAILABLE = "\n§e - Available commands:";
     public static final String COMMANDS_UNAVAILABLE = "\n§e - Other commands:";
     public static final String COMPASS_NAME = "Victim Tracker";
+    public static final String COMPASS_UPDATED = "§aCompass is pointing to §c%s";
     public static final String CONFIG_MODIFIED = "§cGame parameter modified: §e%s = %s";
     public static final String CONSOLE_CANNOT_DO_THIS = "Console cannot do this. Try §6/manhunt help";
     public static final String GAME_IS_NOT_RUNNING = "§cGame is not running.";

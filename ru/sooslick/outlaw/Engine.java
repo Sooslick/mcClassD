@@ -85,7 +85,7 @@ public class Engine extends JavaPlugin {
 
         //change compass direction to actual victim's position every second
         for (Hunter h : hunters) {
-            h.updateCompass(outlaw);
+            h.triggerCompassUpdateTick();
         }
 
         if (Cfg.enableVictimGlowing)
@@ -448,6 +448,7 @@ public class Engine extends JavaPlugin {
                 }
 
                 //process others
+                Hunter.setupHunter(outlaw);
                 spawnLocation = WorldUtil.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
                 Bukkit.getWorlds().get(0).setSpawnLocation(spawnLocation);     //for new players and respawns
                 for (Player p : onlinePlayers) {

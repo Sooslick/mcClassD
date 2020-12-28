@@ -14,6 +14,7 @@ public class Cfg {
     private static final String CANNOT_READ_PARAMETER = "Cannot read parameter %s";
     private static final String READ_STARTINV_ENTRY = "read startInventory entry: %s x %s";
     private static final String UNKNOWN_ITEM = "Unknown item in start inventory: %s";
+    private static final String UNKNOWN_METHOD = "Unknown compass update method: %s";
     private static final String UNKNOWN_PARAMETER = "Unknown parameter: %s";
     private static final String UNPLAYABLE_WORLD_WARNING = "Parameter responsible for modifying world was changed. We strongly recommend to generate a new game world, otherwise it may be unplayable";
     private static final String VALUE_TEMPLATE = "%s: %s";
@@ -29,6 +30,8 @@ public class Cfg {
     public static int spawnDistance;
     public static int alertRadius;
     public static int alertTimeout;
+    public static CompassUpdates compassUpdates;
+    public static int compassUpdatesPeriod;
     public static int hideVictimNametagAboveHunters;
     public static boolean enableVictimGlowing;
     public static int milkGlowImmunityDuration;
@@ -57,6 +60,7 @@ public class Cfg {
                       readValue("spawnDistance", 240);
                       readValue("alertRadius", 50);
                       readValue("alertTimeout", 60);
+                      readValue("compassUpdatesPeriod", 1);
                       readValue("hideVictimNametagAboveHunters", 2);
                       readValue("enableVictimGlowing", false);
                       readValue("milkGlowImmunityDuration", 180);
@@ -77,6 +81,7 @@ public class Cfg {
         if (spawnDistance <= 0) spawnDistance = 10;
         if (alertRadius <= 0) alertRadius = 10;
         if (alertTimeout <= 0) alertTimeout = 10;
+        if (compassUpdatesPeriod <= 0) compassUpdatesPeriod = 1;
         if (milkGlowImmunityDuration <= 0) milkGlowImmunityDuration = 10;
         if (blocksPerSecondLimit < 10000) blocksPerSecondLimit = 10000;
         if (playzoneSize < spawnRadius + spawnDistance) playzoneSize = spawnRadius + spawnDistance + 10;
@@ -87,7 +92,21 @@ public class Cfg {
         if (undergroundSpotQty < 0) undergroundSpotQty = 0;
         if (groundSpotQty + airSpotQty + undergroundSpotQty <= 0) groundSpotQty = 1;
 
-        //start inventory
+        //something special for CompassUpdates
+        String key = "compassUpdates";
+        String compassUpdateCfg = currentCfg.getString(key, "ALWAYS");
+        CompassUpdates old = compassUpdates;
+        try {
+            //noinspection ConstantConditions
+            compassUpdates = CompassUpdates.valueOf(compassUpdateCfg.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            LoggerUtil.warn(String.format(UNKNOWN_METHOD, compassUpdateCfg));
+            compassUpdates = CompassUpdates.ALWAYS;
+        }
+        if (old != compassUpdates)
+            Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, key, compassUpdates));
+
+        //something special for start inventory
         startInventory = new HashMap<>();
         ConfigurationSection cs = f.getConfigurationSection("startInventory");
         for (String itemName : cs.getKeys(false)) {

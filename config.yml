@@ -1,20 +1,32 @@
+#More console output
 debugMode: false
-#General parameters
+
+#Lobby parameters
 minStartVotes: 2
 prestartTimer: 60
+
+#Startgame parameters
 spawnRadius: 250
 spawnDistance: 240
-alertRadius: 50
-alertTimeout: 60
 hideVictimNametagAboveHunters: 2
-enableVictimGlowing: false
-milkGlowImmunityDuration: 180
 enablePotionHandicap: true
 enableStartInventory: true
+
+#Gameplay parameters
+alertRadius: 50
+alertTimeout: 60
+#allowed values for compassUpdates (case insensitive): Always, OnClick, Never
+compassUpdates: ALWAYS
+compassUpdatesPeriod: 1
+enableVictimGlowing: false
+milkGlowImmunityDuration: 180
+
 #Escape the Wall gamemode
 enableEscapeGamemode: false
+
 #Wall generator performance
 blocksPerSecondLimit: 100000
+
 #Escape gamemode parameters
 playzoneSize: 1000
 wallThickness: 8
@@ -22,6 +34,7 @@ spotSize: 4
 groundSpotQty: 3
 airSpotQty: 2
 undergroundSpotQty: 5
+
 #Start inventory
 startInventory:
   OAK_LOG: 3

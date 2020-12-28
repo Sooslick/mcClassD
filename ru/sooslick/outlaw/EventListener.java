@@ -187,13 +187,21 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    public void onInteractBlock(PlayerInteractEvent e) {
+    public void onInteract(PlayerInteractEvent e) {
         Engine engine = Engine.getInstance();
         if (engine.getGameState() != GameState.GAME)
             return;
-        if (e.getAction() != Action.RIGHT_CLICK_BLOCK)
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK)
+            engine.getChestTracker().detectBlock(e.getClickedBlock());
+
+        //check compass
+        Player p = e.getPlayer();
+        Hunter h = engine.getHunter(p);
+        if (h == null)
             return;
-        engine.getChestTracker().detectBlock(e.getClickedBlock());
+        if (e.getMaterial() == Material.COMPASS)
+            if (h.updateCompass())
+                p.sendMessage(String.format(Messages.COMPASS_UPDATED, engine.getOutlaw().getName()));
     }
 
     @EventHandler
