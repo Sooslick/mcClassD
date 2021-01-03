@@ -2,7 +2,11 @@ package ru.sooslick.outlaw;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
@@ -43,6 +47,9 @@ public class ScoreboardHolder {
 
     public void addVictim(Player p) {
         addPlayerToTeam(p, teamVictim);
+
+        //todo: wall
+        victim = p.getName();
     }
 
     public void addHunter(Player p) {
@@ -65,5 +72,26 @@ public class ScoreboardHolder {
             setPlayerScoreboard(p);
             t.addEntry(p.getName());
         }
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+    //todo move entire section to wall
+
+    private Score score;
+    private String victim;
+
+    public void createWallObjective() {
+        Objective objective = scoreboard.registerNewObjective("The Wall", "dummy", "The Wall");
+        objective.setDisplaySlot(DisplaySlot.PLAYER_LIST);
+        score = objective.getScore(victim);
+        score.setScore(Cfg.wallThickness);
+    }
+
+    public void recalculateScore(Location l) {
+        int halfsize = Engine.getInstance().getHalfSize();
+        int blocks = Math.max(Math.abs(l.getBlockX()) - halfsize,  Math.abs(l.getBlockZ()) - halfsize) + 1;
+        int newScore = Cfg.wallThickness - blocks;
+        if (newScore < score.getScore())
+            score.setScore(newScore);
     }
 }

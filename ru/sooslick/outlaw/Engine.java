@@ -468,6 +468,11 @@ public class Engine extends JavaPlugin {
                 //set nametag visiblity
                 scoreboardHolder.recalculateNametagVisiblity(hunters.size());
 
+                //todo: GAMEMODE THE WALL
+                if (Cfg.enableEscapeGamemode) {
+                    scoreboardHolder.createWallObjective();
+                }
+
                 //todo: GAMEMODE.GETOBJECTIVE()
                 String objective = Cfg.enableEscapeGamemode ? "ESCAPE" : "KILL ENDER DRAGON";
                 Bukkit.broadcastMessage(String.format(Messages.SELECTED_OBJECTIVE, objective));

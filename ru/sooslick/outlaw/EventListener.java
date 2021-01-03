@@ -146,6 +146,10 @@ public class EventListener implements Listener {
             return;
         if (engine.getGameState() != GameState.GAME)
             return;
+
+        //TODO: WALL SCOREBOARD
+        engine.getScoreboardHolder().recalculateScore(e.getBlock().getLocation());
+
         if (firstBlockAlerted)
             return;
 
@@ -156,7 +160,7 @@ public class EventListener implements Listener {
         int halfsize = engine.getHalfSize();
         if ((Math.abs(l.getBlockX()) >= halfsize) || (Math.abs(l.getBlockZ()) >= halfsize)) {
             firstBlockAlerted = true;
-            Bukkit.broadcastMessage("§cVictim is trying to break the Wall");       //todo refactor broadcast to broadcaster class
+            Bukkit.broadcastMessage("§cVictim is trying to break the Wall");
         }
     }
 
