@@ -3,12 +3,19 @@ package ru.sooslick.outlaw;
 //Utility class with client messages that might be localized
 public class Messages {
 
+    public static final String BY = "by ";
     public static final String COMMANDS_AVAILABLE = "\n§e - Available commands:";
     public static final String COMMANDS_UNAVAILABLE = "\n§e - Other commands:";
     public static final String COMPASS_NAME = "Victim Tracker";
     public static final String COMPASS_UPDATED = "§aCompass is pointing to §c%s";
     public static final String CONFIG_MODIFIED = "§cGame parameter modified: §e%s = %s";
     public static final String CONSOLE_CANNOT_DO_THIS = "Console cannot do this. Try §6/manhunt help";
+    public static final String DEATH_BY_ATTACK = "beaten";
+    public static final String DEATH_BY_DEFAULT = "became dead";
+    public static final String DEATH_BY_EXPLOSION = "destroyed";
+    public static final String DEATH_BY_FALL = "jymped and died";                   //я пригнул и умер (с)
+    public static final String DEATH_BY_FIRE = "met the inquisition";
+    public static final String DEATH_BY_PROJECTILE = "shot";
     public static final String GAME_IS_NOT_RUNNING = "§cGame is not running.";
     public static final String GAME_IS_RUNNING = "§cGame is running.";
     public static final String GAME_STARTED = "§eGame started. Run!";

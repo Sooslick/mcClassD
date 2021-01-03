@@ -15,10 +15,11 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -32,6 +33,7 @@ import org.bukkit.event.vehicle.VehicleCreateEvent;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
+import ru.sooslick.outlaw.util.CommonUtil;
 import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.Collections;
@@ -53,6 +55,15 @@ public class EventListener implements Listener {
         if (!engine.getGameState().equals(GameState.GAME))
             return;
 
+        Entity eventEntity = e.getEntity();
+        if (eventEntity instanceof Player) {
+            Player eventPlayer = (Player) eventEntity;
+            if (eventPlayer.getHealth() - e.getFinalDamage() <= 0) {
+                Entity damager = e instanceof EntityDamageByEntityEvent ? ((EntityDamageByEntityEvent) e).getDamager() : null;
+                Bukkit.broadcastMessage(CommonUtil.getDeathMessage(eventPlayer, damager, e.getCause()));
+            }
+        }
+
         //check if dragon dead
         //todo: GAMEMODE IMPL
         if (e.getEntity().getType().equals(EntityType.ENDER_DRAGON)) {
@@ -64,31 +75,21 @@ public class EventListener implements Listener {
 
         //check if outlaw dead
         LivingEntity outlaw = engine.getOutlaw().getEntity();
-        if (!e.getEntity().equals(outlaw))
-            return;
-        if (outlaw.getHealth() - e.getFinalDamage() <= 0) {
-            e.setCancelled(true);
-            engine.triggerEndgame(false);
+        if (eventEntity.equals(outlaw)) {
+            if (outlaw.getHealth() - e.getFinalDamage() <= 0) {
+                e.setCancelled(true);
+                engine.triggerEndgame(false);
+            }
         }
-
-        //todo: check if hunter s ded
     }
 
     @EventHandler
-    public void onDeath(EntityDeathEvent e) {
+    public void onDeath(PlayerDeathEvent e) {
+        e.setDeathMessage(null);
         Engine engine = Engine.getInstance();
         if (!engine.getGameState().equals(GameState.GAME))
             return;
-
-        //check outlaw
-        Entity eventEntity = e.getEntity();
-        LivingEntity outlaw = engine.getOutlaw().getEntity();
-        if (e.getEntity().equals(outlaw))
-            return;
-
-        //else inc killcounter
-        if (eventEntity instanceof Player)
-            engine.incKill();
+        engine.incKill();
     }
 
     @EventHandler
