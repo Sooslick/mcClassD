@@ -8,7 +8,6 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.ChestTracker;
 import ru.sooslick.outlaw.Engine;
 
@@ -18,8 +17,7 @@ import java.util.List;
 public class WorldUtil {
     private static final double DISTANCE_MAX = 100500d;
     private static final String COMMA = ", ";
-    private static final String SAFELOC_DEFAULT = "getSafeRandomLocation - default";
-    private static final String SAFELOC_SUCCESS = "getSafeRandomLocation - success";
+    private static final String SAFETIZE = "Created safe location at %s";
     private static final String SAFELOC_FAIL = "getSafeRandomLocation - fail, reason: %s | %s";
     private static final String SAFELOC_FAIL_LIQUID = "liquid";
     private static final String SAFELOC_FAIL_OBSTRUCTION = "obstruction";
@@ -70,84 +68,36 @@ public class WorldUtil {
     public static Location getRandomLocation(int bound) {
         int dbound = bound * 2;
         int x = CommonUtil.random.nextInt(dbound) - bound;
-        if (x >= Cfg.playzoneSize)
-            x = Cfg.playzoneSize - 1;
-        else if (x <= -Cfg.playzoneSize)
-            x = -Cfg.playzoneSize + 1;
         int z = CommonUtil.random.nextInt(dbound) - bound;
-        if (z >= Cfg.playzoneSize)
-            z = Cfg.playzoneSize - 1;
-        else if (z <= -Cfg.playzoneSize)
-            z = -Cfg.playzoneSize + 1;
-        return new Location(Bukkit.getWorlds().get(0), x, 64, z);
-    }
-
-    public static Location getSafeRandomLocation(int bound) {
-        World w = Bukkit.getWorlds().get(0);
-        Location l = w.getSpawnLocation();  //spawn location will have never used. Init variable due to compile error
-        for (int i = 0; i < 10; i++) {      //10 attempts to get safe loc
-            l = getRandomLocation(bound);
-            l.getChunk().load();
-            if (isSafeLocation(l)) {
-                LoggerUtil.debug(SAFELOC_SUCCESS);
-                return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
-            }
-        }
-        LoggerUtil.debug(SAFELOC_DEFAULT);
-        l = w.getHighestBlockAt(l).getLocation();
-        safetizeLocation(l);
-        return l.add(0.5, 1, 0.5);
+        //todo: test this method w/o loading chunk
+        return Bukkit.getWorlds().get(0).getHighestBlockAt(x, z).getLocation().add(0.5, 1, 0.5);
     }
 
     public static Location getDistanceLocation(Location src, int dist) {
         double angle = Math.random() * Math.PI * 2;
-        double x = src.getBlockX() + Math.round(Math.cos(angle) * dist);
-        if (x >= Cfg.playzoneSize)
-            x = Cfg.playzoneSize - 1;
-        else if (x <= -Cfg.playzoneSize)
-            x = -Cfg.playzoneSize + 1;
-        double z = src.getBlockZ() + Math.round(Math.sin(angle) * dist);
-        if (z >= Cfg.playzoneSize)
-            z = Cfg.playzoneSize - 1;
-        else if (z <= -Cfg.playzoneSize)
-            z = -Cfg.playzoneSize + 1;
-        return new Location(src.getWorld(), x, src.getBlockY(), z);
-    }
-
-    public static Location getSafeDistanceLocation(Location src, int dist) {
-        World w = Bukkit.getWorlds().get(0);
-        Location l = src;               // init var with src value due to compile error
-        for (int i = 0; i < 10; i++) {      //10 attempts to get safe loc
-            l = getDistanceLocation(src, dist);
-            l.getChunk().load();
-            if (isSafeLocation(l)) {
-                LoggerUtil.debug(SAFELOC_SUCCESS);
-                return w.getHighestBlockAt(l).getLocation().add(0.5, 1, 0.5);
-            }
-        }
-        LoggerUtil.debug(SAFELOC_DEFAULT);
-        l = w.getHighestBlockAt(l).getLocation();
-        safetizeLocation(l);
-        return l.add(0.5, 1, 0.5);
+        int x = src.getBlockX() + (int) (Math.cos(angle) * dist);
+        int z = src.getBlockZ() + (int) (Math.sin(angle) * dist);
+        //todo: test this method w/o loading chunk
+        return Bukkit.getWorlds().get(0).getHighestBlockAt(x, z).getLocation().add(0.5, 1, 0.5);
     }
 
     public static boolean isSafeLocation(Location l) {
-        l.getChunk().load();                                //todo is necessary to load chunk? Already loaded in getSafeLocation
-        Block b = l.getWorld().getHighestBlockAt(l);
-        Material m = b.getType();
-        if (b.isLiquid()) {
-            LoggerUtil.debug(String.format(SAFELOC_FAIL, SAFELOC_FAIL_LIQUID, formatLocation(b.getLocation())));
+        l.getChunk().load();
+        Block groundBlock = l.getBlock().getRelative(0, -1, 0);
+        Material m = groundBlock.getType();
+        if (groundBlock.isLiquid()) {
+            LoggerUtil.debug(String.format(SAFELOC_FAIL, SAFELOC_FAIL_LIQUID, formatLocation(groundBlock.getLocation())));
             return false;
         }
         if (DANGERS.contains(m)) {
-            LoggerUtil.debug(String.format(SAFELOC_FAIL, m.name(), formatLocation(b.getLocation())));
+            LoggerUtil.debug(String.format(SAFELOC_FAIL, m.name(), formatLocation(groundBlock.getLocation())));
             return false;
         }
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++)
                 for (int k = 1; k <= 2; k++)
-                    if (!EXCLUDES.contains(b.getRelative(i, k, j).getType())) {
-                        LoggerUtil.debug(String.format(SAFELOC_FAIL, SAFELOC_FAIL_OBSTRUCTION, formatLocation(b.getLocation())));
+                    if (!EXCLUDES.contains(groundBlock.getRelative(i, k, j).getType())) {
+                        LoggerUtil.debug(String.format(SAFELOC_FAIL, SAFELOC_FAIL_OBSTRUCTION, formatLocation(groundBlock.getLocation())));
                         return false;
                     }
         return true;
@@ -169,7 +119,7 @@ public class WorldUtil {
                 l.getBlockZ();
     }
 
-    public static void safetizeLocation(Location l) {
+    public static Location safetizeLocation(Location l) {
         World w = l.getWorld();
         int x = l.getBlockX();
         int y = l.getBlockY();
@@ -177,13 +127,15 @@ public class WorldUtil {
         //fill stone
         Filler f = new Filler().setWorld(w).setMaterial(Material.STONE)
                 .setStartX(x - 2).setEndX(x + 2)
-                .setStartY(y - 1).setEndY(y - 1)
+                .setStartY(y - 2).setEndY(y - 2)
                 .setStartZ(z - 2).setEndZ(z + 2);
         f.fill();
         //fill ground log
-        f.setMaterial(Material.OAK_LOG).setStartY(y).setEndY(y).fill();
+        f.setMaterial(Material.OAK_LOG).setStartY(y - 1).setEndY(y - 1).fill();
         //clear spawn area
-        f.setMaterial(Material.AIR).setStartY(y + 1).setEndY(y + 3).fill();
+        f.setMaterial(Material.AIR).setStartY(y).setEndY(y + 2).fill();
+        LoggerUtil.debug(String.format(SAFETIZE, formatLocation(l)));
+        return l;
     }
 
     @SuppressWarnings("ConstantConditions")

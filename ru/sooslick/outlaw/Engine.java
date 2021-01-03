@@ -60,6 +60,7 @@ public class Engine extends JavaPlugin {
     private GameState state;
     private EventListener eventListener;
     private TimedMessages timedMessages;  //todo @SuppressWarnings("FieldCanBeLocal") ??
+    private SafeLocationsHolder safeLocationsHolder;
     private ChestTracker chestTracker;
 
     private final Runnable votestartTimerImpl = () -> {
@@ -132,8 +133,9 @@ public class Engine extends JavaPlugin {
         getServer().getPluginManager().registerEvents(eventListener, this);
 
         //init game variables
-        changeGameState(GameState.IDLE);
         timedMessages = new TimedMessages().launch();
+        safeLocationsHolder = new SafeLocationsHolder();
+        changeGameState(GameState.IDLE);
         LoggerUtil.info(PLUGIN_INIT_SUCCESS);
     }
 
@@ -375,6 +377,9 @@ public class Engine extends JavaPlugin {
                 halfSize = Cfg.playzoneSize / 2 + 1;
                 escapeArea = halfSize + Cfg.wallThickness;
 
+                //launch spawns finder
+                safeLocationsHolder.launchJob();
+
                 //reset players gamemode
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
@@ -407,6 +412,7 @@ public class Engine extends JavaPlugin {
                     chestTracker.cleanupEntities();     //separated cleanups due to beds dropping while blocks cleanup
                 chestTracker = new ChestTracker();
                 eventListener.reset();
+                safeLocationsHolder.selectSafeLocations();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 scoreboardHolder = new ScoreboardHolder(Bukkit.getScoreboardManager());
 
@@ -440,7 +446,7 @@ public class Engine extends JavaPlugin {
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
-                Location outlawLocation = WorldUtil.getSafeRandomLocation(Cfg.spawnRadius);
+                Location outlawLocation = safeLocationsHolder.getVictimLocation();
                 outlaw.preparePlayer(outlawLocation);
                 //give handicap effects
                 if (Cfg.enablePotionHandicap) {
@@ -449,7 +455,7 @@ public class Engine extends JavaPlugin {
 
                 //process others
                 Hunter.setupHunter(outlaw);
-                spawnLocation = WorldUtil.getSafeDistanceLocation(outlawLocation, Cfg.spawnDistance);
+                spawnLocation = safeLocationsHolder.getHunterLocation();
                 Bukkit.getWorlds().get(0).setSpawnLocation(spawnLocation);     //for new players and respawns
                 for (Player p : onlinePlayers) {
                     //skip outlaw
