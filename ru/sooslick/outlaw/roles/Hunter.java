@@ -12,17 +12,18 @@ import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.CompassUpdates;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.Messages;
+import ru.sooslick.outlaw.TrackedLocationCache;
 import ru.sooslick.outlaw.util.CommonUtil;
 
 import java.time.Duration;
 
 public class Hunter extends AbstractPlayer {
-    private static Outlaw outlaw;
     private static CompassUpdates.CompassUpdateMethod compassUpdateMethod;
+    private static TrackedLocationCache cache;
 
-    public static void setupHunter(Outlaw o) {
-        outlaw = o;
+    public static void setupHunter(Outlaw outlaw) {
         compassUpdateMethod = Cfg.compassUpdates.getCompassUpdateMethod();
+        cache = new TrackedLocationCache(outlaw);
     }
 
     private int compassCooldown;
@@ -62,7 +63,8 @@ public class Hunter extends AbstractPlayer {
             return false;
         }
 
-        Location trackedLocation = outlaw.getTrackedLocation(player.getWorld());   //todo: uneffective (???) use of getTrackedLocation
+        World w = player.getWorld();
+        Location trackedLocation = cache.getTrackedLocation(w);
         //unusual scenario, e.g. hunters teleported to nether but victim not. Just do nothing
         if (trackedLocation == null) {
             return false;
@@ -108,11 +110,7 @@ public class Hunter extends AbstractPlayer {
             meta.setDisplayName(Messages.COMPASS_NAME);
 
         //third: update meta
-        if (trackedLocation.getWorld().getEnvironment() == World.Environment.NETHER) {
-            //create lodestone in nether (VERY WEIRD SOLUTION BUT WORKS ONLY)
-            trackedLocation.setY(128);
-            trackedLocation.getBlock().setType(Material.LODESTONE);
-            //todo: uneffective setBlock: called every updateCompass for every hunter
+        if (w.getEnvironment() == World.Environment.NETHER) {
             meta.setLodestone(trackedLocation);
             meta.setLodestoneTracked(true);
         } else {
