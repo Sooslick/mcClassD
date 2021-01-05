@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class CommandListener implements CommandExecutor {
 
@@ -21,7 +22,7 @@ public class CommandListener implements CommandExecutor {
     private static final String MH_SUGGEST = "§6/manhunt suggest §7(/mh s)";
     private static final String MH_VOTE = "§6/manhunt votestart §7(/mh v)";
 
-    public static final String COMMAND_MANHUNT = "manhunt";
+    public  static final String COMMAND_MANHUNT = "manhunt";
     private static final String COMMAND_VOTE = "votestart";
     private static final String COMMAND_VOTE_ALIAS = "v";
     private static final String COMMAND_SUGGEST = "suggest";
@@ -30,7 +31,7 @@ public class CommandListener implements CommandExecutor {
     private static final String COMMAND_EXCLUDE_ALIAS = "e";
     private static final String COMMAND_JOIN_REQUEST = "joinrequest";
     private static final String COMMAND_ACCEPT = "accept";
-    public static final String COMMAND_ACCEPT_ALIAS = "y";
+    public  static final String COMMAND_ACCEPT_ALIAS = "y";
     private static final String COMMAND_CFG = "cfg";
     private static final String COMMAND_START = "start";
     private static final String COMMAND_HELP = "help";
@@ -38,76 +39,49 @@ public class CommandListener implements CommandExecutor {
     private static final String PERMISSION_START = "classd.force.start";
 
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        //todo refactor to two methods for outlaw and for y command
-        //If command is accept
+        //If command is accept (/y)
+        //only one action assigned to /y command, just execute
         if (command.getName().equals(COMMAND_ACCEPT_ALIAS)) {
-            if (sender instanceof Player)
-                Engine.getInstance().acceptJoinRequest((Player) sender);
-            else
-                printConsoleInfo(sender);
-            return true;
+            return executePlayerCommand(sender, Engine.getInstance()::acceptJoinRequest);
         }
 
         //if command is manhunt
+        //send help if no subcommands passed
         if (args.length == 0) {
             printInfo(sender);
             return true;
         }
+        //determine subcommand
         switch (args[0].toLowerCase()) {
             case COMMAND_VOTE:
             case COMMAND_VOTE_ALIAS:
-                if (sender instanceof Player)       //todo refactor: action else print
-                    Engine.getInstance().voteStart((Player) sender);  //todo: is possible refactor if sender instanceof Player to method and pass action as param?
-                else
-                    printConsoleInfo(sender);
-                break;
+                return executePlayerCommand(sender, Engine.getInstance()::voteStart);
 
             case COMMAND_SUGGEST:
             case COMMAND_SUGGEST_ALIAS:
-                if (sender instanceof Player)
-                    Engine.getInstance().suggest((Player) sender);
-                else
-                    printConsoleInfo(sender);
-                break;
+                return executePlayerCommand(sender, Engine.getInstance()::suggest);
 
             case COMMAND_EXCLUDE:
             case COMMAND_EXCLUDE_ALIAS:
-                if (sender instanceof Player)
-                    Engine.getInstance().exclude((Player) sender);
-                else
-                    printConsoleInfo(sender);
-                break;
+                return executePlayerCommand(sender, Engine.getInstance()::exclude);
 
             case COMMAND_JOIN_REQUEST:
-                if (sender instanceof Player)
-                    Engine.getInstance().joinRequest((Player) sender);
-                else
-                    printConsoleInfo(sender);
-                break;
+                return executePlayerCommand(sender, Engine.getInstance()::joinRequest);
 
             case COMMAND_ACCEPT:
-                if (sender instanceof Player)
-                    Engine.getInstance().acceptJoinRequest((Player) sender);
-                else
-                    printConsoleInfo(sender);
-                break;
+                return executePlayerCommand(sender, Engine.getInstance()::acceptJoinRequest);
 
             case COMMAND_CFG:
-                if (args.length == 1) {
-                    //todo available params?
-                    sender.sendMessage(MH_CFG);
-                } else {
-                    sender.sendMessage(Cfg.getValue(args[1]));
-                }
-                break;
+                String message = args.length == 1 ? MH_CFG + Cfg.availableParameters() : Cfg.getValue(args[1]);
+                sender.sendMessage(message);
+                return true;
 
             case COMMAND_START:
-                if (!sender.hasPermission(PERMISSION_START)) {
+                if (!sender.hasPermission(PERMISSION_START))
                     sender.sendMessage(Messages.NOT_PERMITTED);
-                } else {
+                else
                     Engine.getInstance().forceStartGame(sender);
-                }
-                break;
+                return true;
 
             case COMMAND_HELP:
                 printHelpInfo(sender);
@@ -118,9 +92,7 @@ public class CommandListener implements CommandExecutor {
         return true;
     }
 
-    private void printConsoleInfo(CommandSender s) {
-        s.sendMessage(Messages.CONSOLE_CANNOT_DO_THIS);
-    }
+    ////////////////////// helper
 
     private void printInfo(CommandSender s) {
         Engine e = Engine.getInstance();
@@ -159,5 +131,20 @@ public class CommandListener implements CommandExecutor {
                     "§eLike in a vanilla Minecraft, Victim has to beat the Ender Dragon " +
                     "while Hunters try to prevent this.");
         }
+    }
+
+    /////////////////////////// checks & executors
+
+    private boolean executePlayerCommand(CommandSender sender, Consumer<Player> action) {
+        if (isPlayerSenderDenyConsole(sender))
+            action.accept((Player) sender);
+        return true;
+    }
+
+    private boolean isPlayerSenderDenyConsole(CommandSender sender) {
+        if (sender instanceof Player)
+            return true;
+        sender.sendMessage(Messages.CONSOLE_CANNOT_DO_THIS);
+        return false;
     }
 }

@@ -36,7 +36,7 @@ public class Hunter extends AbstractPlayer {
     @Override
     public void preparePlayer(Location dest) {
         super.preparePlayer(dest);
-        updateCompass();            //todo first update dont reset cooldown
+        updateCompass();
     }
 
     @Override

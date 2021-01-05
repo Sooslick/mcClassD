@@ -69,7 +69,6 @@ public class WorldUtil {
         int dbound = bound * 2;
         int x = CommonUtil.random.nextInt(dbound) - bound;
         int z = CommonUtil.random.nextInt(dbound) - bound;
-        //todo: test this method w/o loading chunk
         return Bukkit.getWorlds().get(0).getHighestBlockAt(x, z).getLocation().add(0.5, 1, 0.5);
     }
 
@@ -77,7 +76,6 @@ public class WorldUtil {
         double angle = Math.random() * Math.PI * 2;
         int x = src.getBlockX() + (int) (Math.cos(angle) * dist);
         int z = src.getBlockZ() + (int) (Math.sin(angle) * dist);
-        //todo: test this method w/o loading chunk
         return Bukkit.getWorlds().get(0).getHighestBlockAt(x, z).getLocation().add(0.5, 1, 0.5);
     }
 

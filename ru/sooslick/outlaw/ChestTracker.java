@@ -116,7 +116,6 @@ public class ChestTracker {
         LoggerUtil.info(REPORT_BASE + String.format(REPORT_BLOCKS_TEMPLATE, chests.toString(), beds.toString(), blocks.toString()));
     }
 
-    //todo needs more tests after concurrent modification bugfix
     //todo if I can prevent dropping beds in blocks cleanup, I can unite these cleanups and refactor onChangeGameState
     public void cleanupEntities() {
         int ent = 0;

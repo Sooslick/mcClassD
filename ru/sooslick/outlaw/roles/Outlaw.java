@@ -16,7 +16,7 @@ public class Outlaw extends AbstractPlayer {
 
     private Location lastWorldPos;
     private Location lastNetherPos;
-    private LivingEntity placeholder;       //todo: cleanup in Engine.onDisable
+    private LivingEntity placeholder;
     private boolean offline;
     private int alertTimeoutTimer;
 

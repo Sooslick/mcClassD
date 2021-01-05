@@ -134,6 +134,10 @@ public class Cfg {
         firstRead = false;
     }
 
+    public static String availableParameters() {
+        return "\nAvailable parameters: debugMode, minStartVotes, prestartTimer, spawnRadius, spawnDistance, hideVictimNametagAboveHunters, enablePotionHandicap, enableStartInventory, alertRadius, alertTimeout, compassUpdates, compassUpdatesPeriod, enableVictimGlowing, milkGlowImmunityDuration, enableEscapeGamemode, blocksPerSecondLimit, playzoneSize, wallThickness, spotSize, groundSpotQty, airSpotQty, undergroundSpotQty, startInventory";
+    }
+
     //method can return value of any field in this class include non-config variables. Not a bug, f e a t u r e
     public static String getValue(String key) {
         Field f = getField(key);

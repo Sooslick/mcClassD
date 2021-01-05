@@ -537,8 +537,6 @@ public class Engine extends JavaPlugin {
     //  refactor code
     //  more stats
     //  countdown gamemode
-    //  victim glowing param
-    //  wall progbar feature
 
     //todo: re-organize gamemodes impl
 }
