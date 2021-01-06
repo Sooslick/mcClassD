@@ -59,7 +59,6 @@ public class Engine extends JavaPlugin {
     private ScoreboardHolder scoreboardHolder;
     private GameState state;
     private EventListener eventListener;
-    private TimedMessages timedMessages;  //todo @SuppressWarnings("FieldCanBeLocal") ??
     private SafeLocationsHolder safeLocationsHolder;
     private ChestTracker chestTracker;
 
@@ -133,7 +132,6 @@ public class Engine extends JavaPlugin {
         getServer().getPluginManager().registerEvents(eventListener, this);
 
         //init game variables
-        timedMessages = new TimedMessages().launch();
         safeLocationsHolder = new SafeLocationsHolder();
         changeGameState(GameState.IDLE);
         LoggerUtil.info(PLUGIN_INIT_SUCCESS);
@@ -328,12 +326,9 @@ public class Engine extends JavaPlugin {
         return gameTimer;
     }
 
-    public int getKillCounter() {
-        return killCounter;
-    }
-
     public void incKill() {
         killCounter++;
+        Bukkit.broadcastMessage(String.format(Messages.DEATH_COUNTER, killCounter));
     }
 
     public int getHalfSize() {
@@ -421,8 +416,14 @@ public class Engine extends JavaPlugin {
                 w.setTime(0);
                 w.setStorm(false);
 
-                //filter excludes
+                //zero players bugfix: skip game if no players online
                 Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+                if (onlinePlayers.size() <= 0) {
+                    changeGameState(GameState.IDLE);
+                    return;
+                }
+
+                //filter excludes
                 if (volunteers.isEmpty()) {
                     onlinePlayers.forEach(p -> {
                         String name = p.getName();

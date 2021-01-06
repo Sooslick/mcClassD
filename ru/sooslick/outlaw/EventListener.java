@@ -220,12 +220,13 @@ public class EventListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Engine engine = Engine.getInstance();
+        Player p = e.getPlayer();
         if (!engine.getGameState().equals(GameState.GAME)) {
-            //todo infomessages
-            e.getPlayer().setGameMode(GameMode.SPECTATOR);
+            p.setGameMode(GameMode.SPECTATOR);
+            //todo gamemode impl
+            p.sendMessage(String.format(Messages.ABOUT, Cfg.enableEscapeGamemode ? "The Wall" : "Minecraft Any%"));
             return;
         }
-        Player p = e.getPlayer();
         Outlaw o = engine.getOutlaw();
         //nametag bugfix
         engine.getScoreboardHolder().setPlayerScoreboard(p);
@@ -233,6 +234,7 @@ public class EventListener implements Listener {
         //check Outlaw
         if (p.getName().equals(o.getPlayer().getName())) {
             o.goOnline(p);
+            e.setJoinMessage(null);
             return;
         }
 
@@ -240,6 +242,8 @@ public class EventListener implements Listener {
         for (Hunter h : engine.getHunters()) {
             if (h.getPlayer().getName().equals(p.getName())) {
                 h.setPlayer(p);
+                p.sendMessage(Messages.HUNTER_REMINDER);
+                e.setJoinMessage(String.format(Messages.HUNTER_JOINED, p.getName()));
                 return;
             }
         }
@@ -263,6 +267,7 @@ public class EventListener implements Listener {
             entity.setAI(false);
             entity.setCustomName(p.getName());
             o.goOffline(entity);
+            e.setQuitMessage(null);
         }
     }
 

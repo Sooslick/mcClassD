@@ -12,7 +12,7 @@ import java.util.Random;
 public class CommonUtil {
     public static Random random = new Random();
 
-    public static final String DEATH_MESSAGE_BASE = "§d%s %s %s";    //who, reason, by
+    public static final String DEATH_MESSAGE_BASE = "§4%s %s %s";    //who, reason, by
     private static final String DURATION_DEFAULT = "%d:%02d";
     private static final String DURATION_HOURS = "%d:%02d:%02d";
     private static final String PLACEHOLDER = "";

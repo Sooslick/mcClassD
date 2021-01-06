@@ -3,6 +3,7 @@ package ru.sooslick.outlaw;
 //Utility class with client messages that might be localized
 public class Messages {
 
+    public static final String ABOUT = "§e«Class D» Manhunt gamemode\nType §6/manhunt help §efor more info\nSuggest yourself as Victim: §6/manhunt suggest\n§eType §6/manhunt votestart §eor simply §6/mh v §eto begin\n§ePreferred gamemode: §c%s";
     public static final String BY = "by ";
     public static final String COMMANDS_AVAILABLE = "\n§e - Available commands:";
     public static final String COMMANDS_UNAVAILABLE = "\n§e - Other commands:";
@@ -16,9 +17,12 @@ public class Messages {
     public static final String DEATH_BY_FALL = "jymped and died";                   //я пригнул и умер (с)
     public static final String DEATH_BY_FIRE = "met the inquisition";
     public static final String DEATH_BY_PROJECTILE = "shot";
+    public static final String DEATH_COUNTER = "§eDeath counter: %s";
     public static final String GAME_IS_NOT_RUNNING = "§cGame is not running.";
     public static final String GAME_IS_RUNNING = "§cGame is running.";
     public static final String GAME_STARTED = "§eGame started. Run!";
+    public static final String HUNTER_JOINED = "§e%s joined the game as §cHunter";
+    public static final String HUNTER_REMINDER = "§cYou're one of hunters";
     public static final String HUNTER_RESPAWN = "§eVictim is still §c%s\n§eTime elapsed: §c%s";
     public static final String HUNTERS_NEARBY = "§cHunters nearby";
     public static final String JOIN_REQUEST_ACCEPTED = "§e%s §cjoined the game as Hunter";
@@ -45,14 +49,11 @@ public class Messages {
     public static final String START_VOTE_INGAME = "§cCannot votestart while game is running";
     public static final String START_VOTE_TWICE = "§cCannot votestart twice";
     public static final String START_VOTES_COUNT = "§e%s / %s votes to start";
-    public static final String TIMED_MESSAGE_RULES = "§e«Class D» Manhunt gamemode\nType §6/manhunt help §efor more info\nSuggest yourself as Victim: §6/manhunt suggest\n§eType §6/manhunt votestart §eor simply §6/mh v §eto begin\n§ePreferred gamemode: §c%s";
-    public static final String TIMED_MESSAGE_STATS = "§eGame timer: %s\nDeath counter: %s\nCompass is pointing to §c%s §o%s";
-    public static final String VICTIM = "Victim";
-    public static final String VICTIM_CHICKEN = "Victim Chicken";
     public static final String VICTIM_DEAD = "§cVictim died. §eHunters win!";
     public static final String VICTIM_ESCAPED = "§eVictim escaped and won the game!";
     public static final String VICTIM_OFFLINE = "§cVictim left the game, but there is §eVictim Chicken§c. Kill it!";
     public static final String VICTIM_ONLINE = "§cVictim is back to the game!";
+    public static final String VICTIM_REMINDER = "§cYou're still a Victim with a goal to: %s";
     public static final String VOLUNTEER_ALREADY_EXCLUDED = "§cYou have already excluded yourself from Victim list";
     public static final String VOLUNTEER_EXCLUDED = "§e%s doesn't want to be a Victim";
     public static final String VOLUNTEER_LEFT = "§c%s left and was removed from Victim suggesters";
