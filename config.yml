@@ -1,6 +1,17 @@
+######## CORE ########
 #More console output
 debugMode: false
+#Block filler performance
+blocksPerSecondLimit: 100000
 
+#Selected gamemode from gamemodes list
+preferredGamemode: any%
+#Available gamemodes and their java classes. Modify this list only if you know what are you doing
+gamemodes:
+  any%: ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase
+  wall: ru.sooslick.outlaw.gamemode.wall.WallGameModeBase
+
+#### CORE GAMEPLAY ####
 #Lobby parameters
 minStartVotes: 2
 prestartTimer: 60
@@ -15,27 +26,22 @@ enableStartInventory: true
 #Gameplay parameters
 alertRadius: 50
 alertTimeout: 60
-#allowed values for compassUpdates (case insensitive): Always, OnClick, Never
+#Allowed values for compassUpdates (case insensitive): Always, OnClick, Never
 compassUpdates: ALWAYS
 compassUpdatesPeriod: 1
 enableVictimGlowing: false
 milkGlowImmunityDuration: 180
 
-#Escape the Wall gamemode
-enableEscapeGamemode: false
+#Start inventory
+startInventory:
+  OAK_LOG: 3
+  COOKIE: 3
 
-#Wall generator performance
-blocksPerSecondLimit: 100000
-
-#Escape gamemode parameters
+####### THE WALL ##########
+#Escape the Wall parameters
 playzoneSize: 1000
 wallThickness: 8
 spotSize: 4
 groundSpotQty: 3
 airSpotQty: 2
 undergroundSpotQty: 5
-
-#Start inventory
-startInventory:
-  OAK_LOG: 3
-  COOKIE: 3

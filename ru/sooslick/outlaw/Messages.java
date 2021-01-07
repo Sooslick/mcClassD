@@ -39,7 +39,7 @@ public class Messages {
     public static final String NOT_PERMITTED = "§cYou have not permission to do that";
     public static final String ONLY_VICTIM_ALLOWED = "§cOnly Victim can use this command";
     public static final String READY_FOR_GAME = "§eReady for the next game";
-    public static final String RULES_GAMEMODE = "§6\nMinecraft Manhunt gamemode\n§eIn this game one of players starts as §cVictim§e and others become §cHunters§e.\nVictim has to complete the gamemode's objective avoiding Hunters and loses on death.\nHunters must prevent Victim from reaching their objective by any means. They have unlimited respawns and spawn with compasses that always point to Victim's location.";
+    public static final String RULES_GAMEMODE = "§6\nMinecraft Manhunt gamemode\n§eIn this game one of players starts as §cVictim§e and others become §cHunters§e.\nVictim has to complete the gamemode's objective avoiding Hunters and loses on death.\nHunters must prevent Victim from reaching their objective by any means. They have unlimited respawns and spawn with compasses that always point to Victim's location.\n";
     public static final String SELECTED_HANDICAP = "§eDistance handicap: %s";
     public static final String SELECTED_OBJECTIVE = "§eVictim's objective: §c%s";
     public static final String SELECTED_VICTIM = "§eChosen Victim: §c%s";

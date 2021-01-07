@@ -4,10 +4,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import ru.sooslick.outlaw.gamemode.GameModeBase;
+import ru.sooslick.outlaw.gamemode.GameModeConfig;
+import ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase;
 import ru.sooslick.outlaw.util.LoggerUtil;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Cfg {
 
@@ -16,64 +20,50 @@ public class Cfg {
     private static final String UNKNOWN_ITEM = "Unknown item in start inventory: %s";
     private static final String UNKNOWN_METHOD = "Unknown compass update method: %s";
     private static final String UNKNOWN_PARAMETER = "Unknown parameter: %s";
-    private static final String UNPLAYABLE_WORLD_WARNING = "Parameter responsible for modifying world was changed. We strongly recommend to generate a new game world, otherwise it may be unplayable";
     private static final String VALUE_TEMPLATE = "%s: %s";
 
-    private static boolean firstRead = true;
-    private static boolean changeAlert = false;
     private static FileConfiguration currentCfg;
+    private static GameModeConfig gameModeCfg;
 
     public static boolean debugMode;
+    public static int blocksPerSecondLimit;
+    public static Map<String, String> gamemodes;
+    public static Class<? extends GameModeBase> preferredGamemode;
     public static int minStartVotes;
     public static int prestartTimer;
     public static int spawnRadius;
     public static int spawnDistance;
+    public static int hideVictimNametagAboveHunters;
+    public static boolean enablePotionHandicap;
+    public static boolean enableStartInventory;
     public static int alertRadius;
     public static int alertTimeout;
     public static CompassUpdates compassUpdates;
     public static int compassUpdatesPeriod;
-    public static int hideVictimNametagAboveHunters;
     public static boolean enableVictimGlowing;
     public static int milkGlowImmunityDuration;
-    public static boolean enablePotionHandicap;
-    public static boolean enableStartInventory;
-    public static boolean enableEscapeGamemode;
-    public static int blocksPerSecondLimit;
-    public static int playzoneSize;
-    public static int wallThickness;
-    public static int spotSize;
-    public static int groundSpotQty;
-    public static int airSpotQty;
-    public static int undergroundSpotQty;
     public static HashMap<Material, Integer> startInventory;
 
     //disable constructor for utility class
     private Cfg() {}
 
     public static void readConfig(FileConfiguration f) {
-        changeAlert = false;
+
         currentCfg = f;
-                      readValue("debugMode", false);
-                      readValue("minStartVotes", 2);
-                      readValue("prestartTimer", 60);
-                      readValue("spawnRadius", 250);
-                      readValue("spawnDistance", 240);
-                      readValue("alertRadius", 50);
-                      readValue("alertTimeout", 60);
-                      readValue("compassUpdatesPeriod", 1);
-                      readValue("hideVictimNametagAboveHunters", 2);
-                      readValue("enableVictimGlowing", false);
-                      readValue("milkGlowImmunityDuration", 180);
-                      readValue("enablePotionHandicap", true);
-                      readValue("enableStartInventory", true);
-        changeAlert = readValue("enableEscapeGamemode", false) || changeAlert;
-                      readValue("blocksPerSecondLimit", 100000);
-        changeAlert = readValue("playzoneSize", 1000) || changeAlert;
-        changeAlert = readValue("wallThickness", 8) || changeAlert;
-                      readValue("spotSize", 4);
-                      readValue("groundSpotQty", 3);
-                      readValue("airSpotQty", 2);
-                      readValue("undergroundSpotQty", 5);
+        readValue("debugMode", false);
+        readValue("blocksPerSecondLimit", 100000);
+        readValue("minStartVotes", 2);
+        readValue("prestartTimer", 60);
+        readValue("spawnRadius", 250);
+        readValue("spawnDistance", 240);
+        readValue("hideVictimNametagAboveHunters", 2);
+        readValue("enablePotionHandicap", true);
+        readValue("enableStartInventory", true);
+        readValue("alertRadius", 50);
+        readValue("alertTimeout", 60);
+        readValue("compassUpdatesPeriod", 1);
+        readValue("enableVictimGlowing", false);
+        readValue("milkGlowImmunityDuration", 180);
 
         //validate
         if (prestartTimer <= 0) prestartTimer = 10;
@@ -84,13 +74,6 @@ public class Cfg {
         if (compassUpdatesPeriod <= 0) compassUpdatesPeriod = 1;
         if (milkGlowImmunityDuration <= 0) milkGlowImmunityDuration = 10;
         if (blocksPerSecondLimit < 10000) blocksPerSecondLimit = 10000;
-        if (playzoneSize < spawnRadius + spawnDistance) playzoneSize = spawnRadius + spawnDistance + 10;
-        if (wallThickness <= 0) wallThickness = 1;
-        if (spotSize <= 0) spotSize = 1;
-        if (groundSpotQty < 0) groundSpotQty = 0;
-        if (airSpotQty < 0) airSpotQty = 0;
-        if (undergroundSpotQty < 0) undergroundSpotQty = 0;
-        if (groundSpotQty + airSpotQty + undergroundSpotQty <= 0) groundSpotQty = 1;
 
         //something special for CompassUpdates
         String key = "compassUpdates";
@@ -122,20 +105,40 @@ public class Cfg {
             }
         }
 
-        //switch log mode
-        LoggerUtil.setupLevel();
-
-        //change warnings
-        if (changeAlert && !firstRead) {
-            LoggerUtil.warn(UNPLAYABLE_WORLD_WARNING);
+        //something special for gamemodes
+        gamemodes = new HashMap<>();
+        cs = f.getConfigurationSection("gamemodes");
+        for (String gmName : cs.getKeys(false))
+            gamemodes.put(gmName, cs.getString(gmName));
+        String className = gamemodes.get(f.getString("preferredGamemode"));
+        try {
+            Class<?> clazz = Class.forName(className);
+            if (!GameModeBase.class.isAssignableFrom(clazz))
+                throw new Exception("Invalid gamemode class");
+            preferredGamemode = clazz.asSubclass(GameModeBase.class);
+        } catch (Exception e) {
+            preferredGamemode = AnyPercentBase.class;
+            LoggerUtil.warn(e.getMessage() + "\nCannot load gamemode class " + className);
         }
 
-        //enable change warnings
-        firstRead = false;
+        //switch log mode
+        LoggerUtil.setupLevel();
+    }
+
+    public static void readGameModeConfig(GameModeBase gmb) {
+        gameModeCfg = gmb.getConfig();
+        if (gameModeCfg != null)
+            gameModeCfg.readConfig();
     }
 
     public static String availableParameters() {
-        return "\nAvailable parameters: debugMode, minStartVotes, prestartTimer, spawnRadius, spawnDistance, hideVictimNametagAboveHunters, enablePotionHandicap, enableStartInventory, alertRadius, alertTimeout, compassUpdates, compassUpdatesPeriod, enableVictimGlowing, milkGlowImmunityDuration, enableEscapeGamemode, blocksPerSecondLimit, playzoneSize, wallThickness, spotSize, groundSpotQty, airSpotQty, undergroundSpotQty, startInventory";
+        StringBuilder sb = new StringBuilder().append("\nAvailable parameters: debugMode, blocksPerSecondLimit, gamemodes, preferredGamemode, minStartVotes, prestartTimer, spawnRadius, spawnDistance, hideVictimNametagAboveHunters, enablePotionHandicap, enableStartInventory, alertRadius, alertTimeout, compassUpdates, compassUpdatesPeriod, enableVictimGlowing, milkGlowImmunityDuration, startInventory");
+        if (gameModeCfg == null)
+            return sb.toString();
+        String gmParams = gameModeCfg.availableParameters();
+        if (gmParams.length() == 0)
+            return sb.toString();
+        return sb.append(", ").append(gmParams).toString();
     }
 
     //method can return value of any field in this class include non-config variables. Not a bug, f e a t u r e
@@ -152,12 +155,12 @@ public class Cfg {
     }
 
     //returns true only when field changed
-    private static boolean readValue(String key, Object defaultValue) {
+    private static void readValue(String key, Object defaultValue) {
         //identify Cfg.class field
         Field f = getField(key);
         if (f == null) {
             LoggerUtil.warn(String.format(UNKNOWN_PARAMETER, key));
-            return false;
+            return;
         }
 
         //read and set value
@@ -181,14 +184,13 @@ public class Cfg {
             newVal = f.get(null);
         } catch (Exception e) {
             LoggerUtil.warn(String.format(CANNOT_READ_PARAMETER, key));
-            return false;
+            return;
         }
 
         //detect changes
         if (modified) {
             Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, key, newVal));
         }
-        return modified;
     }
 
     private static Field getField(String key) {

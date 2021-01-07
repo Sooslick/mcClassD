@@ -80,8 +80,7 @@ public class Outlaw extends AbstractPlayer {
         offline = false;
         placeholder = null;
         Bukkit.broadcastMessage(Messages.VICTIM_ONLINE);
-        //todo: GAMEMODE.GETOBJECTIVE()
-        String objective = Cfg.enableEscapeGamemode ? "ESCAPE" : "KILL ENDER DRAGON";
+        String objective = Engine.getInstance().getGameMode().getName();
         p.sendMessage(String.format(Messages.VICTIM_REMINDER, objective));
     }
 

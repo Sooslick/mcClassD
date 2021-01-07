@@ -10,6 +10,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import ru.sooslick.outlaw.gamemode.GameModeBase;
+import ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 import ru.sooslick.outlaw.util.CommonUtil;
@@ -52,12 +54,10 @@ public class Engine extends JavaPlugin {
     private long gameTimer;
     private int killCounter;
     private int glowingRefreshTimer;
-    private boolean hunterAlert;
-    private int halfSize;
-    private int escapeArea;
     private Location spawnLocation;
     private ScoreboardHolder scoreboardHolder;
     private GameState state;
+    private GameModeBase gamemode;
     private EventListener eventListener;
     private SafeLocationsHolder safeLocationsHolder;
     private ChestTracker chestTracker;
@@ -79,6 +79,7 @@ public class Engine extends JavaPlugin {
 
     private final Runnable gameProcessor = () -> {
         gameTimer++;
+        gamemode.tick();
 
         //wait for alert cooldown, then check distance between victim and hunters every second
         outlaw.huntersNearbyAlert();
@@ -90,14 +91,6 @@ public class Engine extends JavaPlugin {
 
         if (Cfg.enableVictimGlowing)
             victimGlowingImpl.run();
-
-        //todo: move wall methods to gamemode
-        //check if Victim's position is inside or outside the wall
-        if (Cfg.enableEscapeGamemode) {
-            if (!hunterAlert)
-                alertHunter();
-            checkEscape();
-        }
 
         //process join requests
         for (Map.Entry<String, TimedRequest> e : joinRequests.entrySet()) {
@@ -306,6 +299,10 @@ public class Engine extends JavaPlugin {
         }
     }
 
+    public GameModeBase getGameMode() {
+        return gamemode;
+    }
+
     public GameState getGameState() {
         return state;
     }
@@ -331,10 +328,6 @@ public class Engine extends JavaPlugin {
         Bukkit.broadcastMessage(String.format(Messages.DEATH_COUNTER, killCounter));
     }
 
-    public int getHalfSize() {
-        return halfSize;
-    }
-
     public ChestTracker getChestTracker() {
         return chestTracker;
     }
@@ -356,6 +349,8 @@ public class Engine extends JavaPlugin {
                 Bukkit.getScheduler().cancelTask(gameTimerId);
                 reloadConfig();
                 Cfg.readConfig(getConfig());
+                reloadGamemode();
+                Cfg.readGameModeConfig(gamemode);
 
                 //reinit game variables
                 votestarters = new ArrayList<>();
@@ -367,10 +362,6 @@ public class Engine extends JavaPlugin {
                 gameTimer = 0;
                 glowingRefreshTimer = 0;
                 killCounter = 0;
-                hunterAlert = false;
-                //todo move gamemode's variables to gamemode
-                halfSize = Cfg.playzoneSize / 2 + 1;
-                escapeArea = halfSize + Cfg.wallThickness;
 
                 //launch spawns finder
                 safeLocationsHolder.launchJob();
@@ -378,24 +369,14 @@ public class Engine extends JavaPlugin {
                 //reset players gamemode
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
-
-                //regenerate wall
-                if (Cfg.enableEscapeGamemode) {
-                    Wall.buildWall();
-                    Bukkit.broadcastMessage("§cPlease wait until the Wall is rebuilt"); //todo mooveee
-                } else {
-                    Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
-                }
+                gamemode.onIdle();
                 break;
             case PRESTART:
                 //removes created or found containers and beds
                 if (chestTracker != null)
                     chestTracker.cleanupBlocks();
 
-                //generate wall spots
-                if (Cfg.enableEscapeGamemode) {
-                    Wall.buildSpots();
-                }
+                gamemode.onPreStart();
 
                 //launch timer
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
@@ -406,7 +387,6 @@ public class Engine extends JavaPlugin {
                 if (chestTracker != null)
                     chestTracker.cleanupEntities();     //separated cleanups due to beds dropping while blocks cleanup
                 chestTracker = new ChestTracker();
-                eventListener.reset();
                 safeLocationsHolder.selectSafeLocations();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 scoreboardHolder = new ScoreboardHolder(Bukkit.getScoreboardManager());
@@ -469,14 +449,8 @@ public class Engine extends JavaPlugin {
                 //set nametag visiblity
                 scoreboardHolder.recalculateNametagVisiblity(hunters.size());
 
-                //todo: GAMEMODE THE WALL
-                if (Cfg.enableEscapeGamemode) {
-                    scoreboardHolder.createWallObjective();
-                }
-
-                //todo: GAMEMODE.GETOBJECTIVE()
-                String objective = Cfg.enableEscapeGamemode ? "ESCAPE" : "KILL ENDER DRAGON";
-                Bukkit.broadcastMessage(String.format(Messages.SELECTED_OBJECTIVE, objective));
+                gamemode.onGame();
+                Bukkit.broadcastMessage(String.format(Messages.SELECTED_OBJECTIVE, gamemode.getObjective()));
 
                 //debug: check distance btw runner and hunters
                 if (hunters.size() > 0) {
@@ -493,32 +467,36 @@ public class Engine extends JavaPlugin {
         }
     }
 
+    private void reloadGamemode() {
+        if (gamemode == null || !gamemode.getClass().equals(Cfg.preferredGamemode)) {
+            //unload previous
+            if (gamemode != null) {
+                LoggerUtil.debug("Unload gamemode " + gamemode.getName());
+                gamemode.unload();
+            }
+            //try to load new gamemode
+            try {
+                LoggerUtil.debug("Trying to load gamemode from class " + Cfg.preferredGamemode);
+                gamemode = Cfg.preferredGamemode.newInstance();
+                LoggerUtil.debug("Loaded gamemode " + gamemode.getName());
+            }
+            //cannot load gamemode, load default AnyPercent
+            catch (Exception e) {
+                LoggerUtil.warn(e.getMessage());
+                gamemode = new AnyPercentBase();
+                LoggerUtil.debug("Loaded default gamemode Any%");
+            }
+            return;
+        }
+        //log string if nothing changed
+        LoggerUtil.debug("Gamemode not changed, active gamemode: " + gamemode.getName());
+    }
+
     private void joinHunter(Player p) {
         Hunter currentHunter = new Hunter(p);
         hunters.add(currentHunter);
         currentHunter.preparePlayer(spawnLocation);
         scoreboardHolder.addHunter(p);
-    }
-
-    //todo: gamemode
-    private void alertHunter() {
-        Location l = outlaw.getLocation();
-        if (isOutside(l)) {
-            hunterAlert = true;
-            Bukkit.broadcastMessage("§cVictim is breaking through the Wall");
-        }
-    }
-
-    //todo: gamemode
-    private void checkEscape() {
-        Location l = outlaw.getLocation().add(-0.5, 0, -0.5);
-        if ((Math.abs(l.getX()) > escapeArea) || (Math.abs(l.getZ()) > escapeArea)) {
-            triggerEndgame(true);
-        }
-    }
-
-    public boolean isOutside(Location l) {
-        return ((Math.abs(l.getX()) > halfSize + 1) || (Math.abs(l.getZ()) > halfSize + 1) || l.getY() > 255);
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer) {
@@ -532,12 +510,9 @@ public class Engine extends JavaPlugin {
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
     }
 
-    //todo refactor wall methods from Engine
-
     //todo
     //  refactor code
     //  more stats
     //  countdown gamemode
-
-    //todo: re-organize gamemodes impl
+    //  strings & messages 2
 }

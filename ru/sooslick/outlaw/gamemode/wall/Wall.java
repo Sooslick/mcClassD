@@ -1,13 +1,18 @@
-package ru.sooslick.outlaw;
+package ru.sooslick.outlaw.gamemode.wall;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import ru.sooslick.outlaw.Cfg;
+import ru.sooslick.outlaw.Engine;
+import ru.sooslick.outlaw.GameState;
+import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.util.CommonUtil;
 import ru.sooslick.outlaw.util.Filler;
 import ru.sooslick.outlaw.util.LoggerUtil;
 
+import java.time.Duration;
 import java.util.LinkedList;
 
 public class Wall {
@@ -20,6 +25,7 @@ public class Wall {
     private static final String WARN_BUILD_LIMIT_TOO_SMALL = "blocksPerSecondLimit value too small, fixed it";
 
     private static int generatorTimerId;
+    private static WallGameModeConfig wallCfg;
     private static LinkedList<Integer> spotPositions;
     private static int groundCurr;
     private static int airCurr;
@@ -67,18 +73,18 @@ public class Wall {
     private final static Runnable buildSpotTick = () -> {
         int center = spotPositions.getFirst();
         Filler f = getSideBasedFiller(side, center-spotSize, center+spotSize).setMaterial(Material.OBSIDIAN);
-        if (groundCurr < Cfg.groundSpotQty) {
+        if (groundCurr < wallCfg.groundSpotQty) {
             int h = getGroundLevel(side, center);
             f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
             groundCurr++;
-        } else if (airCurr < Cfg.airSpotQty) {
+        } else if (airCurr < wallCfg.airSpotQty) {
             int h = getAirLevel(side, center);
             f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
             airCurr++;
-        } else if (undergroundCurr < Cfg.undergroundSpotQty) {
+        } else if (undergroundCurr < wallCfg.undergroundSpotQty) {
             int h = getUndergroundLevel(side, center);
             f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
-            if (++undergroundCurr >= Cfg.undergroundSpotQty) {
+            if (++undergroundCurr >= wallCfg.undergroundSpotQty) {
                 groundCurr = 0;
                 airCurr = 0;
                 undergroundCurr = 0;
@@ -94,22 +100,28 @@ public class Wall {
     //disable constructor for utility class
     private Wall() {}
 
-    public static void buildWall() {
+    static String getWaitDuration() {
+        long seconds = (size / limiter + 1) * 4;
+        return CommonUtil.formatDuration(Duration.ofSeconds(seconds));
+    }
+
+    static void buildWall(WallGameModeConfig cfg) {
         //stop previous generator if it still working, clear
         Bukkit.getScheduler().cancelTask(generatorTimerId);
+        wallCfg = cfg;
         wallBuilt = false;
         spotsQueued = false;
-        size = Cfg.playzoneSize;
+        size = wallCfg.playzoneSize;
         halfSize = size / 2;
         startWallCoord = halfSize + 1;
-        endWallCoord = startWallCoord + Cfg.wallThickness - 1;
+        endWallCoord = startWallCoord + wallCfg.wallThickness - 1;
         side = 0;
         currentBlock = -startWallCoord;         //from -start to +end
-        limiter = Cfg.blocksPerSecondLimit / 256 / Cfg.wallThickness;
-        LoggerUtil.debug(String.format(DEBUG_LIMITER, limiter, limiter*256*Cfg.wallThickness));
+        limiter = Cfg.blocksPerSecondLimit / 256 / wallCfg.wallThickness;
+        LoggerUtil.debug(String.format(DEBUG_LIMITER, limiter, limiter*256*wallCfg.wallThickness));
         if (limiter == 0) {
             limiter = 1;
-            Cfg.blocksPerSecondLimit = Cfg.wallThickness * 256;
+            Cfg.blocksPerSecondLimit = wallCfg.wallThickness * 256;
             LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
         }
         w = Bukkit.getWorlds().get(0);
@@ -119,8 +131,8 @@ public class Wall {
         LoggerUtil.debug(DEBUG_RESET_WALL);
     }
 
-    public static void launchBuildSpots() {
-        spotSize = Cfg.spotSize;
+    private static void launchBuildSpots() {
+        spotSize = wallCfg.spotSize;
         side = 0;
         groundCurr = 0;
         undergroundCurr = 0;
@@ -128,7 +140,7 @@ public class Wall {
 
         //pre-generate spots
         spotPositions = new LinkedList<>();
-        int total = (Cfg.airSpotQty + Cfg.groundSpotQty + Cfg.undergroundSpotQty) * 4;
+        int total = (wallCfg.airSpotQty + wallCfg.groundSpotQty + wallCfg.undergroundSpotQty) * 4;
         for (int i = 0; i < total; i++) {
             spotPositions.add(CommonUtil.random.nextInt(size) - halfSize);
         }
@@ -138,13 +150,18 @@ public class Wall {
         LoggerUtil.debug(DEBUG_RESET_SPOTS);
     }
 
-    public static void buildSpots() {
+    static void buildSpots() {
         LoggerUtil.debug(DEBUG_SPOTS_QUEUED + wallBuilt);
         if (wallBuilt) {
             launchBuildSpots();
         } else {
             spotsQueued = true;
         }
+    }
+
+    static void kill() {
+        //stop previous generator if it still working, clear
+        Bukkit.getScheduler().cancelTask(generatorTimerId);
     }
 
     private static Filler getSideBasedFiller(int side, int from, int to) {

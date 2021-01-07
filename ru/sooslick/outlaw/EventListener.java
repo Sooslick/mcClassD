@@ -2,7 +2,6 @@ package ru.sooslick.outlaw;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -12,15 +11,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -28,26 +24,12 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
-import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 import ru.sooslick.outlaw.util.CommonUtil;
-import ru.sooslick.outlaw.util.WorldUtil;
-
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 
 public class EventListener implements Listener {
-
-    private boolean firstBlockAlerted;
-    private boolean goldenPickaxeAlerted;
-
-    public EventListener() {
-        reset();
-    }
 
     @EventHandler
     public void onDamage(EntityDamageEvent e) {
@@ -55,6 +37,7 @@ public class EventListener implements Listener {
         if (!engine.getGameState().equals(GameState.GAME))
             return;
 
+        // death messages for players
         Entity eventEntity = e.getEntity();
         if (eventEntity instanceof Player) {
             Player eventPlayer = (Player) eventEntity;
@@ -62,15 +45,6 @@ public class EventListener implements Listener {
                 Entity damager = e instanceof EntityDamageByEntityEvent ? ((EntityDamageByEntityEvent) e).getDamager() : null;
                 Bukkit.broadcastMessage(CommonUtil.getDeathMessage(eventPlayer, damager, e.getCause()));
             }
-        }
-
-        //check if dragon dead
-        //todo: GAMEMODE IMPL
-        if (e.getEntity().getType().equals(EntityType.ENDER_DRAGON)) {
-            if (((LivingEntity) e.getEntity()).getHealth() - e.getFinalDamage() <= 0) {
-                engine.triggerEndgame(true);
-            }
-            return;
         }
 
         //check if outlaw dead
@@ -102,10 +76,6 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onPortal(PlayerPortalEvent e) {
-        if (Cfg.enableEscapeGamemode) {
-            e.setCancelled(true);
-            return;
-        }
         Outlaw o = Engine.getInstance().getOutlaw();
         if (!e.getPlayer().equals(o.getPlayer()))
             return;
@@ -113,56 +83,10 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    public void onEnderPearl(PlayerTeleportEvent e) {
-        if (!Cfg.enableEscapeGamemode) {
-            return;
-        }
-        if (e.getCause().equals(PlayerTeleportEvent.TeleportCause.ENDER_PEARL)) {
-            Location l = e.getTo();
-            if (Engine.getInstance().isOutside(l))
-                e.setCancelled(true);
-        }
-    }
-
-    @EventHandler
     public void onPistonMove(BlockPistonExtendEvent e) {
         Engine engine = Engine.getInstance();
         ChestTracker ct = engine.getChestTracker();
-        List<Block> movedBlocks = new LinkedList<>();
-        for (Block b : e.getBlocks()) {
-            Block moved = b.getRelative(e.getDirection(), 1);
-            ct.detectBlock(moved, true);
-            movedBlocks.add(moved);
-        }
-        //todo gamemode
-        if (Cfg.enableEscapeGamemode)
-            WorldUtil.generateBarrier(movedBlocks);
-    }
-
-    //todo: gamemode listener
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent e) {
-        Engine engine = Engine.getInstance();
-        if (!Cfg.enableEscapeGamemode)
-            return;
-        if (engine.getGameState() != GameState.GAME)
-            return;
-
-        //TODO: WALL SCOREBOARD
-        engine.getScoreboardHolder().recalculateScore(e.getBlock().getLocation());
-
-        if (firstBlockAlerted)
-            return;
-
-        Player p = e.getPlayer();
-        if (!p.equals(engine.getOutlaw().getPlayer()))
-            return;
-        Location l = e.getBlock().getLocation();
-        int halfsize = engine.getHalfSize();
-        if ((Math.abs(l.getBlockX()) >= halfsize) || (Math.abs(l.getBlockZ()) >= halfsize)) {
-            firstBlockAlerted = true;
-            Bukkit.broadcastMessage("§cVictim is trying to break the Wall");
-        }
+        e.getBlocks().forEach(b -> ct.detectBlock(b.getRelative(e.getDirection(), 1), true));
     }
 
     @EventHandler
@@ -173,22 +97,6 @@ public class EventListener implements Listener {
         ChestTracker ct = engine.getChestTracker();
         if (ct != null)
             ct.detectBlock(b);
-
-        if (!Cfg.enableEscapeGamemode)
-            return;
-
-        //detect wall restoring
-        Material m = b.getType();
-        if (m == Material.OBSIDIAN || m == Material.NETHERITE_BLOCK || m == Material.CRYING_OBSIDIAN || m == Material.ANCIENT_DEBRIS) {
-            int halfsize = engine.getHalfSize();
-            if ((Math.abs(b.getX()) >= halfsize - 1) || (Math.abs(b.getZ()) >= halfsize - 1)) {
-                e.setCancelled(true);
-                e.getPlayer().sendMessage("§4Obsidian is restricted here");
-            }
-        }
-
-        //detect towering escape attempts
-        WorldUtil.generateBarrier(Collections.singletonList(b));
     }
 
     @EventHandler
@@ -223,8 +131,7 @@ public class EventListener implements Listener {
         Player p = e.getPlayer();
         if (!engine.getGameState().equals(GameState.GAME)) {
             p.setGameMode(GameMode.SPECTATOR);
-            //todo gamemode impl
-            p.sendMessage(String.format(Messages.ABOUT, Cfg.enableEscapeGamemode ? "The Wall" : "Minecraft Any%"));
+            p.sendMessage(String.format(Messages.ABOUT, engine.getGameMode().getName()));
             return;
         }
         Outlaw o = engine.getOutlaw();
@@ -271,24 +178,6 @@ public class EventListener implements Listener {
         }
     }
 
-    //todo: move to gamemode listener
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent e) {
-        if (Engine.getInstance().getGameState() != GameState.GAME)
-            return;
-        if (e.getWhoClicked().equals(Engine.getInstance().getOutlaw().getPlayer()))
-            detectGoldPickaxe(e.getCurrentItem());
-    }
-
-    //todo: move to gamemode listener
-    @EventHandler
-    public void onItemPickup(EntityPickupItemEvent e) {
-        if (Engine.getInstance().getGameState() != GameState.GAME)
-            return;
-        if (e.getEntity().equals(Engine.getInstance().getOutlaw().getPlayer()))
-            detectGoldPickaxe(e.getItem().getItemStack());
-    }
-
     @EventHandler
     public void onEntitySpawn(EntitySpawnEvent e) {
         // Constantly detects entities!
@@ -321,24 +210,6 @@ public class EventListener implements Listener {
             return;
         if (e.getItem().getType() == Material.MILK_BUCKET) {
             engine.setGlowingRefreshTimer(Cfg.milkGlowImmunityDuration);
-        }
-    }
-
-    public void reset() {
-        firstBlockAlerted = false;
-        goldenPickaxeAlerted = false;
-    }
-
-    //todo: Gamemode
-    private void detectGoldPickaxe(ItemStack is) {
-        if (!Cfg.enableEscapeGamemode)
-            return;
-        Engine engine = Engine.getInstance();
-        if (goldenPickaxeAlerted)
-            return;
-        if (is.getType() == Material.GOLDEN_PICKAXE) {
-            goldenPickaxeAlerted = true;
-            Bukkit.broadcastMessage("§cGolden pickaxe detected");
         }
     }
 }

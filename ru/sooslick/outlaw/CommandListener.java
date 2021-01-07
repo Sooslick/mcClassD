@@ -120,17 +120,7 @@ public class CommandListener implements CommandExecutor {
 
     private void printHelpInfo(CommandSender s) {
         s.sendMessage(Messages.RULES_GAMEMODE);
-        if (Cfg.enableEscapeGamemode) { //todo: refactor to gamemode class and impl getRule method
-            s.sendMessage("§6\nThe Wall gamemode\n" +
-                    "§ePlayers start in square zone restricted by wall of bedrock. " +
-                    "This wall has some obsidian spots " +
-                    "and Victim has to escape the zone by breaking through one of them.\n" +
-                    "Wall thickness: §c" + Cfg.wallThickness + "\n§eZone size: §c" + Cfg.playzoneSize);
-        } else {
-            s.sendMessage("§6\nMinecraft Any% gamemode\n" +
-                    "§eLike in a vanilla Minecraft, Victim has to beat the Ender Dragon " +
-                    "while Hunters try to prevent this.");
-        }
+        s.sendMessage(Engine.getInstance().getGameMode().getDescription());
     }
 
     /////////////////////////// checks & executors
