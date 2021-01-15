@@ -58,6 +58,10 @@ public class Filler {
         return this;
     }
 
+    public int size() {
+        return (Math.abs(endX - startX) + 1) * (Math.abs(endY - startY) + 1) * (Math.abs(endZ - startZ) + 1);
+    }
+
     public boolean fill() {
         // validate world
         if (world == null) {
@@ -65,7 +69,7 @@ public class Filler {
             return false;
         }
         //validate size
-        int volume = (Math.abs(endX - startX) + 1) * (Math.abs(endY - startY) + 1) * (Math.abs(endZ - startZ) + 1);
+        int volume = size();
         if (volume > Cfg.blocksPerSecondLimit) {
             LoggerUtil.warn(FILL_SIZE_EXCEED + volume);
             return false;

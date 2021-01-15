@@ -49,6 +49,7 @@ public class Messages {
     public static final String START_VOTE_INGAME = "§cCannot votestart while game is running";
     public static final String START_VOTE_TWICE = "§cCannot votestart twice";
     public static final String START_VOTES_COUNT = "§e%s / %s votes to start";
+    public static final String UNPLAYABLE_WORLD_WARNING = "We strongly recommend to generate a new game world, otherwise it may be unplayable";
     public static final String VICTIM_DEAD = "§cVictim died. §eHunters win!";
     public static final String VICTIM_ESCAPED = "§eVictim escaped and won the game!";
     public static final String VICTIM_OFFLINE = "§cVictim left the game, but there is §eVictim Chicken§c. Kill it!";

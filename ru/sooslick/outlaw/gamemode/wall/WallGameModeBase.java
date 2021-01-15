@@ -8,6 +8,7 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import ru.sooslick.outlaw.Engine;
+import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.gamemode.GameModeBase;
 import ru.sooslick.outlaw.gamemode.GameModeConfig;
 import ru.sooslick.outlaw.util.LoggerUtil;
@@ -42,6 +43,7 @@ public class WallGameModeBase implements GameModeBase {
 
     public WallGameModeBase() {
         wallCfg = new WallGameModeConfig();
+        Wall.initWith(wallCfg);
         events = new WallEventListener(this);
         Engine engine = Engine.getInstance();
         engine.getServer().getPluginManager().registerEvents(events, engine);
@@ -52,18 +54,15 @@ public class WallGameModeBase implements GameModeBase {
         hunterAlert = false;
         halfSize = wallCfg.playzoneSize / 2 + 1;
         escapeArea = halfSize + wallCfg.wallThickness;
-
         events.reset();
-
-        //regenerate wall
-        Wall.buildWall(wallCfg);
-        Bukkit.broadcastMessage("§cPlease wait until the Wall is rebuilt. Estimated wait time: " + Wall.getWaitDuration());
+        //generate wall or rollback spots from previous game
+        Wall.prepareWall();
     }
 
     @Override
     public void onPreStart() {
         //generate exit spots
-        Wall.buildSpots();
+        Wall.prepareSpots();
     }
 
     @Override
@@ -79,9 +78,9 @@ public class WallGameModeBase implements GameModeBase {
 
     @Override
     public void unload() {
-        Wall.kill();
+        Wall.rollback();
         HandlerList.unregisterAll(events);
-        LoggerUtil.warn(WallGameModeConfig.UNPLAYABLE_WORLD_WARNING);
+        LoggerUtil.warn(Messages.UNPLAYABLE_WORLD_WARNING);
     }
 
     @Override

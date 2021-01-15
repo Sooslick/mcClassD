@@ -142,6 +142,7 @@ public class Engine extends JavaPlugin {
             chestTracker.cleanupEntities();
         }
         LoggerUtil.info(PLUGIN_DISABLE_SUCCESS);
+        LoggerUtil.info(Messages.UNPLAYABLE_WORLD_WARNING);
     }
 
     public static Engine getInstance() {
@@ -469,10 +470,12 @@ public class Engine extends JavaPlugin {
 
     private void reloadGamemode() {
         if (gamemode == null || !gamemode.getClass().equals(Cfg.preferredGamemode)) {
+            boolean unload = false;
             //unload previous
             if (gamemode != null) {
                 LoggerUtil.debug("Unload gamemode " + gamemode.getName());
                 gamemode.unload();
+                unload = true;
             }
             //try to load new gamemode
             try {
@@ -486,6 +489,9 @@ public class Engine extends JavaPlugin {
                 gamemode = new AnyPercentBase();
                 LoggerUtil.debug("Loaded default gamemode Any%");
             }
+            if (unload)
+                Bukkit.broadcastMessage("§cGamemode is changed, new gamemode is §6" + gamemode.getName() +
+                        "\n§cType §6/manhunt help §cto check the rules!");
             return;
         }
         //log string if nothing changed
