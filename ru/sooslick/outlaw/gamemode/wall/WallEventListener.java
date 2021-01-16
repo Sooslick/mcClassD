@@ -1,8 +1,11 @@
 package ru.sooslick.outlaw.gamemode.wall;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -43,6 +46,19 @@ public class WallEventListener implements Listener {
     public void onPortal(PlayerPortalEvent e) {
         //disable nether portals
         e.setCancelled(true);
+        //break portal
+        Location from = e.getFrom();
+        Block b = from.getBlock();
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++){
+                Block b1 = b.getRelative(x, 0, z);
+                if (b1.getType() == Material.NETHER_PORTAL) {
+                    b = b1;
+                    break;
+                }
+            }
+        }
+        b.breakNaturally();
     }
 
     @EventHandler
@@ -52,10 +68,14 @@ public class WallEventListener implements Listener {
             return;
 
         if (e.getCause().equals(PlayerTeleportEvent.TeleportCause.ENDER_PEARL)) {
-            Location l = e.getTo();
-            if (base.isOutside(l)) {
-                //todo: create placeholder effect
+            Location from = e.getFrom();
+            World worldFrom = from.getWorld();
+            Location to = e.getTo();
+            if (base.isOutside(to)) {
                 e.setCancelled(true);
+                //effect
+                worldFrom.playEffect(from, Effect.EXTINGUISH, 4);
+                worldFrom.spawnParticle(Particle.CLOUD, from.add(0, 2, 0), 16);
             }
         }
     }
