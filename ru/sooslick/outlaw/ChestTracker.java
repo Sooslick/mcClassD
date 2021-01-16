@@ -14,9 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChestTracker {
-    private static final String REPORT_BASE = "ChestTracker cleanup report:";
-    private static final String REPORT_BLOCKS_TEMPLATE = "\nContainers: %s\nBeds: %s\nBlocks: %s";
-    private static final String REPORT_ENTITIES_TEMPLATE = " Entities: %s";
+    private static final String REPORT_TEMPLATE = "ChestTracker cleanup report:\nContainers: %s\nBeds: %s\nBlocks: %s\nEntities: %s";
     private static final String TRACKED_FORCE = "Force tracking on block %s";
     private static final String TRACKED_CONTAINER = "Tracked container %s at %s";
     private static final String TRACKED_BED = "Tracked bed at %s";
@@ -53,7 +51,6 @@ public class ChestTracker {
         TRACKED_BLOCKS.add(Material.ANCIENT_DEBRIS);
         TRACKED_BLOCKS.add(Material.NETHERITE_BLOCK);
         TRACKED_BLOCKS.add(Material.OBSIDIAN);
-        //todo: obsidian from lava+water buckets not tracked
     }
 
     public ChestTracker() {
@@ -92,10 +89,11 @@ public class ChestTracker {
             }
     }
 
-    public void cleanupBlocks() {
+    public void cleanup() {
         AtomicInteger chests = new AtomicInteger();
         AtomicInteger beds = new AtomicInteger();
         AtomicInteger blocks = new AtomicInteger();
+        //clear and delete containers
         trackedContainers.forEach(b -> {
             if (b.getState() instanceof InventoryHolder) {
                 ((InventoryHolder) b.getState()).getInventory().clear();
@@ -103,21 +101,20 @@ public class ChestTracker {
                 chests.getAndIncrement();
             }
         });
+        //clear beds
         trackedBeds.forEach(b -> {
             if (b.getBlockData() instanceof Bed) {
+                b.getRelative(((Bed) b.getBlockData()).getFacing()).setType(Material.AIR);
                 b.setType(Material.AIR);
                 beds.getAndIncrement();
             }
         });
+        //clear simple blocks and fluids
         trackedBlocks.forEach(b -> {
             b.setType(Material.AIR);
             blocks.getAndIncrement();
         });
-        LoggerUtil.info(REPORT_BASE + String.format(REPORT_BLOCKS_TEMPLATE, chests.toString(), beds.toString(), blocks.toString()));
-    }
-
-    //todo if I can prevent dropping beds in blocks cleanup, I can unite these cleanups and refactor onChangeGameState
-    public void cleanupEntities() {
+        //clear entities (array is copied to prevent concurrent modification exceptions due to e.remove)
         int ent = 0;
         Entity[] trackerEntitiesArray = new Entity[trackedEntities.size()];
         trackerEntitiesArray = trackedEntities.toArray(trackerEntitiesArray);
@@ -127,7 +124,6 @@ public class ChestTracker {
                 ent++;
             }
         }
-        LoggerUtil.info(REPORT_BASE + String.format(REPORT_ENTITIES_TEMPLATE, ent));
+        LoggerUtil.info(String.format(REPORT_TEMPLATE, chests.toString(), beds.toString(), blocks.toString(), ent));
     }
-
 }

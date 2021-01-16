@@ -22,7 +22,6 @@ public class Messages {
     public static final String GAME_IS_RUNNING = "§cGame is running.";
     public static final String GAME_STARTED = "§eGame started. Run!";
     public static final String HUNTER_JOINED = "§e%s joined the game as §cHunter";
-    public static final String HUNTER_REMINDER = "§cYou're one of hunters";
     public static final String HUNTER_RESPAWN = "§eVictim is still §c%s\n§eTime elapsed: §c%s";
     public static final String HUNTERS_NEARBY = "§cHunters nearby";
     public static final String JOIN_REQUEST_ACCEPTED = "§e%s §cjoined the game as Hunter";

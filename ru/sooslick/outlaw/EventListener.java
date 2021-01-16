@@ -5,7 +5,6 @@ import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,6 +16,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -61,7 +61,7 @@ public class EventListener implements Listener {
     public void onDeath(PlayerDeathEvent e) {
         e.setDeathMessage(null);
         Engine engine = Engine.getInstance();
-        if (!engine.getGameState().equals(GameState.GAME))
+        if (engine.getGameState() != GameState.GAME)
             return;
         engine.incKill();
     }
@@ -76,7 +76,10 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onPortal(PlayerPortalEvent e) {
-        Outlaw o = Engine.getInstance().getOutlaw();
+        Engine engine = Engine.getInstance();
+        if (!engine.getGameState().equals(GameState.GAME))
+            return;
+        Outlaw o = engine.getOutlaw();
         if (!e.getPlayer().equals(o.getPlayer()))
             return;
         o.setTrackedLocation(e.getFrom());
@@ -85,6 +88,8 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPistonMove(BlockPistonExtendEvent e) {
         Engine engine = Engine.getInstance();
+        if (engine.getGameState() != GameState.GAME)
+            return;
         ChestTracker ct = engine.getChestTracker();
         e.getBlocks().forEach(b -> ct.detectBlock(b.getRelative(e.getDirection(), 1), true));
     }
@@ -92,11 +97,23 @@ public class EventListener implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
         Engine engine = Engine.getInstance();
+        if (engine.getGameState() != GameState.GAME)
+            return;
         //detect beds and chests
         Block b = e.getBlockPlaced();
         ChestTracker ct = engine.getChestTracker();
         if (ct != null)
             ct.detectBlock(b);
+    }
+
+    @EventHandler
+    public void onBucket(PlayerBucketEmptyEvent e) {
+        Engine engine = Engine.getInstance();
+        if (engine.getGameState() != GameState.GAME)
+            return;
+        ChestTracker ct = engine.getChestTracker();
+        if (ct != null)
+            ct.detectBlock(e.getBlock(), true);
     }
 
     @EventHandler
@@ -149,7 +166,6 @@ public class EventListener implements Listener {
         for (Hunter h : engine.getHunters()) {
             if (h.getPlayer().getName().equals(p.getName())) {
                 h.setPlayer(p);
-                p.sendMessage(Messages.HUNTER_REMINDER);
                 e.setJoinMessage(String.format(Messages.HUNTER_JOINED, p.getName()));
                 return;
             }
@@ -168,12 +184,8 @@ public class EventListener implements Listener {
         }
         Player p = e.getPlayer();
         Outlaw o = engine.getOutlaw();
-        //todo move spawn and assignments to goOffline
         if (o.getPlayer().equals(p)) {
-            LivingEntity entity = (LivingEntity) p.getWorld().spawnEntity(p.getLocation(), EntityType.CHICKEN);
-            entity.setAI(false);
-            entity.setCustomName(p.getName());
-            o.goOffline(entity);
+            o.goOffline();
             e.setQuitMessage(null);
         }
     }

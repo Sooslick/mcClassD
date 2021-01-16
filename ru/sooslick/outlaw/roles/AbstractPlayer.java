@@ -35,10 +35,6 @@ public abstract class AbstractPlayer {
         return player;
     }
 
-    public void setPlayer(Player p) {
-        player = p;
-    }
-
     public Location getLocation() {
         return player.getLocation();
     }

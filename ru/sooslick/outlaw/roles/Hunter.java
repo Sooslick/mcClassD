@@ -50,6 +50,10 @@ public class Hunter extends AbstractPlayer {
         firstRespawn = false;
     }
 
+    public void setPlayer(Player p) {
+        player = p;
+    }
+
     public void triggerCompassUpdateTick() {
         compassUpdateMethod.tick(this);
     }

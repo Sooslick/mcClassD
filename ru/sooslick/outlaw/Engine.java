@@ -138,8 +138,7 @@ public class Engine extends JavaPlugin {
             hunters.forEach(Hunter::onEndGame);
         }
         if (chestTracker != null) {
-            chestTracker.cleanupBlocks();
-            chestTracker.cleanupEntities();
+            chestTracker.cleanup();
         }
         LoggerUtil.info(PLUGIN_DISABLE_SUCCESS);
         LoggerUtil.info(Messages.UNPLAYABLE_WORLD_WARNING);
@@ -375,7 +374,8 @@ public class Engine extends JavaPlugin {
             case PRESTART:
                 //removes created or found containers and beds
                 if (chestTracker != null)
-                    chestTracker.cleanupBlocks();
+                    chestTracker.cleanup();
+                chestTracker = new ChestTracker();
 
                 gamemode.onPreStart();
 
@@ -384,10 +384,6 @@ public class Engine extends JavaPlugin {
                 Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, votestartCountdown));
                 break;
             case GAME:
-                //reinit variables and stop lobby timers
-                if (chestTracker != null)
-                    chestTracker.cleanupEntities();     //separated cleanups due to beds dropping while blocks cleanup
-                chestTracker = new ChestTracker();
                 safeLocationsHolder.selectSafeLocations();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 scoreboardHolder = new ScoreboardHolder(Bukkit.getScoreboardManager());

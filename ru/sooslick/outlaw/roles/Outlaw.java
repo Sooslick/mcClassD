@@ -3,6 +3,7 @@ package ru.sooslick.outlaw.roles;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -49,7 +50,7 @@ public class Outlaw extends AbstractPlayer {
     }
 
     public Location getTrackedLocation(World from) {
-        //method doesn't work correctly with custom worlds?
+        //method doesn't work correctly with custom worlds? todo?
 
         //check if victim's and hunter's worlds equals
         Location here = getLocation();
@@ -68,20 +69,22 @@ public class Outlaw extends AbstractPlayer {
         }
     }
 
-    public void goOffline(LivingEntity e) {
+    public void goOffline() {
+        placeholder = (LivingEntity) player.getWorld().spawnEntity(player.getLocation(), EntityType.CHICKEN);
+        placeholder.setAI(false);
+        placeholder.setCustomName(player.getName());
         offline = true;
-        placeholder = e;
         Bukkit.broadcastMessage(Messages.VICTIM_OFFLINE);
     }
 
-    public void goOnline(Player p) {
+    public void goOnline(Player newPlayer) {
         placeholder.remove();
-        player = p;
+        player = newPlayer;
         offline = false;
         placeholder = null;
         Bukkit.broadcastMessage(Messages.VICTIM_ONLINE);
         String objective = Engine.getInstance().getGameMode().getName();
-        p.sendMessage(String.format(Messages.VICTIM_REMINDER, objective));
+        newPlayer.sendMessage(String.format(Messages.VICTIM_REMINDER, objective));
     }
 
     public void huntersNearbyAlert() {
