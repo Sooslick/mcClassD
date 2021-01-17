@@ -163,12 +163,11 @@ public class EventListener implements Listener {
         }
 
         //check hunter
-        for (Hunter h : engine.getHunters()) {
-            if (h.getPlayer().getName().equals(p.getName())) {
-                h.setPlayer(p);
-                e.setJoinMessage(String.format(Messages.HUNTER_JOINED, p.getName()));
-                return;
-            }
+        Hunter h = engine.getHunter(p);
+        if (h != null) {
+            h.goOnline(p);
+            e.setJoinMessage(String.format(Messages.HUNTER_JOINED, p.getName()));
+            return;
         }
 
         //set spectator mode for anyone else
@@ -182,12 +181,18 @@ public class EventListener implements Listener {
             engine.unvote(e.getPlayer());
             return;
         }
+
         Player p = e.getPlayer();
         Outlaw o = engine.getOutlaw();
         if (o.getPlayer().equals(p)) {
             o.goOffline();
             e.setQuitMessage(null);
+            return;
         }
+
+        Hunter h = engine.getHunter(p);
+        if (h != null)
+            h.goOffline();
     }
 
     @EventHandler

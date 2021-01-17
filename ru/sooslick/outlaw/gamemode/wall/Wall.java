@@ -252,6 +252,7 @@ public class Wall {
                             return;
                         }
                         Filler f = rollbackWallFillers.getFirst();
+                        //todo normalize
                         f.setMaterial(Material.AIR).fill();
                         rollbackWallFillers.removeFirst();
                     }

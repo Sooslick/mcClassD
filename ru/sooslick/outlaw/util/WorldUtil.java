@@ -138,14 +138,13 @@ public class WorldUtil {
 
     @SuppressWarnings("ConstantConditions")
     public static void invToChest(Inventory inv, Location l) {
-        //todo test: possible NPE, but chesttracker created after game start
         ChestTracker ct = Engine.getInstance().getChestTracker();
         World w = l.getWorld();
         //prevent attempts to create chests outside the world
-        if (l.getY() < 0 || l.getY() > w.getMaxHeight())
+        if (l.getY() < 0 || l.getY() > w.getMaxHeight())    //todo NPE check
             return;
 
-        Block b = w.getBlockAt(l);
+        Block b = l.getBlock();
         int slots = 0;
         b.setType(Material.CHEST);
         ct.detectBlock(b);
@@ -155,9 +154,10 @@ public class WorldUtil {
             if (is != null) {
                 //switch to next chest when filled
                 if (slots == 27) {
-                    b = w.getBlockAt(l.getBlockX(), l.getBlockY() + 1, l.getBlockZ());
+                    b = b.getRelative(0, 1, 0);
                     b.setType(Material.CHEST);
                     chestInv = ((Chest) b.getState()).getBlockInventory();
+                    ct.detectBlock(b);
                 }
                 //put item
                 chestInv.addItem(is);

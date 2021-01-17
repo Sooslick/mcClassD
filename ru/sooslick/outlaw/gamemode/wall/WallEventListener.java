@@ -151,7 +151,7 @@ public class WallEventListener implements Listener {
     }
 
     private void detectGoldPickaxe(ItemStack is) {
-        if (goldenPickaxeAlerted)
+        if (goldenPickaxeAlerted || is == null)
             return;
         if (is.getType() == Material.GOLDEN_PICKAXE) {
             goldenPickaxeAlerted = true;

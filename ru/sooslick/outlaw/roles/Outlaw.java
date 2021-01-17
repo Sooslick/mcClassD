@@ -69,6 +69,7 @@ public class Outlaw extends AbstractPlayer {
         }
     }
 
+    @Override
     public void goOffline() {
         placeholder = (LivingEntity) player.getWorld().spawnEntity(player.getLocation(), EntityType.CHICKEN);
         placeholder.setAI(false);
@@ -77,14 +78,14 @@ public class Outlaw extends AbstractPlayer {
         Bukkit.broadcastMessage(Messages.VICTIM_OFFLINE);
     }
 
+    @Override
     public void goOnline(Player newPlayer) {
+        super.goOnline(newPlayer);
         placeholder.remove();
-        player = newPlayer;
         offline = false;
         placeholder = null;
         Bukkit.broadcastMessage(Messages.VICTIM_ONLINE);
-        String objective = Engine.getInstance().getGameMode().getName();
-        newPlayer.sendMessage(String.format(Messages.VICTIM_REMINDER, objective));
+        newPlayer.sendMessage(String.format(Messages.VICTIM_REMINDER, Engine.getInstance().getGameMode().getObjective()));
     }
 
     public void huntersNearbyAlert() {

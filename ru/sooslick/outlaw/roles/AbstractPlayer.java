@@ -62,6 +62,12 @@ public abstract class AbstractPlayer {
         firstRespawn = false;
     }
 
+    public void goOffline() {}
+
+    public void goOnline(Player newPlayer) {
+        player = newPlayer;
+    }
+
     public void onEndGame() {
         player.setGameMode(GameMode.SPECTATOR);
         WorldUtil.invToChest(getPlayer().getInventory(), getEntity().getLocation());

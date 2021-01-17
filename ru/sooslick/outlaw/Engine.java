@@ -320,7 +320,11 @@ public class Engine extends JavaPlugin {
     }
 
     public Hunter getHunter(Player p) {
-        return hunters.stream().filter(h -> h.getPlayer().equals(p)).findFirst().orElse(null);
+        //comparing by name
+        return hunters.stream()
+                .filter(h -> h.getPlayer().getName().equals(p.getName()))
+                .findFirst()
+                .orElse(null);
     }
 
     public long getGameTimer() {
