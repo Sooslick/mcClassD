@@ -28,6 +28,11 @@ public class Engine extends JavaPlugin {
 
     private static final String GAME_STATE_CHANGED = "ClassD game state has changed. New state: ";
     private static final String GAME_STATE_UNKNOWN = "Suspicious game state: ";
+    private static final String GAMEMODE_ACTIVE = "Gamemode not changed, active gamemode: ";
+    private static final String GAMEMODE_LOAD_CLASS = "Trying to load gamemode from ";
+    private static final String GAMEMODE_LOAD_DEFAULT = "Loaded default gamemode Any%";
+    private static final String GAMEMODE_LOADED = "Loaded gamemode ";
+    private static final String GAMEMODE_UNLOAD = "Unload gamemode ";
     private static final String PLUGIN_CREATE_DATAFOLDER = "Created plugin data folder";
     private static final String PLUGIN_CREATE_DATAFOLDER_FAILED = "§eCannot create plugin data folder. Default config will be loaded.\n Do you have sufficient rights?";
     private static final String PLUGIN_DISABLE = "Disable ClassD Plugin";
@@ -58,7 +63,6 @@ public class Engine extends JavaPlugin {
     private ScoreboardHolder scoreboardHolder;
     private GameState state;
     private GameModeBase gamemode;
-    private EventListener eventListener;
     private SafeLocationsHolder safeLocationsHolder;
     private ChestTracker chestTracker;
 
@@ -121,7 +125,7 @@ public class Engine extends JavaPlugin {
         CommandListener cmdListener = new CommandListener();
         getCommand(CommandListener.COMMAND_MANHUNT).setExecutor(cmdListener);
         getCommand(CommandListener.COMMAND_ACCEPT_ALIAS).setExecutor(cmdListener);
-        eventListener = new EventListener();
+        EventListener eventListener = new EventListener();
         getServer().getPluginManager().registerEvents(eventListener, this);
 
         //init game variables
@@ -469,29 +473,28 @@ public class Engine extends JavaPlugin {
             boolean unload = false;
             //unload previous
             if (gamemode != null) {
-                LoggerUtil.debug("Unload gamemode " + gamemode.getName());
+                LoggerUtil.debug(GAMEMODE_UNLOAD + gamemode.getName());
                 gamemode.unload();
                 unload = true;
             }
             //try to load new gamemode
             try {
-                LoggerUtil.debug("Trying to load gamemode from class " + Cfg.preferredGamemode);
+                LoggerUtil.debug(GAMEMODE_LOAD_CLASS + Cfg.preferredGamemode);
                 gamemode = Cfg.preferredGamemode.newInstance();
-                LoggerUtil.debug("Loaded gamemode " + gamemode.getName());
+                LoggerUtil.debug(GAMEMODE_LOADED + gamemode.getName());
             }
             //cannot load gamemode, load default AnyPercent
             catch (Exception e) {
                 LoggerUtil.warn(e.getMessage());
                 gamemode = new AnyPercentBase();
-                LoggerUtil.debug("Loaded default gamemode Any%");
+                LoggerUtil.debug(GAMEMODE_LOAD_DEFAULT);
             }
             if (unload)
-                Bukkit.broadcastMessage("§cGamemode is changed, new gamemode is §6" + gamemode.getName() +
-                        "\n§cType §6/manhunt help §cto check the rules!");
+                Bukkit.broadcastMessage(String.format(Messages.GAMEMODE_CHANGED, gamemode.getName()));
             return;
         }
         //log string if nothing changed
-        LoggerUtil.debug("Gamemode not changed, active gamemode: " + gamemode.getName());
+        LoggerUtil.debug(GAMEMODE_ACTIVE + gamemode.getName());
     }
 
     private void joinHunter(Player p) {
@@ -513,8 +516,6 @@ public class Engine extends JavaPlugin {
     }
 
     //todo
-    //  refactor code
     //  more stats
     //  countdown gamemode
-    //  strings & messages 2
 }

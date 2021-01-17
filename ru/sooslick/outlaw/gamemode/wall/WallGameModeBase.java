@@ -29,7 +29,7 @@ public class WallGameModeBase implements GameModeBase {
             Location l = engine.getOutlaw().getLocation();
             if (isOutside(l)) {
                 hunterAlert = true;
-                Bukkit.broadcastMessage("§cVictim is breaking through the Wall");
+                Bukkit.broadcastMessage(Messages.WALL_WALKTHROUGH_ALERT);
             }
         }
     };
@@ -90,22 +90,17 @@ public class WallGameModeBase implements GameModeBase {
 
     @Override
     public String getObjective() {
-        return "ESCAPE THE WALL";
+        return Messages.WALL_OBJECTIVE;
     }
 
     @Override
     public String getName() {
-        return "The Wall";
+        return Messages.WALL_NAME;
     }
 
     @Override
     public String getDescription() {
-        return "§6The Wall gamemode\n" +
-                "§ePlayers start in square zone restricted by wall of bedrock. " +
-                "This wall has some obsidian spots " +
-                "and Victim has to escape the zone by breaking through one of them.\n" +
-                "Wall thickness: §c" + wallCfg.wallThickness +
-                "\n§eZone size: §c" + wallCfg.playzoneSize;
+        return String.format(Messages.WALL_DESCRIPTION, wallCfg.wallThickness, wallCfg.playzoneSize);
     }
 
     boolean isOutside(Location l) {

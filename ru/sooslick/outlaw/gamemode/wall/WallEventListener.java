@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.GameState;
+import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.Collections;
@@ -110,7 +111,7 @@ public class WallEventListener implements Listener {
         int halfsize = base.getHalfSize();
         if ((Math.abs(l.getBlockX()) >= halfsize) || (Math.abs(l.getBlockZ()) >= halfsize)) {
             firstBlockAlerted = true;
-            Bukkit.broadcastMessage("§cVictim is trying to break the Wall");
+            Bukkit.broadcastMessage(Messages.WALL_BREAK_ALERT);
         }
     }
 
@@ -123,7 +124,7 @@ public class WallEventListener implements Listener {
             int halfsize = base.getHalfSize();
             if ((Math.abs(b.getX()) >= halfsize - 1) || (Math.abs(b.getZ()) >= halfsize - 1)) {
                 e.setCancelled(true);
-                e.getPlayer().sendMessage("§4Obsidian is restricted here");
+                e.getPlayer().sendMessage(Messages.WALL_BUILD_RESTRICTION);
             }
         }
 
@@ -154,7 +155,7 @@ public class WallEventListener implements Listener {
             return;
         if (is.getType() == Material.GOLDEN_PICKAXE) {
             goldenPickaxeAlerted = true;
-            Bukkit.broadcastMessage("§cGolden pickaxe detected");
+            Bukkit.broadcastMessage(Messages.WALL_GOLDEN_PICKAXE_ALERT);
         }
     }
 }

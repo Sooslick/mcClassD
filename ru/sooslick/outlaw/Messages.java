@@ -3,7 +3,9 @@ package ru.sooslick.outlaw;
 //Utility class with client messages that might be localized
 public class Messages {
 
+    // CORE
     public static final String ABOUT = "§e«Class D» Manhunt gamemode\nType §6/manhunt help §efor more info\nSuggest yourself as Victim: §6/manhunt suggest\n§eType §6/manhunt votestart §eor simply §6/mh v §eto begin\n§ePreferred gamemode: §c%s";
+    public static final String AVAILABLE_PARAMETERS = "\nAvailable parameters: ";
     public static final String BY = "by ";
     public static final String COMMANDS_AVAILABLE = "\n§e - Available commands:";
     public static final String COMMANDS_UNAVAILABLE = "\n§e - Other commands:";
@@ -11,16 +13,17 @@ public class Messages {
     public static final String COMPASS_UPDATED = "§aCompass is pointing to §c%s";
     public static final String CONFIG_MODIFIED = "§cGame parameter modified: §e%s = %s";
     public static final String CONSOLE_CANNOT_DO_THIS = "Console cannot do this. Try §6/manhunt help";
-    public static final String DEATH_BY_ATTACK = "beaten";
+    public static final String DEATH_BY_ATTACK = "beaten up";
     public static final String DEATH_BY_DEFAULT = "became dead";
-    public static final String DEATH_BY_EXPLOSION = "destroyed";
-    public static final String DEATH_BY_FALL = "jymped and died";                   //я пригнул и умер (с)
+    public static final String DEATH_BY_EXPLOSION = "was destroyed";
+    public static final String DEATH_BY_FALL = "jumped and died";
     public static final String DEATH_BY_FIRE = "met the inquisition";
-    public static final String DEATH_BY_PROJECTILE = "shot";
+    public static final String DEATH_BY_PROJECTILE = "was shot";
     public static final String DEATH_COUNTER = "§eDeath counter: %s";
     public static final String GAME_IS_NOT_RUNNING = "§cGame is not running.";
     public static final String GAME_IS_RUNNING = "§cGame is running.";
     public static final String GAME_STARTED = "§eGame started. Run!";
+    public static final String GAMEMODE_CHANGED = "§cGamemode is changed, new gamemode is §6%s\n§cType §6/manhunt help §cto check the rules!";
     public static final String HUNTER_JOINED = "§e%s joined the game as §cHunter";
     public static final String HUNTER_RESPAWN = "§eVictim is still §c%s\n§eTime elapsed: §c%s";
     public static final String HUNTERS_NEARBY = "§cHunters nearby";
@@ -60,6 +63,20 @@ public class Messages {
     public static final String VOLUNTEER_SUGGEST = "§e%s proposed himself as a Victim";
     public static final String VOLUNTEER_SUGGEST_INGAME = "§cCannot suggest while game is running";
     public static final String VOLUNTEER_SUGGEST_TWICE = "§cCannot suggest twice";
+
+    // ANY%
+    public static final String ANYP_DESCRIPTION = "§6Minecraft Any% gamemode\n§eLike in a vanilla Minecraft, Victim has to beat the Ender Dragon while Hunters try to prevent this.";
+    public static final String ANYP_NAME = "Minecraft Any%";
+    public static final String ANYP_OBJECTIVE = "KILL THE DRAGON";
+
+    // WALL
+    public static final String WALL_BREAK_ALERT = "§cVictim is trying to break the Wall";
+    public static final String WALL_BUILD_RESTRICTION = "§4Obsidian is restricted here";
+    public static final String WALL_DESCRIPTION = "§6The Wall gamemode\n§ePlayers start in square zone restricted by wall of bedrock. This wall has some obsidian spots and Victim has to escape the zone by breaking through one of them.\nWall thickness: §c%s\n§eZone size: §c%s";
+    public static final String WALL_GOLDEN_PICKAXE_ALERT = "§cGolden pickaxe detected";
+    public static final String WALL_NAME = "The Wall";
+    public static final String WALL_OBJECTIVE = "ESCAPE THE WALL";
+    public static final String WALL_WALKTHROUGH_ALERT = "§cVictim is breaking through the Wall";
 
     //deny constructors
     private Messages() {}

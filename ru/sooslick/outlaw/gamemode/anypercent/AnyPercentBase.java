@@ -42,18 +42,16 @@ public class AnyPercentBase implements GameModeBase {
 
     @Override
     public String getObjective() {
-        return "KILL THE DRAGON";
+        return Messages.ANYP_OBJECTIVE;
     }
 
     @Override
     public String getName() {
-        return "Minecraft Any%";
+        return Messages.ANYP_NAME;
     }
 
     @Override
     public String getDescription() {
-        return "§6Minecraft Any% gamemode\n" +
-                "§eLike in a vanilla Minecraft, Victim has to beat the Ender Dragon " +
-                "while Hunters try to prevent this.";
+        return Messages.ANYP_DESCRIPTION;
     }
 }

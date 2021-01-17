@@ -15,6 +15,7 @@ import java.util.Map;
 
 public class Cfg {
 
+    private static final String CANNOT_LOAD_GAMEMODE = "Cannot load gamemode class %s";
     private static final String CANNOT_READ_PARAMETER = "Cannot read parameter %s";
     private static final String READ_STARTINV_ENTRY = "read startInventory entry: %s x %s";
     private static final String UNKNOWN_ITEM = "Unknown item in start inventory: %s";
@@ -114,11 +115,11 @@ public class Cfg {
         try {
             Class<?> clazz = Class.forName(className);
             if (!GameModeBase.class.isAssignableFrom(clazz))
-                throw new Exception("Invalid gamemode class");
+                throw new Exception("Invalid gamemode class");          //todo GamemodeException class
             preferredGamemode = clazz.asSubclass(GameModeBase.class);
         } catch (Exception e) {
             preferredGamemode = AnyPercentBase.class;
-            LoggerUtil.warn(e.getMessage() + "\nCannot load gamemode class " + className);
+            LoggerUtil.warn(String.format(CANNOT_LOAD_GAMEMODE, className));
         }
 
         //switch log mode
@@ -132,7 +133,7 @@ public class Cfg {
     }
 
     public static String availableParameters() {
-        StringBuilder sb = new StringBuilder().append("\nAvailable parameters: debugMode, blocksPerSecondLimit, gamemodes, preferredGamemode, minStartVotes, prestartTimer, spawnRadius, spawnDistance, hideVictimNametagAboveHunters, enablePotionHandicap, enableStartInventory, alertRadius, alertTimeout, compassUpdates, compassUpdatesPeriod, enableVictimGlowing, milkGlowImmunityDuration, startInventory");
+        StringBuilder sb = new StringBuilder().append(Messages.AVAILABLE_PARAMETERS).append("debugMode, blocksPerSecondLimit, gamemodes, preferredGamemode, minStartVotes, prestartTimer, spawnRadius, spawnDistance, hideVictimNametagAboveHunters, enablePotionHandicap, enableStartInventory, alertRadius, alertTimeout, compassUpdates, compassUpdatesPeriod, enableVictimGlowing, milkGlowImmunityDuration, startInventory");
         if (gameModeCfg == null)
             return sb.toString();
         String gmParams = gameModeCfg.availableParameters();
