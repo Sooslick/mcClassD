@@ -2,6 +2,7 @@ package ru.sooslick.outlaw;
 
 import ru.sooslick.outlaw.roles.Hunter;
 
+@SuppressWarnings("unused")
 public enum CompassUpdates {
     ALWAYS((h) -> {
         h.cooldownTick();

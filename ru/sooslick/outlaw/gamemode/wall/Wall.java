@@ -19,6 +19,7 @@ public class Wall {
     private static final String BROADCAST_BUILD_PREDICTION = "§cPlease wait until the Wall is rebuilt. Estimated wait time: ";
     private static final String DEBUG_KILLED = "All tasks completed, remove Wall from scheduler";
     private static final String DEBUG_LIMITER = "Wall limiter is %s. Expected volume: %s";
+    private static final String DEBUG_MAX_HEIGHT = "World's max height is ";
     private static final String DEBUG_TASK_FINISHED = "Init new Wall Task ";
     private static final String DEBUG_TASK_IGNORED = "Task %s not queued due to killed state";
     private static final String DEBUG_TASK_QUEUED = "Queued task ";
@@ -37,6 +38,7 @@ public class Wall {
     private static int limiter;
     private static int startWallCoord;
     private static int endWallCoord;
+    private static int maxY;
     private static World world;
     private static LinkedList<Task> taskQueue;
     private static LinkedList<Filler> rollbackWallFillers;
@@ -90,6 +92,8 @@ public class Wall {
         taskFinished = true;
         oldSize = 0;
         oldThickness = 0;
+        maxY = Bukkit.getWorlds().get(0).getMaxHeight() - 1;
+        LoggerUtil.debug(DEBUG_MAX_HEIGHT + maxY);
         queueTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), queueTick, 20, 20);
     }
 
@@ -213,7 +217,7 @@ public class Wall {
                         to = endWallCoord;
                     Filler f = getSideBasedFiller(side, from, to)
                             .setStartY(0)
-                            .setEndY(255)
+                            .setEndY(maxY)
                             .setMaterial(Material.BEDROCK);
                     if (f.fill()) {
                         rollbackWallFillers.add(f);
@@ -252,8 +256,9 @@ public class Wall {
                             return;
                         }
                         Filler f = rollbackWallFillers.getFirst();
-                        //todo normalize
-                        f.setMaterial(Material.AIR).fill();
+                        f.setStartY(1).setEndY(60).setMaterial(Material.STONE).fill();
+                        f.setStartY(61).setEndY(63).setMaterial(Material.DIRT).fill();
+                        f.setStartY(64).setEndY(maxY).setMaterial(Material.AIR).fill();
                         rollbackWallFillers.removeFirst();
                     }
                 }
@@ -348,7 +353,7 @@ public class Wall {
         private final Runnable init;
         private final Runnable tick;
 
-        private Task(Runnable init, Runnable tick) {
+        Task(Runnable init, Runnable tick) {
             this.init = init;
             this.tick = tick;
         }

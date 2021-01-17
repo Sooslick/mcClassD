@@ -42,6 +42,7 @@ public class EventListener implements Listener {
         if (eventEntity instanceof Player) {
             Player eventPlayer = (Player) eventEntity;
             if (eventPlayer.getHealth() - e.getFinalDamage() <= 0) {
+                //todo: projectiles bug
                 Entity damager = e instanceof EntityDamageByEntityEvent ? ((EntityDamageByEntityEvent) e).getDamager() : null;
                 Bukkit.broadcastMessage(CommonUtil.getDeathMessage(eventPlayer, damager, e.getCause()));
             }
@@ -197,23 +198,19 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onEntitySpawn(EntitySpawnEvent e) {
-        // Constantly detects entities!
-        //todo onEntitySpawn and onVehicleSpawn - same code. Move to method?
-        Engine engine = Engine.getInstance();
-        //ChestTracker created after changeGameState - Game and its value is null before first game
-        ChestTracker ct = engine.getChestTracker();
-        if (ct != null)
-            engine.getChestTracker().detectEntity(e.getEntity());
+        detectEntity(e.getEntity());
     }
 
     @EventHandler
     public void onVehicleSpawn(VehicleCreateEvent e) {
-        // Constantly detects entities!
+        detectEntity(e.getVehicle());
+    }
+
+    private void detectEntity(Entity e) {
         Engine engine = Engine.getInstance();
-        //ChestTracker created after changeGameState - Game and its value is null before first game
-        ChestTracker ct = engine.getChestTracker();
-        if (ct != null)
-            engine.getChestTracker().detectEntity(e.getVehicle());
+        if (engine.getGameState() != GameState.GAME)
+            return;
+        engine.getChestTracker().detectEntity(e);
     }
 
     @EventHandler

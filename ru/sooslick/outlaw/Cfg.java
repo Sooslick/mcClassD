@@ -93,24 +93,27 @@ public class Cfg {
         //something special for start inventory
         startInventory = new HashMap<>();
         ConfigurationSection cs = f.getConfigurationSection("startInventory");
-        for (String itemName : cs.getKeys(false)) {
-            try {
-                Material m = Material.valueOf(itemName);
-                int qty = cs.getInt(itemName);
-                if (qty > 0) {
-                    startInventory.put(m, qty);
-                    LoggerUtil.debug(String.format(READ_STARTINV_ENTRY, m.name(), qty));
+        if (cs != null) {
+            for (String itemName : cs.getKeys(false)) {
+                try {
+                    Material m = Material.valueOf(itemName);
+                    int qty = cs.getInt(itemName);
+                    if (qty > 0) {
+                        startInventory.put(m, qty);
+                        LoggerUtil.debug(String.format(READ_STARTINV_ENTRY, m.name(), qty));
+                    }
+                } catch (IllegalArgumentException e) {
+                    LoggerUtil.warn(String.format(UNKNOWN_ITEM, itemName));
                 }
-            } catch (IllegalArgumentException e) {
-                LoggerUtil.warn(String.format(UNKNOWN_ITEM, itemName));
             }
         }
 
         //something special for gamemodes
         gamemodes = new HashMap<>();
         cs = f.getConfigurationSection("gamemodes");
-        for (String gmName : cs.getKeys(false))
-            gamemodes.put(gmName, cs.getString(gmName));
+        if (cs != null)
+            for (String gmName : cs.getKeys(false))
+                gamemodes.put(gmName, cs.getString(gmName));
         String className = gamemodes.get(f.getString("preferredGamemode"));
         try {
             Class<?> clazz = Class.forName(className);

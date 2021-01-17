@@ -72,11 +72,13 @@ public class WallEventListener implements Listener {
             Location from = e.getFrom();
             World worldFrom = from.getWorld();
             Location to = e.getTo();
-            if (base.isOutside(to)) {
+            if (to != null && base.isOutside(to)) {
                 e.setCancelled(true);
                 //effect
-                worldFrom.playEffect(from, Effect.EXTINGUISH, 4);
-                worldFrom.spawnParticle(Particle.CLOUD, from.add(0, 2, 0), 16);
+                if (worldFrom != null) {
+                    worldFrom.playEffect(from, Effect.EXTINGUISH, 4);
+                    worldFrom.spawnParticle(Particle.CLOUD, from.add(0, 2, 0), 16);
+                }
             }
         }
     }

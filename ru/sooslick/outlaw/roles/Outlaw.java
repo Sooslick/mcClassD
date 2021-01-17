@@ -50,8 +50,6 @@ public class Outlaw extends AbstractPlayer {
     }
 
     public Location getTrackedLocation(World from) {
-        //method doesn't work correctly with custom worlds? todo?
-
         //check if victim's and hunter's worlds equals
         Location here = getLocation();
         if (here.getWorld().equals(from))
@@ -108,4 +106,6 @@ public class Outlaw extends AbstractPlayer {
             }
         }
     }
+
+    //todo rework lastworldpos for custom worlds
 }

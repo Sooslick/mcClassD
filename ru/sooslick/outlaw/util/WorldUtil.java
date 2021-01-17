@@ -17,6 +17,7 @@ import java.util.List;
 public class WorldUtil {
     private static final double DISTANCE_MAX = 100500d;
     private static final String COMMA = ", ";
+    private static final String PLACEHOLDER = "";
     private static final String SAFETIZE = "Created safe location at %s";
     private static final String SAFELOC_FAIL = "getSafeRandomLocation - fail, reason: %s | %s";
     private static final String SAFELOC_FAIL_LIQUID = "liquid";
@@ -24,6 +25,7 @@ public class WorldUtil {
 
     public static final List<Material> DANGERS;
     public static final List<Material> EXCLUDES;
+    public static final int WMAXY = Bukkit.getWorlds().get(0).getMaxHeight() - 1;
 
     static {
         DANGERS = new ArrayList<>();
@@ -63,6 +65,7 @@ public class WorldUtil {
         EXCLUDES.add(Material.DEAD_BUSH);
         EXCLUDES.add(Material.FERN);
         EXCLUDES.add(Material.LARGE_FERN);
+        EXCLUDES.add(Material.SNOW);
     }
 
     public static Location getRandomLocation(int bound) {
@@ -111,7 +114,8 @@ public class WorldUtil {
     }
 
     public static String formatLocation(Location l) {
-        return l.getWorld().getName() + COMMA +
+        String ws = l.getWorld() != null ? l.getWorld().getName() : PLACEHOLDER;
+        return ws +
                 l.getBlockX() + COMMA +
                 l.getBlockY() + COMMA +
                 l.getBlockZ();
@@ -139,9 +143,8 @@ public class WorldUtil {
     @SuppressWarnings("ConstantConditions")
     public static void invToChest(Inventory inv, Location l) {
         ChestTracker ct = Engine.getInstance().getChestTracker();
-        World w = l.getWorld();
         //prevent attempts to create chests outside the world
-        if (l.getY() < 0 || l.getY() > w.getMaxHeight())    //todo NPE check
+        if (l.getY() < 0 || l.getY() > WMAXY)
             return;
 
         Block b = l.getBlock();
@@ -186,10 +189,10 @@ public class WorldUtil {
                 else if (bz > maxZ) maxZ = bz;
                 if (by > maxY) maxY = by;
             }
-        if (maxY > 248) {
+        if (maxY > WMAXY - 8) {
             new Filler().setWorld(b0.getWorld()).setMaterial(Material.BARRIER)
                     .setStartX(minX-1).setEndX(maxX+1)
-                    .setStartY(255).setEndY(255)
+                    .setStartY(WMAXY).setEndY(WMAXY)
                     .setStartZ(minZ-1).setEndZ(maxZ+1)
                     .fill();
         }

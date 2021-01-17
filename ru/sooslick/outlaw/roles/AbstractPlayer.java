@@ -49,7 +49,7 @@ public abstract class AbstractPlayer {
         player.setExp(0);
         player.setLevel(0);
         player.getInventory().clear();
-        player.getActivePotionEffects().clear();
+        player.getActivePotionEffects().forEach(pe -> player.removePotionEffect(pe.getType()));
         player.setBedSpawnLocation(null);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), String.format(ADVANCEMENT_REVOKE, player.getName()));
         player.setGameMode(GameMode.SURVIVAL);

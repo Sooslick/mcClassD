@@ -5,6 +5,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -121,10 +122,16 @@ public class Engine extends JavaPlugin {
             }
         }
 
-        //register commands and events
         CommandListener cmdListener = new CommandListener();
-        getCommand(CommandListener.COMMAND_MANHUNT).setExecutor(cmdListener);
-        getCommand(CommandListener.COMMAND_ACCEPT_ALIAS).setExecutor(cmdListener);
+        //register manhunt
+        PluginCommand cmd = getCommand(CommandListener.COMMAND_MANHUNT);
+        assert cmd != null;
+        cmd.setExecutor(cmdListener);
+        //register accept
+        cmd = getCommand(CommandListener.COMMAND_ACCEPT_ALIAS);
+        assert cmd != null;
+        cmd.setExecutor(cmdListener);
+
         EventListener eventListener = new EventListener();
         getServer().getPluginManager().registerEvents(eventListener, this);
 
@@ -401,14 +408,8 @@ public class Engine extends JavaPlugin {
                 w.setTime(0);
                 w.setStorm(false);
 
-                //zero players bugfix: skip game if no players online
-                Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
-                if (onlinePlayers.size() <= 0) {
-                    changeGameState(GameState.IDLE);
-                    return;
-                }
-
                 //filter excludes
+                Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
                 if (volunteers.isEmpty()) {
                     onlinePlayers.forEach(p -> {
                         String name = p.getName();
@@ -426,6 +427,11 @@ public class Engine extends JavaPlugin {
                 } else {
                     selectedPlayer = Bukkit.getPlayer(CommonUtil.getRandomOf(volunteers));
                     LoggerUtil.debug(SELECTOR_SUGGESTERS);
+                }
+                //validate selected player
+                if (selectedPlayer == null) {
+                    changeGameState(GameState.IDLE);
+                    return;
                 }
                 scoreboardHolder.addVictim(selectedPlayer);
                 Bukkit.broadcastMessage(String.format(Messages.SELECTED_VICTIM, selectedPlayer.getName()));
@@ -518,8 +524,4 @@ public class Engine extends JavaPlugin {
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
     }
-
-    //todo
-    //  more stats
-    //  countdown gamemode
 }

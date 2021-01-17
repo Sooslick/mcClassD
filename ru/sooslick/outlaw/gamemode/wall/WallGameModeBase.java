@@ -2,6 +2,7 @@ package ru.sooslick.outlaw.gamemode.wall;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.WorldBorder;
 import org.bukkit.event.HandlerList;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -55,6 +56,9 @@ public class WallGameModeBase implements GameModeBase {
         halfSize = wallCfg.playzoneSize / 2 + 1;
         escapeArea = halfSize + wallCfg.wallThickness;
         events.reset();
+        WorldBorder wb = Bukkit.getWorlds().get(0).getWorldBorder();
+        wb.setCenter(0, 0);
+        wb.setSize(escapeArea*2 + 20);
         //generate wall or rollback spots from previous game
         Wall.prepareWall();
     }
