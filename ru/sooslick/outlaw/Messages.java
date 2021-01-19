@@ -19,7 +19,6 @@ public class Messages {
     public static final String DEATH_BY_FALL = "jumped and died";
     public static final String DEATH_BY_FIRE = "met the inquisition";
     public static final String DEATH_BY_PROJECTILE = "was shot";
-    public static final String DEATH_COUNTER = "§eDeath counter: %s";
     public static final String GAME_IS_NOT_RUNNING = "§cGame is not running.";
     public static final String GAME_IS_RUNNING = "§cGame is running.";
     public static final String GAME_STARTED = "§eGame started. Run!";
@@ -51,6 +50,13 @@ public class Messages {
     public static final String START_VOTE_INGAME = "§cCannot votestart while game is running";
     public static final String START_VOTE_TWICE = "§cCannot votestart twice";
     public static final String START_VOTES_COUNT = "§e%s / %s votes to start";
+    public static final String STATS_CHICKEN = "§c§oFinally, %s chickens were injured during the last round...";
+    public static final String STATS_DAMAGE_BY_OUTLAW = "§cAmount of damage dealt to Hunters by Victim:";
+    public static final String STATS_DAMAGE_OVERALL = "§cTotal amount of damage taken by Hunters:";
+    public static final String STATS_DAMAGE_TO_OUTLAW = "§cVictim took damage from:";
+    public static final String STATS_DEATH_COUNTER = "§eDeath counter: %s";
+    public static final String STATS_DEATH_HUNTERS = "§cHunters' death counter:";
+    public static final String STATS_TOTAL_DAMAGE = "§eTotal damage: ";
     public static final String UNPLAYABLE_WORLD_WARNING = "We strongly recommend to generate a new game world, otherwise it may be unplayable";
     public static final String VICTIM_DEAD = "§cVictim died. §eHunters win!";
     public static final String VICTIM_ESCAPED = "§eVictim escaped and won the game!";

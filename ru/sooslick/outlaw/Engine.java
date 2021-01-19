@@ -58,7 +58,6 @@ public class Engine extends JavaPlugin {
     private int votestartTimerId;
     private int gameTimerId;
     private long gameTimer;
-    private int killCounter;
     private int glowingRefreshTimer;
     private Location spawnLocation;
     private ScoreboardHolder scoreboardHolder;
@@ -66,6 +65,7 @@ public class Engine extends JavaPlugin {
     private GameModeBase gamemode;
     private SafeLocationsHolder safeLocationsHolder;
     private ChestTracker chestTracker;
+    private StatsCollector statsCollector;
 
     private final Runnable votestartTimerImpl = () -> {
         if (votestartCountdown <= 0)
@@ -175,6 +175,7 @@ public class Engine extends JavaPlugin {
         Bukkit.broadcastMessage(victimWin ? Messages.VICTIM_ESCAPED : Messages.VICTIM_DEAD);
         outlaw.onEndGame();
         hunters.forEach(Hunter::onEndGame);
+        statsCollector.scheduleBroadcast();
         changeGameState(GameState.IDLE);
     }
 
@@ -334,17 +335,16 @@ public class Engine extends JavaPlugin {
         return gameTimer;
     }
 
-    public void incKill() {
-        killCounter++;
-        Bukkit.broadcastMessage(String.format(Messages.DEATH_COUNTER, killCounter));
-    }
-
     public ChestTracker getChestTracker() {
         return chestTracker;
     }
 
     public ScoreboardHolder getScoreboardHolder() {
         return scoreboardHolder;
+    }
+
+    public StatsCollector getStatsCollector() {
+        return statsCollector;
     }
 
     public void setGlowingRefreshTimer(int glowingRefreshTimer) {
@@ -372,7 +372,6 @@ public class Engine extends JavaPlugin {
                 votestartCountdown = Cfg.prestartTimer;
                 gameTimer = 0;
                 glowingRefreshTimer = 0;
-                killCounter = 0;
 
                 //launch spawns finder
                 safeLocationsHolder.launchJob();
@@ -398,6 +397,7 @@ public class Engine extends JavaPlugin {
                 safeLocationsHolder.selectSafeLocations();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 scoreboardHolder = new ScoreboardHolder(Bukkit.getScoreboardManager());
+                statsCollector = new StatsCollector();
 
                 //prepare environment
                 World w = Bukkit.getWorlds().get(0);

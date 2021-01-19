@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -15,6 +16,7 @@ import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
@@ -38,38 +40,69 @@ public class EventListener implements Listener {
         if (!engine.getGameState().equals(GameState.GAME))
             return;
 
-        // death messages for players
-        Entity eventEntity = e.getEntity();
-        if (eventEntity instanceof Player) {
-            Player eventPlayer = (Player) eventEntity;
-            if (eventPlayer.getHealth() - e.getFinalDamage() <= 0) {
-                Entity damager = null;
-                if (e instanceof EntityDamageByEntityEvent) {
-                    damager = ((EntityDamageByEntityEvent) e).getDamager();
-                    if (damager instanceof Projectile)
-                        damager = (Entity) ((Projectile) damager).getShooter();
-                }
-                Bukkit.broadcastMessage(CommonUtil.getDeathMessage(eventPlayer, damager, e.getCause()));
-            }
-        }
+        Entity damagedEntity = e.getEntity();
+        double dmg = e.getFinalDamage();
+        double statDmg = dmg > 20 ? 20 : dmg;
+        if (damagedEntity instanceof Player) {
+            // who (almost for stats)
+            Player damagedPlayer = (Player) damagedEntity;
+            Hunter damagedHunter = engine.getHunter(damagedPlayer);
+            LivingEntity outlawEntity = engine.getOutlaw().getEntity();
+            //by who (for stats)
+            Entity killer = null;
+            Hunter killerHunter = null;
+            boolean byOutlaw = false;
 
-        //check if outlaw dead
-        LivingEntity outlaw = engine.getOutlaw().getEntity();
-        if (eventEntity.equals(outlaw)) {
-            if (outlaw.getHealth() - e.getFinalDamage() <= 0) {
-                e.setCancelled(true);
-                engine.triggerEndgame(false);
+            //check by who
+            if (e instanceof EntityDamageByEntityEvent) {
+                killer = ((EntityDamageByEntityEvent) e).getDamager();
+                if (killer instanceof Projectile)
+                    killer = (Entity) ((Projectile) killer).getShooter();
+                if (killer instanceof Player) {
+                    killerHunter = engine.getHunter((Player) killer);
+                    byOutlaw = killer.equals(outlawEntity);
+                }
+            }
+
+            // format death message
+            if (damagedPlayer.getHealth() - dmg <= 0) {
+                Bukkit.broadcastMessage(CommonUtil.getDeathMessage(damagedPlayer, killer, e.getCause()));
+            }
+
+            //check if hunter is damaged
+            if (damagedHunter != null){
+                engine.getStatsCollector().countHunterDamage(damagedHunter, statDmg, byOutlaw);
+                return;
+            }
+
+            //check if outlaw dead
+            if (damagedEntity.equals(outlawEntity)) {
+                engine.getStatsCollector().countVictimDamage(killerHunter, statDmg);
+                if (outlawEntity.getHealth() - dmg <= 0) {
+                    e.setCancelled(true);
+                    engine.triggerEndgame(false);
+                }
             }
         }
     }
 
     @EventHandler
-    public void onDeath(PlayerDeathEvent e) {
-        e.setDeathMessage(null);
+    public void onDeath(EntityDeathEvent ede) {
         Engine engine = Engine.getInstance();
-        if (engine.getGameState() != GameState.GAME)
+        if (ede instanceof PlayerDeathEvent) {
+            PlayerDeathEvent pde = (PlayerDeathEvent) ede;
+            pde.setDeathMessage(null);
+            if (engine.getGameState() != GameState.GAME)
+                return;
+            Hunter h = engine.getHunter(pde.getEntity().getPlayer());
+            if (h != null)
+                engine.getStatsCollector().countDeath(h);
             return;
-        engine.incKill();
+        }
+
+        //chickens
+        if (ede.getEntity() instanceof Chicken)
+            engine.getStatsCollector().countChicken();
     }
 
     @EventHandler
