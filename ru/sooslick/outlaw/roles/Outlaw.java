@@ -13,18 +13,18 @@ import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.util.WorldUtil;
 
-public class Outlaw extends AbstractPlayer {
+import java.util.HashMap;
 
-    private Location lastWorldPos;
-    private Location lastNetherPos;
+public class Outlaw extends AbstractPlayer {
+    private final HashMap<World, Location> trackedPositions;
+
     private LivingEntity placeholder;
     private boolean offline;
     private int alertTimeoutTimer;
 
     public Outlaw(Player p) {
         super(p);
-        lastWorldPos = p.getLocation();
-        lastNetherPos = null;
+        trackedPositions = new HashMap<>();
         placeholder = null;
         offline = false;
         alertTimeoutTimer = 0;
@@ -42,29 +42,17 @@ public class Outlaw extends AbstractPlayer {
     }
 
     public void setTrackedLocation(Location l) {
-        World.Environment env = l.getWorld().getEnvironment();
-        if (env == World.Environment.NORMAL)
-            lastWorldPos = l;
-        else if (env == World.Environment.NETHER)
-            lastNetherPos = l;
+        trackedPositions.put(l.getWorld(), l);
     }
 
     public Location getTrackedLocation(World from) {
         //check if victim's and hunter's worlds equals
         Location here = getLocation();
-        if (here.getWorld().equals(from))
+        if (from.equals(here.getWorld()))
             return here;
 
         //else return last tracked position (i.e. portal position) in this world
-        World.Environment env = from.getEnvironment();
-        switch (env) {
-            case NORMAL:
-                return lastWorldPos;
-            case NETHER:
-                return lastNetherPos;
-            default:
-                return here;
-        }
+        return trackedPositions.get(from);
     }
 
     @Override
@@ -106,6 +94,4 @@ public class Outlaw extends AbstractPlayer {
             }
         }
     }
-
-    //todo rework lastworldpos for custom worlds
 }

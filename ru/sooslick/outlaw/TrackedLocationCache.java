@@ -34,6 +34,9 @@ public class TrackedLocationCache {
             return trackedLocation;
         //get actual tracked pos and put it to cache and create lodestone for nether
         trackedLocation = outlaw.getTrackedLocation(w);
+        //if no tracked loc for current world
+        if (trackedLocation == null)
+            return null;
         if (w.getEnvironment() == World.Environment.NETHER) {
             trackedLocation.setY(128);
             trackedLocation.getBlock().setType(Material.LODESTONE);

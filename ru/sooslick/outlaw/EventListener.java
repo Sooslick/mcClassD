@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -42,8 +43,12 @@ public class EventListener implements Listener {
         if (eventEntity instanceof Player) {
             Player eventPlayer = (Player) eventEntity;
             if (eventPlayer.getHealth() - e.getFinalDamage() <= 0) {
-                //todo: projectiles bug
-                Entity damager = e instanceof EntityDamageByEntityEvent ? ((EntityDamageByEntityEvent) e).getDamager() : null;
+                Entity damager = null;
+                if (e instanceof EntityDamageByEntityEvent) {
+                    damager = ((EntityDamageByEntityEvent) e).getDamager();
+                    if (damager instanceof Projectile)
+                        damager = (Entity) ((Projectile) damager).getShooter();
+                }
                 Bukkit.broadcastMessage(CommonUtil.getDeathMessage(eventPlayer, damager, e.getCause()));
             }
         }
@@ -78,7 +83,7 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPortal(PlayerPortalEvent e) {
         Engine engine = Engine.getInstance();
-        if (!engine.getGameState().equals(GameState.GAME))
+        if (engine.getGameState() != GameState.GAME)
             return;
         Outlaw o = engine.getOutlaw();
         if (!e.getPlayer().equals(o.getPlayer()))

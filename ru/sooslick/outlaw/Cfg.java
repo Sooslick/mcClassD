@@ -15,8 +15,9 @@ import java.util.Map;
 
 public class Cfg {
 
-    private static final String CANNOT_LOAD_GAMEMODE = "Cannot load gamemode class %s";
+    private static final String CANNOT_LOAD_GAMEMODE = "§4Cannot load gamemode class %s";
     private static final String CANNOT_READ_PARAMETER = "Cannot read parameter %s";
+    private static final String INVALID_CLASS_EXCEPTION = " is not GameModeBase class";
     private static final String READ_STARTINV_ENTRY = "read startInventory entry: %s x %s";
     private static final String UNKNOWN_ITEM = "Unknown item in start inventory: %s";
     private static final String UNKNOWN_METHOD = "Unknown compass update method: %s";
@@ -118,10 +119,11 @@ public class Cfg {
         try {
             Class<?> clazz = Class.forName(className);
             if (!GameModeBase.class.isAssignableFrom(clazz))
-                throw new Exception("Invalid gamemode class");          //todo GamemodeException class
+                throw new Exception(clazz.getName() + INVALID_CLASS_EXCEPTION);
             preferredGamemode = clazz.asSubclass(GameModeBase.class);
         } catch (Exception e) {
             preferredGamemode = AnyPercentBase.class;
+            LoggerUtil.warn(e.getMessage());
             LoggerUtil.warn(String.format(CANNOT_LOAD_GAMEMODE, className));
         }
 

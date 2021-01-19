@@ -9,7 +9,7 @@ import ru.sooslick.outlaw.gamemode.GameModeBase;
 import ru.sooslick.outlaw.gamemode.GameModeConfig;
 
 public class AnyPercentBase implements GameModeBase {
-    AnyPercentEventListener events;
+    final AnyPercentEventListener events;
 
     public AnyPercentBase() {
         events = new AnyPercentEventListener();

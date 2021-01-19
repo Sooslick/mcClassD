@@ -187,10 +187,6 @@ public class Engine extends JavaPlugin {
             if (votestarters.remove(name)) {
                 Bukkit.broadcastMessage(String.format(Messages.START_VOTES_COUNT, votestarters.size(), Cfg.minStartVotes));
             }
-            //todo same code in voteStart. Refactor to method
-            if (votestarters.size() >= Bukkit.getOnlinePlayers().size()) {
-                changeGameState(GameState.PRESTART);
-            }
         }
     }
 

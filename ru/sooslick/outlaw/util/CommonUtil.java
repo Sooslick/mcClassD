@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Random;
 
 public class CommonUtil {
-    public static Random random = new Random();
+    public static final Random random = new Random();
 
     public static final String DEATH_MESSAGE_BASE = "§4%s %s %s";    //who, reason, by
     private static final String DURATION_DEFAULT = "%d:%02d";
