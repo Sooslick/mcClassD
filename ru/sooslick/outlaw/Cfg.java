@@ -151,7 +151,8 @@ public class Cfg {
     public static String getValue(String key) {
         Field f = getField(key);
         if (f == null) {
-            return String.format(UNKNOWN_PARAMETER, key);
+            String str = gameModeCfg == null ? null : gameModeCfg.getValueOf(key);
+            return str == null ? String.format(UNKNOWN_PARAMETER, key) : String.format(VALUE_TEMPLATE, key, str);
         }
         try {
             return String.format(VALUE_TEMPLATE, key, f.get(null));

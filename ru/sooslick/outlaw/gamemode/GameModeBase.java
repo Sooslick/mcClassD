@@ -12,7 +12,9 @@ public interface GameModeBase {
 
     void unload();
 
-    GameModeConfig getConfig();
+    default GameModeConfig getConfig() {
+        return null;
+    }
 
     String getObjective();
 

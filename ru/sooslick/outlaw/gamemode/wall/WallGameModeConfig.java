@@ -51,6 +51,19 @@ public class WallGameModeConfig implements GameModeConfig {
     }
 
     @Override
+    public String getValueOf(String param) {
+        switch (param.toLowerCase()) {
+            case "playzonesize": return String.valueOf(playzoneSize);
+            case "wallthickness": return String.valueOf(wallThickness);
+            case "spotsize": return String.valueOf(spotSize);
+            case "groundspotqty": return String.valueOf(groundSpotQty);
+            case "undergroundspotqty": return String.valueOf(undergroundSpotQty);
+            case "airspotqty": return String.valueOf(airSpotQty);
+            default: return null;
+        }
+    }
+
+    @Override
     public String availableParameters() {
         return "playzoneSize, wallThickness, spotSize, groundSpotQty, airSpotQty, undergroundSpotQty";
     }

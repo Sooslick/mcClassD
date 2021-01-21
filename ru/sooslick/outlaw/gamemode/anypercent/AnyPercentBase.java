@@ -6,7 +6,6 @@ import org.bukkit.event.HandlerList;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.gamemode.GameModeBase;
-import ru.sooslick.outlaw.gamemode.GameModeConfig;
 
 public class AnyPercentBase implements GameModeBase {
     final AnyPercentEventListener events;
@@ -37,11 +36,6 @@ public class AnyPercentBase implements GameModeBase {
     @Override
     public void unload() {
         HandlerList.unregisterAll(events);
-    }
-
-    @Override
-    public GameModeConfig getConfig() {
-        return null;
     }
 
     @Override
