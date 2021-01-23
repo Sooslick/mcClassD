@@ -32,7 +32,7 @@ import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 import ru.sooslick.outlaw.util.CommonUtil;
 
-public class EventListener implements Listener {
+class EventListener implements Listener {
 
     @EventHandler
     public void onDamage(EntityDamageEvent e) {
@@ -244,13 +244,6 @@ public class EventListener implements Listener {
         detectEntity(e.getVehicle());
     }
 
-    private void detectEntity(Entity e) {
-        Engine engine = Engine.getInstance();
-        if (engine.getGameState() != GameState.GAME)
-            return;
-        engine.getChestTracker().detectEntity(e);
-    }
-
     @EventHandler
     public void onConsume(PlayerItemConsumeEvent e) {
         if (e.isCancelled())
@@ -263,5 +256,12 @@ public class EventListener implements Listener {
         if (e.getItem().getType() == Material.MILK_BUCKET) {
             engine.setGlowingRefreshTimer(Cfg.milkGlowImmunityDuration);
         }
+    }
+
+    private void detectEntity(Entity e) {
+        Engine engine = Engine.getInstance();
+        if (engine.getGameState() != GameState.GAME)
+            return;
+        engine.getChestTracker().detectEntity(e);
     }
 }

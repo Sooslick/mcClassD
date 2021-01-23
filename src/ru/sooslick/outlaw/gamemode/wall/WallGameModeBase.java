@@ -46,7 +46,6 @@ public class WallGameModeBase implements GameModeBase {
         wallCfg = new WallGameModeConfig();
         Wall.initWith(wallCfg);
         events = new WallEventListener(this);
-        Engine engine = Engine.getInstance();
         engine.getServer().getPluginManager().registerEvents(events, engine);
     }
 

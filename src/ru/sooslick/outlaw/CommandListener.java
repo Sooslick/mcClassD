@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class CommandListener implements CommandExecutor {
+class CommandListener implements CommandExecutor {
 
     private static final String MH_ACCEPT = "§6/manhunt accept §7(/y)";
     private static final String MH_CFG = "§7/manhunt cfg <parameter>";

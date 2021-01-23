@@ -9,7 +9,7 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StatsCollector {
+class StatsCollector {
     private static final String DF = "0.#";
     private static final String LF = "\n§6";
     private static final String SEMICOLON = ":§e ";
@@ -25,7 +25,7 @@ public class StatsCollector {
     private double outlawDamage;
     private int chickens;
 
-    public StatsCollector() {
+    StatsCollector() {
         df = new DecimalFormat(DF);
         damageByOutlaw = new HashMap<>();
         damageToOutlaw = new HashMap<>();
@@ -35,27 +35,27 @@ public class StatsCollector {
         chickens = 0;
     }
 
-    public void countVictimDamage(Hunter hunter, double damage) {
+    void countVictimDamage(Hunter hunter, double damage) {
         outlawDamage += damage;
         addHunterStat(damageToOutlaw, hunter, damage);
     }
 
-    public void countHunterDamage(Hunter hunter, double damage, boolean byOutlaw) {
+    void countHunterDamage(Hunter hunter, double damage, boolean byOutlaw) {
         addHunterStat(damageTotal, hunter, damage);
         if (byOutlaw)
             addHunterStat(damageByOutlaw, hunter, damage);
     }
 
-    public void countDeath(Hunter hunter) {
+    void countDeath(Hunter hunter) {
         addHunterStat(deaths, hunter, 1);
         Bukkit.broadcastMessage(String.format(Messages.STATS_DEATH_COUNTER, df.format(calcTotal(deaths))));
     }
 
-    public void countChicken() {
+    void countChicken() {
         chickens++;
     }
 
-    public void scheduleBroadcast() {
+    void scheduleBroadcast() {
         BukkitScheduler sch = Bukkit.getScheduler();
         // DAMAGE TO OUTLAW
         long baseDelay = 80;

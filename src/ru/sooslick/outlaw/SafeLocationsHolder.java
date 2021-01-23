@@ -8,7 +8,7 @@ import ru.sooslick.outlaw.util.WorldUtil;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SafeLocationsHolder {
+class SafeLocationsHolder {
     private final static String DEBUG_CURRENT = "SafeLocations job - save current spawn locations";
     private final static String DEBUG_PENDING = "SafeLocations job - save pending location";
     private final static String DEBUG_RESERVATION = "SafeLocations job - save to reservation // size = ";
@@ -25,7 +25,7 @@ public class SafeLocationsHolder {
     private Map<Location, Location> reservation;
     private int jobTaskId;
 
-    public SafeLocationsHolder() {
+    SafeLocationsHolder() {
         pendingLocation = null;
         safeLocationVictim = null;
         safeLocationHunter = null;
@@ -58,7 +58,7 @@ public class SafeLocationsHolder {
         }
     };
 
-    public void launchJob() {
+    void launchJob() {
         pendingLocation = null;
         safeLocationVictim = null;
         safeLocationHunter = null;
@@ -66,12 +66,12 @@ public class SafeLocationsHolder {
         LoggerUtil.debug(JOB_LAUNCH);
     }
 
-    public void stopJob() {
+    void stopJob() {
         Bukkit.getScheduler().cancelTask(jobTaskId);
         LoggerUtil.debug(JOB_STOP + reservation.size());
     }
 
-    public void selectSafeLocations() {
+    void selectSafeLocations() {
         stopJob();
         // if spawns not selected in lobby state
         if (safeLocationVictim == null || safeLocationHunter == null) {
@@ -93,15 +93,15 @@ public class SafeLocationsHolder {
         LoggerUtil.debug(SELECT_CURRENT);
     }
 
-    public Location getVictimLocation() {
+    Location getVictimLocation() {
         return getSafeLocation(safeLocationVictim);
     }
 
-    public Location getHunterLocation() {
+    Location getHunterLocation() {
         return getSafeLocation(safeLocationHunter);
     }
 
-    private Location getSafeLocation(Location l) {
+    Location getSafeLocation(Location l) {
         //load chunk and check if loc still safe
         if (WorldUtil.isSafeLocation(l))
             return l;

@@ -10,8 +10,8 @@ import ru.sooslick.outlaw.util.LoggerUtil;
 import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChestTracker {
     private static final String REPORT_TEMPLATE = "ChestTracker cleanup report:\nContainers: %s\nBeds: %s\nBlocks: %s\nEntities: %s";
@@ -90,40 +90,37 @@ public class ChestTracker {
     }
 
     public void cleanup() {
-        AtomicInteger chests = new AtomicInteger();
-        AtomicInteger beds = new AtomicInteger();
-        AtomicInteger blocks = new AtomicInteger();
+        int chests = trackedContainers.size();
+        int beds = trackedBeds.size();
+        int blocks = trackedBlocks.size();
+        int ent = trackedEntities.size();
         //clear and delete containers
         trackedContainers.forEach(b -> {
             if (b.getState() instanceof InventoryHolder) {
                 ((InventoryHolder) b.getState()).getInventory().clear();
                 b.setType(Material.AIR);
-                chests.getAndIncrement();
             }
         });
+        trackedContainers.clear();
         //clear beds
         trackedBeds.forEach(b -> {
             if (b.getBlockData() instanceof Bed) {
                 b.getRelative(((Bed) b.getBlockData()).getFacing()).setType(Material.AIR);
                 b.setType(Material.AIR);
-                beds.getAndIncrement();
             }
         });
+        trackedBeds.clear();
         //clear simple blocks and fluids
-        trackedBlocks.forEach(b -> {
-            b.setType(Material.AIR);
-            blocks.getAndIncrement();
-        });
-        //clear entities (array is copied to prevent concurrent modification exceptions due to e.remove)
-        int ent = 0;
-        Entity[] trackerEntitiesArray = new Entity[trackedEntities.size()];
-        trackerEntitiesArray = trackedEntities.toArray(trackerEntitiesArray);
-        for (Entity e : trackerEntitiesArray) {
-            if (e != null) {
+        trackedBlocks.forEach(b -> b.setType(Material.AIR));
+        trackedBlocks.clear();
+        //clear entities (via iterator because concurrent modification exception)
+        Iterator<Entity> i = trackedEntities.iterator();
+        //noinspection WhileLoopReplaceableByForEach
+        while (i.hasNext()) {
+            Entity e = i.next();
+            if (e != null)
                 e.remove();
-                ent++;
-            }
         }
-        LoggerUtil.info(String.format(REPORT_TEMPLATE, chests.toString(), beds.toString(), blocks.toString(), ent));
+        LoggerUtil.info(String.format(REPORT_TEMPLATE, chests, beds, blocks, ent));
     }
 }

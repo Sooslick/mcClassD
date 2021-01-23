@@ -16,7 +16,7 @@ import java.time.Duration;
 import java.util.LinkedList;
 
 public class Wall {
-    private static final String BROADCAST_BUILD_PREDICTION = "§cPlease wait until the Wall is rebuilt. Estimated wait time: ";
+    private static final String BROADCAST_BUILD_PREDICTION = "§cPlease wait until the Wall is done. Estimated wait time: ";
     private static final String DEBUG_KILLED = "All tasks completed, remove Wall from scheduler";
     private static final String DEBUG_LIMITER = "Wall limiter is %s. Expected volume: %s";
     private static final String DEBUG_MAX_HEIGHT = "World's max height is ";
@@ -245,7 +245,8 @@ public class Wall {
                         Cfg.blocksPerSecondLimit = size;
                         LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
                     }
-                    String duration = CommonUtil.formatDuration(Duration.ofSeconds(rollbackWallFillers.size() * 2 / limiter));
+                    int mpl = taskQueue.contains(Task.GENERATE_WALL) ? 2 : 1;
+                    String duration = CommonUtil.formatDuration(Duration.ofSeconds(rollbackWallFillers.size() * mpl / limiter));
                     Bukkit.broadcastMessage(BROADCAST_BUILD_PREDICTION + duration);
                 },
                 //TICK RUNNABLE
