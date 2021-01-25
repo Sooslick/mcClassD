@@ -21,6 +21,10 @@ public class Hunter extends AbstractPlayer {
     private static CompassUpdates.CompassUpdateMethod compassUpdateMethod;
     private static TrackedLocationCache cache;
 
+    /**
+     * Init global Hunter variables before game starts
+     * @param outlaw selected Victim
+     */
     public static void setupHunter(Outlaw outlaw) {
         compassUpdateMethod = Cfg.compassUpdates.getCompassUpdateMethod();
         cache = new TrackedLocationCache(outlaw);
@@ -43,21 +47,31 @@ public class Hunter extends AbstractPlayer {
     public void onRespawn() {
         if (!firstRespawn) {
             Engine e = Engine.getInstance();
-            player.sendMessage(String.format(Messages.HUNTER_RESPAWN, e.getOutlaw().getName(), CommonUtil.formatDuration(Duration.ofSeconds(e.getGameTimer()))));
+            player.sendMessage(String.format(Messages.HUNTER_RESPAWN, e.getOutlaw().getName(), CommonUtil.formatDuration(e.getGameTimer())));
         }
         if (Cfg.compassUpdates != CompassUpdates.NEVER)
             player.getInventory().addItem(new ItemStack(Material.COMPASS));
         firstRespawn = false;
     }
 
+    /**
+     * Trigger the tick event of current compass update method
+     */
     public void triggerCompassUpdateTick() {
         compassUpdateMethod.tick(this);
     }
 
+    /**
+     * Decrease the cooldown duration by 1
+     */
     public void cooldownTick() {
         compassCooldown--;
     }
 
+    /**
+     * Update Hunter's compass
+     * @return true if compass updated successfully, false otherwise
+     */
     public boolean updateCompass() {
         if (compassCooldown > 0) {
             return false;
@@ -122,5 +136,4 @@ public class Hunter extends AbstractPlayer {
         is.setItemMeta(meta);
         return true;
     }
-
 }

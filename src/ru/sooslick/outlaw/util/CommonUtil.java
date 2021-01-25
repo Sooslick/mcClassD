@@ -9,6 +9,9 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Random;
 
+/**
+ * Utility class with common methods like formatting or random
+ */
 public class CommonUtil {
     public static final Random random = new Random();
 
@@ -19,6 +22,11 @@ public class CommonUtil {
 
     private CommonUtil() {}
 
+    /**
+     * Returns one random element from collection
+     * @param set collection
+     * @return random element of collection
+     */
     public static <E> E getRandomOf(Collection<E> set) {
         return set.stream().skip(random.nextInt(set.size())).findFirst().orElse(null);
     }
@@ -40,6 +48,13 @@ public class CommonUtil {
         }
     }
 
+    /**
+     * Format custom death message for damage event
+     * @param dead who is dead
+     * @param killer who is killer
+     * @param cause type of fatal damage
+     * @return formatted death message
+     */
     public static String getDeathMessage(Player dead, Entity killer, EntityDamageEvent.DamageCause cause) {
         String reason;
         switch (cause) {

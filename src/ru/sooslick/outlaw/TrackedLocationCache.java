@@ -7,6 +7,9 @@ import ru.sooslick.outlaw.roles.Outlaw;
 
 import java.util.HashMap;
 
+/**
+ * Represent the storage for tracked Victim's positions to optimize compass updates
+ */
 public class TrackedLocationCache {
     private final HashMap<World, Location> cache;
     private final int refreshPeriod;
@@ -21,6 +24,11 @@ public class TrackedLocationCache {
         this.outlaw = outlaw;
     }
 
+    /**
+     * Return the Victim's last tracked location for specified world
+     * @param w specified world
+     * @return tracked location
+     */
     public Location getTrackedLocation(World w) {
         //check is cache requires refreshing;
         long timer = Engine.getInstance().getGameTimer();

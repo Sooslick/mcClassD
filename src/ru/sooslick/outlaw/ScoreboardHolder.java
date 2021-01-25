@@ -8,6 +8,9 @@ import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 import ru.sooslick.outlaw.util.LoggerUtil;
 
+/**
+ * Represents the game's scoreboard which will function in the current game
+ */
 public class ScoreboardHolder {
     public static final String TEAM_HUNTER_NAME = "Hunter";
     public static final String TEAM_VICTIM_NAME = "Victim";
@@ -19,7 +22,7 @@ public class ScoreboardHolder {
     private Team teamVictim, teamHunter;
     private final boolean enabled;
 
-    public ScoreboardHolder(ScoreboardManager sbm) {
+    ScoreboardHolder(ScoreboardManager sbm) {
         if (sbm != null) {
             enabled = true;
             scoreboard = sbm.getNewScoreboard();
@@ -34,10 +37,18 @@ public class ScoreboardHolder {
         LoggerUtil.debug(DEBUG_HOLDER_CREATED + enabled);
     }
 
+    /**
+     * Return the current Scoreboard
+     * @return current Scoreboard
+     */
     public Scoreboard getScoreboard() {
         return scoreboard;
     }
 
+    /**
+     * Fix custom scoreboard so the player can see current objectives and teams
+     * @param p player requires the fix
+     */
     // for rejoin bugfix
     public void setPlayerScoreboard(Player p) {
         if (scoreboard != null)
@@ -45,15 +56,15 @@ public class ScoreboardHolder {
         LoggerUtil.debug(DEBUG_SET_SCOREBOARD + p.getName());
     }
 
-    public void addVictim(Player p) {
+    void addVictim(Player p) {
         addPlayerToTeam(p, teamVictim);
     }
 
-    public void addHunter(Player p) {
+    void addHunter(Player p) {
         addPlayerToTeam(p, teamHunter);
     }
 
-    public void recalculateNametagVisiblity(int hunters) {
+    void recalculateNametagVisiblity(int hunters) {
         if (enabled) {
             boolean invisible = hunters > Cfg.hideVictimNametagAboveHunters;
             teamVictim.setOption(Team.Option.NAME_TAG_VISIBILITY, invisible ? Team.OptionStatus.NEVER : Team.OptionStatus.ALWAYS);

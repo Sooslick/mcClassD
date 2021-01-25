@@ -12,6 +12,9 @@ import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.Map;
 
+/**
+ * Representation of Manhunt player
+ */
 public abstract class AbstractPlayer {
 
     private static final String ADVANCEMENT_REVOKE = "advancement revoke %s everything";
@@ -23,22 +26,42 @@ public abstract class AbstractPlayer {
         player = p;
     }
 
+    /**
+     * Return player's name
+     * @return player's name
+     */
     public String getName() {
         return player.getName();
     }
 
+    /**
+     * Return the Minecraft player
+     * @return Minecraft player
+     */
     public Player getPlayer() {
         return player;
     }
 
+    /**
+     * Return the entity representing the Manhunt player
+     * @return LivingEntity representing the Manhunt player
+     */
     public LivingEntity getEntity() {
         return player;
     }
 
+    /**
+     * Return the current location of Manhunt player
+     * @return the location of Manhunt player
+     */
     public Location getLocation() {
         return player.getLocation();
     }
 
+    /**
+     * Spawn the Manhunt player at specified location and prepare him for the game
+     * @param dest location where the Manhunt player will spawn
+     */
     public void preparePlayer(Location dest) {
         player.teleport(dest);
         player.setHealth(20);
@@ -58,16 +81,29 @@ public abstract class AbstractPlayer {
         onRespawn();
     }
 
+    /**
+     * Do action after respawn
+     */
     public void onRespawn() {
         firstRespawn = false;
     }
 
+    /**
+     * Do action after leaving the server
+     */
     public void goOffline() {}
 
+    /**
+     * Do action after rejoining the server
+     * @param newPlayer same Minecraft player
+     */
     public void goOnline(Player newPlayer) {
         player = newPlayer;
     }
 
+    /**
+     * Do action after the game ending
+     */
     public void onEndGame() {
         player.setGameMode(GameMode.SPECTATOR);
         WorldUtil.invToChest(getPlayer().getInventory(), getEntity().getLocation());

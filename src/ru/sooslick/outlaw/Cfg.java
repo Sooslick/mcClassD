@@ -13,6 +13,9 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents the main Manhunt config
+ */
 public class Cfg {
 
     private static final String CANNOT_LOAD_GAMEMODE = "§4Cannot load gamemode class %s";
@@ -49,6 +52,10 @@ public class Cfg {
     //disable constructor for utility class
     private Cfg() {}
 
+    /**
+     * Read Manhunt's config
+     * @param f Manhunt's configuration file
+     */
     public static void readConfig(FileConfiguration f) {
 
         currentCfg = f;
@@ -131,12 +138,16 @@ public class Cfg {
         LoggerUtil.setupLevel();
     }
 
-    public static void readGameModeConfig(GameModeBase gmb) {
+    static void readGameModeConfig(GameModeBase gmb) {
         gameModeCfg = gmb.getConfig();
         if (gameModeCfg != null)
             gameModeCfg.readConfig();
     }
 
+    /**
+     * Format string of parameters that are available in main and gamemode's config
+     * @return formatted string
+     */
     public static String availableParameters() {
         StringBuilder sb = new StringBuilder().append(Messages.AVAILABLE_PARAMETERS).append("debugMode, blocksPerSecondLimit, gamemodes, preferredGamemode, minStartVotes, prestartTimer, spawnRadius, spawnDistance, hideVictimNametagAboveHunters, enablePotionHandicap, enableStartInventory, alertRadius, alertTimeout, compassUpdates, compassUpdatesPeriod, enableVictimGlowing, milkGlowImmunityDuration, startInventory");
         if (gameModeCfg == null)
@@ -147,7 +158,12 @@ public class Cfg {
         return sb.append(", ").append(gmParams).toString();
     }
 
-    //method can return value of any field in this class include non-config variables. Not a bug, f e a t u r e
+    /**
+     * Return string value of config's parameter
+     * @param key parameter
+     * @return String value
+     */
+    //method can return value of any field in this class include non-config variables. Not a bug, but kinda sus
     public static String getValue(String key) {
         Field f = getField(key);
         if (f == null) {

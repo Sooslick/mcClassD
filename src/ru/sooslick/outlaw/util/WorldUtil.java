@@ -14,6 +14,9 @@ import ru.sooslick.outlaw.Engine;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility class with common world and location methods
+ */
 public class WorldUtil {
     private static final double DISTANCE_MAX = 100500d;
     private static final String COMMA = ", ";
@@ -68,6 +71,11 @@ public class WorldUtil {
         EXCLUDES.add(Material.SNOW);
     }
 
+    /**
+     * Get random main world location on the surface within specified radius (square)
+     * @param bound search radius
+     * @return random location
+     */
     public static Location getRandomLocation(int bound) {
         int dbound = bound * 2;
         int x = CommonUtil.random.nextInt(dbound) - bound;
@@ -75,6 +83,12 @@ public class WorldUtil {
         return Bukkit.getWorlds().get(0).getHighestBlockAt(x, z).getLocation().add(0.5, 1, 0.5);
     }
 
+    /**
+     * Get random location from a specified distance
+     * @param src source location
+     * @param dist required distance from source location
+     * @return random location
+     */
     public static Location getDistanceLocation(Location src, int dist) {
         double angle = Math.random() * Math.PI * 2;
         int x = src.getBlockX() + (int) (Math.cos(angle) * dist);
@@ -82,6 +96,11 @@ public class WorldUtil {
         return Bukkit.getWorlds().get(0).getHighestBlockAt(x, z).getLocation().add(0.5, 1, 0.5);
     }
 
+    /**
+     * Check spawn safety on the specified location
+     * @param l location to check
+     * @return true if the location is safe to spawn, otherwise false
+     */
     public static boolean isSafeLocation(Location l) {
         l.getChunk().load();
         Block groundBlock = l.getBlock().getRelative(0, -1, 0);
@@ -104,6 +123,12 @@ public class WorldUtil {
         return true;
     }
 
+    /**
+     * Return the distance between two locations
+     * @param l1 first location
+     * @param l2 second location
+     * @return distance between locations, or hard-coded max value if worlds of this locations are different
+     */
     public static double distance2d(Location l1, Location l2) {
         //return max distance if both worlds are specified and not equals
         if (l1.getWorld() != null && l2.getWorld() != null && l1.getWorld() != l2.getWorld())
@@ -113,6 +138,11 @@ public class WorldUtil {
         return Math.sqrt(x * x + z * z);
     }
 
+    /**
+     * Format location as string
+     * @param l location to format
+     * @return formatted string
+     */
     public static String formatLocation(Location l) {
         String ws = l.getWorld() != null ? l.getWorld().getName() : PLACEHOLDER;
         return ws +
@@ -121,6 +151,11 @@ public class WorldUtil {
                 l.getBlockZ();
     }
 
+    /**
+     * Make selected location safe for spawn
+     * @param l location to safe
+     * @return this location
+     */
     public static Location safetizeLocation(Location l) {
         World w = l.getWorld();
         int x = l.getBlockX();
@@ -140,6 +175,11 @@ public class WorldUtil {
         return l;
     }
 
+    /**
+     * Copy inventory to chests
+     * @param inv inventory to copy
+     * @param l location of first chest
+     */
     @SuppressWarnings("ConstantConditions")
     public static void invToChest(Inventory inv, Location l) {
         ChestTracker ct = Engine.getInstance().getChestTracker();
@@ -169,6 +209,10 @@ public class WorldUtil {
         }
     }
 
+    /**
+     * Generate top barrier if some blocks changed near the max world's height
+     * @param blocks list of blocks changed
+     */
     public static void generateBarrier(List<Block> blocks) {
         if (blocks.size() == 0)
             return;

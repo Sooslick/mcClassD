@@ -15,6 +15,9 @@ import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.HashMap;
 
+/**
+ * Representation of the Victim
+ */
 public class Outlaw extends AbstractPlayer {
     private final HashMap<World, Location> trackedPositions;
 
@@ -41,10 +44,19 @@ public class Outlaw extends AbstractPlayer {
         if (placeholder != null) placeholder.remove();
     }
 
+    /**
+     * Update Victim's tracked position for Hunters' compasses
+     * @param l location to track
+     */
     public void setTrackedLocation(Location l) {
         trackedPositions.put(l.getWorld(), l);
     }
 
+    /**
+     * Return the tracked location for specified world
+     * @param from requested world
+     * @return tracked location for this world
+     */
     public Location getTrackedLocation(World from) {
         //check if victim's and hunter's worlds equals
         Location here = getLocation();
@@ -74,6 +86,9 @@ public class Outlaw extends AbstractPlayer {
         newPlayer.sendMessage(String.format(Messages.VICTIM_REMINDER, Engine.getInstance().getGameMode().getObjective()));
     }
 
+    /**
+     * Send text notification for Victim if hunters are nearby
+     */
     public void huntersNearbyAlert() {
         if (--alertTimeoutTimer > 0)
             return;

@@ -1,6 +1,8 @@
 package ru.sooslick.outlaw;
 
-//Utility class with client messages that might be localized
+/**
+ * Utility class with client messages that can be localized
+ */
 public class Messages {
 
     // CORE

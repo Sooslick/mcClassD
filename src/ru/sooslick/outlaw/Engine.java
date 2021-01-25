@@ -25,6 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Main Manhunt class which contains all core functionality
+ */
 public class Engine extends JavaPlugin {
 
     private static final String GAME_STATE_CHANGED = "ClassD game state has changed. New state: ";
@@ -155,11 +158,15 @@ public class Engine extends JavaPlugin {
         LoggerUtil.info(Messages.UNPLAYABLE_WORLD_WARNING);
     }
 
+    /**
+     * Return the instance of Manhunt plugin
+     * @return instance of Manhunt plugin
+     */
     public static Engine getInstance() {
         return instance;
     }
 
-    public void forceStartGame(CommandSender sender) {
+    void forceStartGame(CommandSender sender) {
         if (state == GameState.GAME) {
             sender.sendMessage(Messages.GAME_IS_RUNNING);
         } else {
@@ -171,6 +178,10 @@ public class Engine extends JavaPlugin {
         }
     }
 
+    /**
+     * End the game and announce the winner
+     * @param victimWin is Victim the winner
+     */
     public void triggerEndgame(boolean victimWin) {
         Bukkit.broadcastMessage(victimWin ? Messages.VICTIM_ESCAPED : Messages.VICTIM_DEAD);
         outlaw.onEndGame();
@@ -179,7 +190,7 @@ public class Engine extends JavaPlugin {
         changeGameState(GameState.IDLE);
     }
 
-    public void unvote(Player p) {
+    void unvote(Player p) {
         String name = p.getName();
         if (volunteers.remove(name)) {
             Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_LEFT, name));
@@ -191,7 +202,7 @@ public class Engine extends JavaPlugin {
         }
     }
 
-    public void voteStart(Player p) {
+    void voteStart(Player p) {
         if (state == GameState.GAME) {
             p.sendMessage(Messages.START_VOTE_INGAME);
             return;
@@ -211,7 +222,7 @@ public class Engine extends JavaPlugin {
         }
     }
 
-    public void suggest(Player p) {
+    void suggest(Player p) {
         if (state == GameState.GAME) {
             p.sendMessage(Messages.VOLUNTEER_SUGGEST_INGAME);
             return;
@@ -226,7 +237,7 @@ public class Engine extends JavaPlugin {
         Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_SUGGEST, name));
     }
 
-    public void exclude(Player p) {
+    void exclude(Player p) {
         if (state == GameState.GAME) {
             p.sendMessage(Messages.VOLUNTEER_SUGGEST_INGAME);
             return;
@@ -241,7 +252,7 @@ public class Engine extends JavaPlugin {
         Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_EXCLUDED, name));
     }
 
-    public void joinRequest(Player sender) {
+    void joinRequest(Player sender) {
         //allow command only in game
         if (state != GameState.GAME) {
             sender.sendMessage(Messages.JOIN_REQUEST_LOBBY);
@@ -272,7 +283,7 @@ public class Engine extends JavaPlugin {
         outlaw.getPlayer().sendMessage(String.format(Messages.JOIN_REQUEST_NOTIFICATION, sender.getName()));
     }
 
-    public void acceptJoinRequest(Player sender) {
+    void acceptJoinRequest(Player sender) {
         //allow command only in game
         if (state != GameState.GAME) {
             sender.sendMessage(Messages.GAME_IS_NOT_RUNNING);
@@ -307,22 +318,43 @@ public class Engine extends JavaPlugin {
         }
     }
 
+    /**
+     * Return the instance of currently loaded gamemode
+     * @return current Manhunt's gamemode
+     */
     public GameModeBase getGameMode() {
         return gamemode;
     }
 
+    /**
+     * Return the state of the game
+     * @return current game state
+     */
     public GameState getGameState() {
         return state;
     }
 
+    /**
+     * Return the current Victim
+     * @return Victim or null if the game is not running
+     */
     public Outlaw getOutlaw() {
         return outlaw;
     }
 
+    /**
+     * Return the list of active Hunters
+     * @return list of active Hunters
+     */
     public List<Hunter> getHunters() {
         return hunters;
     }
 
+    /**
+     * Search the Hunter by player
+     * @param p player
+     * @return Hunter or null if this player is not a Hunter
+     */
     public Hunter getHunter(Player p) {
         //comparing by name
         return hunters.stream()
@@ -331,23 +363,35 @@ public class Engine extends JavaPlugin {
                 .orElse(null);
     }
 
+    /**
+     * Return amount of seconds passed since the game start
+     * @return amount of seconds since the start
+     */
     public long getGameTimer() {
         return gameTimer;
     }
 
+    /**
+     * Return the current ChestTracker
+     * @return current ChestTracker
+     */
     public ChestTracker getChestTracker() {
         return chestTracker;
     }
 
+    /**
+     * Return the current ScoreboardHolder
+     * @return current ScoreboardHolder
+     */
     public ScoreboardHolder getScoreboardHolder() {
         return scoreboardHolder;
     }
 
-    public StatsCollector getStatsCollector() {
+    StatsCollector getStatsCollector() {
         return statsCollector;
     }
 
-    public void setGlowingRefreshTimer(int glowingRefreshTimer) {
+    void setGlowingRefreshTimer(int glowingRefreshTimer) {
         this.glowingRefreshTimer = glowingRefreshTimer;
     }
 

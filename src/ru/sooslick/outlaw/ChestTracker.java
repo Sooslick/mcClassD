@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
+/**
+ * Class for tracking and rolling back players' stuff
+ */
 public class ChestTracker {
     private static final String REPORT_TEMPLATE = "ChestTracker cleanup report:\nContainers: %s\nBeds: %s\nBlocks: %s\nEntities: %s";
     private static final String TRACKED_FORCE = "Force tracking on block %s";
@@ -53,17 +56,26 @@ public class ChestTracker {
         TRACKED_BLOCKS.add(Material.OBSIDIAN);
     }
 
-    public ChestTracker() {
+    ChestTracker() {
         trackedContainers = new LinkedHashSet<>();
         trackedBeds = new LinkedHashSet<>();
         trackedBlocks = new LinkedHashSet<>();
         trackedEntities = new LinkedHashSet<>();
     }
 
+    /**
+     * Detect specified block and mark it for rollback if it meets rollback criteria
+     * @param b tracked block
+     */
     public void detectBlock(Block b) {
         detectBlock(b, false);
     }
 
+    /**
+     * Detect specified block and mark it for rollback if it meets rollback criteria
+     * @param b tracked block
+     * @param force forced track flag
+     */
     public void detectBlock(Block b, boolean force) {
         if (force) {
             if (trackedBlocks.add(b))
@@ -82,6 +94,10 @@ public class ChestTracker {
         }
     }
 
+    /**
+     * Detect the specified entity and mark it for rollback if it meets rollback criteria
+     * @param e tracked entity
+     */
     public void detectEntity(Entity e) {
         if (TRACKED_ENTITY_TYPES.contains(e.getType()))
             if (trackedEntities.add(e)) {
@@ -89,6 +105,9 @@ public class ChestTracker {
             }
     }
 
+    /**
+     * Remove all tracked stuff
+     */
     public void cleanup() {
         int chests = trackedContainers.size();
         int beds = trackedBeds.size();
