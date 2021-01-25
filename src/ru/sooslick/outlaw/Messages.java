@@ -86,6 +86,14 @@ public class Messages {
     public static final String WALL_OBJECTIVE = "ESCAPE THE WALL";
     public static final String WALL_WALKTHROUGH_ALERT = "§cVictim is breaking through the Wall";
 
+    // EVAC
+    public static final String EVAC_VEHICLE_ANNOUNCE = "§cEvacuation point is located on X: %s, Z: %s";
+    public static final String EVAC_VEHICLE_READY = "§cEvacuation point is open!";
+    public static final String EVAC_COMPASS = "§cYou got the compass that points to evacuation location";
+    public static final String EVAC_NAME = "Evacuation Point";
+    public static final String EVAC_OBJECTIVE = "GET ON EVACUATION VEHICLE";
+    public static final String EVAC_DESCRIPTION = "§6Evacuation Point mode\n§eThe Victim is waiting for evacuation vehicle and must get on as soon as it lands";
+
     //deny constructors
     private Messages() {}
 }

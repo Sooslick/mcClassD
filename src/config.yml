@@ -10,6 +10,7 @@ preferredGamemode: any%
 gamemodes:
   any%: ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase
   wall: ru.sooslick.outlaw.gamemode.wall.WallGameModeBase
+  evacuation: ru.sooslick.outlaw.gamemode.evacuation.EvacuationBase
 
 #### CORE GAMEPLAY ####
 #Lobby parameters
@@ -37,11 +38,19 @@ startInventory:
   OAK_LOG: 3
   COOKIE: 3
 
-####### THE WALL ##########
-#Escape the Wall parameters
+####### THE WALL & EVACUATION ##########
+#Common
 playzoneSize: 1000
+
+#Escape the Wall parameters
 wallThickness: 8
 spotSize: 4
 groundSpotQty: 3
 airSpotQty: 2
 undergroundSpotQty: 5
+
+#Duration of Evacuation stages
+waitTime: 1500
+landingTime: 300
+cordonTime: 300
+cordonZoneSize: 16

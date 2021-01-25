@@ -6,6 +6,7 @@ and the rest become Hunters.
 [Gameplay](#Gameplay)  
 [Features](#Features)  
 [Setup](#Setup)  
+[Feedback](#Feedback)  
 [For developers](#For-developers)
 
 ### Gameplay
@@ -66,7 +67,7 @@ By default, a couple game modes are available:
 *Escape the Wall*: play area is restricted by an unpassable wall of bedrock with a few 
 exit spots made of obsidian. Victim's objective is to pass through the Wall.
 
-*3* ??? (countdown)
+*Evacuation Point*: the Victim is waiting for evacuation "vehicle" and must get on as soon as it lands.
 
 ### Setup
 
@@ -92,6 +93,11 @@ All commands and features are available for every player except this feature:
 * `/manhunt joinrequest` - send the game join request
 * `/manhunt accept` - accept received join requests. Alias is `/y`
 * `/manhunt start` - force game start
+
+### Feedback
+
+In you found a bug, have a problem or just a feature request, please visit the _issues_ section.
+You can also contact me on Telegram ( _@Sooslick_ ) or Discord ( _Sooslick#8763_ ). 
 
 
 
@@ -128,6 +134,12 @@ This method is automatically called before `onIdle` so you don't need to reload 
 All core and gameplay variables are stored in main plugin instance. 
 To access it, you should use `Engine.getInstance()`. Victory conditions for the Victim 
 are not defined by default, so you must implement them in your game mode - call the engine's `triggerEndgame`.
+
+If you want to visualize objectives using scoreboard, get the scoreboard using 
+`Engine.getInstance().getScoreboardHolder().getScoreboard()` instead of making new Scoreboard by hand.
+Each game round has its own scoreboard which stores Victim and Hunter teams with specified settings, 
+so if you create a custom scoreboard, you may break the particular Manhunt features
+such as nametag visiblity.
 
 To see an example, check the source code of The Wall game mode, which is located in 
 `ru.sooslick.outlaw.gamemode.wall`

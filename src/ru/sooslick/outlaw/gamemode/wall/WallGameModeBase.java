@@ -121,7 +121,7 @@ public class WallGameModeBase implements GameModeBase {
             return;
         }
 
-        Objective objective = engine.getScoreboardHolder().getScoreboard().registerNewObjective("The Wall", "dummy", "The Wall");
+        Objective objective = sb.registerNewObjective("The Wall", "dummy", "The Wall");
         objective.setDisplaySlot(DisplaySlot.PLAYER_LIST);
         score = objective.getScore(engine.getOutlaw().getName());
         score.setScore(wallCfg.wallThickness);
