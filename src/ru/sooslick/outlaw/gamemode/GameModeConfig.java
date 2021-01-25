@@ -9,7 +9,18 @@ public interface GameModeConfig {
      */
     void readConfig();
 
-    String getValueOf(String field);
+    /**
+     * Return the value of specified config's parameter
+     * @param field the specified parameter
+     * @return String value of this field or null if field is not present in the config
+     */
+    default String getValueOf(String field) {
+        return null;
+    }
 
-    String availableParameters();
+    /**
+     * Return the available parameters list
+     * @return available parameters list
+     */
+    List<String> availableParameters();
 }

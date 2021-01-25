@@ -144,7 +144,7 @@ public class WorldUtil {
      * @return formatted string
      */
     public static String formatLocation(Location l) {
-        String ws = l.getWorld() != null ? l.getWorld().getName() : PLACEHOLDER;
+        String ws = l.getWorld() != null ? l.getWorld().getName() + COMMA : PLACEHOLDER;
         return ws +
                 l.getBlockX() + COMMA +
                 l.getBlockY() + COMMA +

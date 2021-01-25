@@ -31,7 +31,13 @@ public class CommonUtil {
         return set.stream().skip(random.nextInt(set.size())).findFirst().orElse(null);
     }
 
-    public static String formatDuration(Duration duration) {
+    /**
+     * Format duration in H:MM:SS
+     * @param secondsTotal amount of seconds
+     * @return formatted duration
+     */
+    public static String formatDuration(long secondsTotal) {
+        Duration duration = Duration.ofSeconds(secondsTotal);
         long seconds = duration.getSeconds();
         long h = seconds / 3600;
         if (h > 0) {

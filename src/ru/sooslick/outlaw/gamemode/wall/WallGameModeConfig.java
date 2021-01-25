@@ -8,7 +8,11 @@ import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.gamemode.GameModeConfig;
 import ru.sooslick.outlaw.util.LoggerUtil;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class WallGameModeConfig implements GameModeConfig {
+    private static final List<String> AVAILABLE_COMMANDS;
 
     private boolean firstRead = true;
 
@@ -18,6 +22,11 @@ public class WallGameModeConfig implements GameModeConfig {
     public int groundSpotQty;
     public int airSpotQty;
     public int undergroundSpotQty;
+
+    static {
+        AVAILABLE_COMMANDS = Arrays.asList("playzoneSize", "wallThickness", "spotSize",
+                "groundSpotQty", "airSpotQty", "undergroundSpotQty");
+    }
 
     @Override
     public void readConfig() {
@@ -64,8 +73,8 @@ public class WallGameModeConfig implements GameModeConfig {
     }
 
     @Override
-    public String availableParameters() {
-        return "playzoneSize, wallThickness, spotSize, groundSpotQty, airSpotQty, undergroundSpotQty";
+    public List<String> availableParameters() {
+        return AVAILABLE_COMMANDS;
     }
 
     //weird method

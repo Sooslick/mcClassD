@@ -15,8 +15,9 @@ import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.TrackedLocationCache;
 import ru.sooslick.outlaw.util.CommonUtil;
 
-import java.time.Duration;
-
+/**
+ * Representation of the Hunter
+ */
 public class Hunter extends AbstractPlayer {
     private static CompassUpdates.CompassUpdateMethod compassUpdateMethod;
     private static TrackedLocationCache cache;

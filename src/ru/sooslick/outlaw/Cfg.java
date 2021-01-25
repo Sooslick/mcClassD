@@ -152,7 +152,7 @@ public class Cfg {
         StringBuilder sb = new StringBuilder().append(Messages.AVAILABLE_PARAMETERS).append("debugMode, blocksPerSecondLimit, gamemodes, preferredGamemode, minStartVotes, prestartTimer, spawnRadius, spawnDistance, hideVictimNametagAboveHunters, enablePotionHandicap, enableStartInventory, alertRadius, alertTimeout, compassUpdates, compassUpdatesPeriod, enableVictimGlowing, milkGlowImmunityDuration, startInventory");
         if (gameModeCfg == null)
             return sb.toString();
-        String gmParams = gameModeCfg.availableParameters();
+        String gmParams = String.join(", ", gameModeCfg.availableParameters());
         if (gmParams.length() == 0)
             return sb.toString();
         return sb.append(", ").append(gmParams).toString();

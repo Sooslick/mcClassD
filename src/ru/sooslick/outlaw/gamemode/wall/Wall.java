@@ -12,7 +12,6 @@ import ru.sooslick.outlaw.util.CommonUtil;
 import ru.sooslick.outlaw.util.Filler;
 import ru.sooslick.outlaw.util.LoggerUtil;
 
-import java.time.Duration;
 import java.util.LinkedList;
 
 public class Wall {
@@ -206,7 +205,7 @@ public class Wall {
                         LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
                     }
                     world = Bukkit.getWorlds().get(0);
-                    String duration = CommonUtil.formatDuration(Duration.ofSeconds(size * 4 / limiter));
+                    String duration = CommonUtil.formatDuration(size * 4 / limiter);
                     Bukkit.broadcastMessage(BROADCAST_BUILD_PREDICTION + duration);
                 },
                 //TICK RUNNABLE
@@ -246,7 +245,7 @@ public class Wall {
                         LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
                     }
                     int mpl = taskQueue.contains(Task.GENERATE_WALL) ? 2 : 1;
-                    String duration = CommonUtil.formatDuration(Duration.ofSeconds(rollbackWallFillers.size() * mpl / limiter));
+                    String duration = CommonUtil.formatDuration(rollbackWallFillers.size() * mpl / limiter);
                     Bukkit.broadcastMessage(BROADCAST_BUILD_PREDICTION + duration);
                 },
                 //TICK RUNNABLE
