@@ -135,8 +135,8 @@ public class Engine extends JavaPlugin {
         assert cmd != null;
         cmd.setExecutor(cmdListener);
 
-        EventListener eventListener = new EventListener();
-        getServer().getPluginManager().registerEvents(eventListener, this);
+        getServer().getPluginManager().registerEvents(new EventListener(), this);
+        getServer().getPluginManager().registerEvents(cmdListener, this);
 
         //init game variables
         safeLocationsHolder = new SafeLocationsHolder();

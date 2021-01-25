@@ -1,5 +1,6 @@
 package ru.sooslick.outlaw.gamemode.wall;
 
+import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import ru.sooslick.outlaw.Cfg;
@@ -12,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class WallGameModeConfig implements GameModeConfig {
-    private static final List<String> AVAILABLE_COMMANDS;
+    private static final ImmutableList<String> AVAILABLE_COMMANDS;
 
     private boolean firstRead = true;
 
@@ -24,8 +25,8 @@ public class WallGameModeConfig implements GameModeConfig {
     public int undergroundSpotQty;
 
     static {
-        AVAILABLE_COMMANDS = Arrays.asList("playzoneSize", "wallThickness", "spotSize",
-                "groundSpotQty", "airSpotQty", "undergroundSpotQty");
+        AVAILABLE_COMMANDS = ImmutableList.copyOf(Arrays.asList("playzoneSize", "wallThickness", "spotSize",
+                "groundSpotQty", "airSpotQty", "undergroundSpotQty"));
     }
 
     @Override

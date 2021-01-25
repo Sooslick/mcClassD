@@ -1,5 +1,6 @@
 package ru.sooslick.outlaw.gamemode.evacuation;
 
+import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import ru.sooslick.outlaw.Cfg;
@@ -11,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class EvacuationConfig implements GameModeConfig {
-    private static final List<String> AVAILABLE_COMMANDS;
+    private static final ImmutableList<String> AVAILABLE_COMMANDS;
 
     private boolean firstRead = true;
 
@@ -22,7 +23,7 @@ public class EvacuationConfig implements GameModeConfig {
     int cordonZoneSize;
 
     static {
-        AVAILABLE_COMMANDS = Arrays.asList("playzoneSize", "waitTime", "landingTime", "cordonTime", "cordonZoneSize");
+        AVAILABLE_COMMANDS = ImmutableList.copyOf(Arrays.asList("playzoneSize", "waitTime", "landingTime", "cordonTime", "cordonZoneSize"));
     }
 
     @Override

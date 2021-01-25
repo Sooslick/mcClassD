@@ -1,5 +1,6 @@
 package ru.sooslick.outlaw;
 
+import com.google.common.collect.ImmutableList;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -10,7 +11,10 @@ import ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase;
 import ru.sooslick.outlaw.util.LoggerUtil;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,6 +30,8 @@ public class Cfg {
     private static final String UNKNOWN_METHOD = "Unknown compass update method: %s";
     private static final String UNKNOWN_PARAMETER = "Unknown parameter: %s";
     private static final String VALUE_TEMPLATE = "%s: %s";
+
+    private static final ImmutableList<String> PARAMETERS;
 
     private static FileConfiguration currentCfg;
     private static GameModeConfig gameModeCfg;
@@ -48,6 +54,14 @@ public class Cfg {
     public static boolean enableVictimGlowing;
     public static int milkGlowImmunityDuration;
     public static HashMap<Material, Integer> startInventory;
+
+    static {
+        PARAMETERS = ImmutableList.copyOf(Arrays.asList("debugMode", "blocksPerSecondLimit", "gamemodes",
+                "preferredGamemode", "minStartVotes", "prestartTimer", "spawnRadius", "spawnDistance",
+                "hideVictimNametagAboveHunters", "enablePotionHandicap", "enableStartInventory",
+                "alertRadius", "alertTimeout", "compassUpdates", "compassUpdatesPeriod",
+                "enableVictimGlowing", "milkGlowImmunityDuration", "startInventory"));
+    }
 
     //disable constructor for utility class
     private Cfg() {}
@@ -145,17 +159,25 @@ public class Cfg {
     }
 
     /**
+     * Return the list of parameters that are available in main and gamemode's config
+     * @return list of parameters
+     */
+    public static List<String> availableParameters() {
+        if (gameModeCfg == null)
+            return new LinkedList<>(PARAMETERS);
+        else {
+            List<String> result = new LinkedList<>(PARAMETERS);
+            result.addAll(gameModeCfg.availableParameters());
+            return result;
+        }
+    }
+
+    /**
      * Format string of parameters that are available in main and gamemode's config
      * @return formatted string
      */
-    public static String availableParameters() {
-        StringBuilder sb = new StringBuilder().append(Messages.AVAILABLE_PARAMETERS).append("debugMode, blocksPerSecondLimit, gamemodes, preferredGamemode, minStartVotes, prestartTimer, spawnRadius, spawnDistance, hideVictimNametagAboveHunters, enablePotionHandicap, enableStartInventory, alertRadius, alertTimeout, compassUpdates, compassUpdatesPeriod, enableVictimGlowing, milkGlowImmunityDuration, startInventory");
-        if (gameModeCfg == null)
-            return sb.toString();
-        String gmParams = String.join(", ", gameModeCfg.availableParameters());
-        if (gmParams.length() == 0)
-            return sb.toString();
-        return sb.append(", ").append(gmParams).toString();
+    public static String formatAvailableParameters() {
+        return Messages.AVAILABLE_PARAMETERS + String.join(", ", availableParameters());
     }
 
     /**
