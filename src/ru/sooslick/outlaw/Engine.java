@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Main Manhunt class which contains all core functionality
@@ -438,7 +439,16 @@ public class Engine extends JavaPlugin {
                 Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, votestartCountdown));
                 break;
             case GAME:
-                safeLocationsHolder.selectSafeLocations();
+                Supplier<Location> victimSupplier;
+                Supplier<Location> hunterSupplier;
+                if (gamemode.customSpawnEnabled()) {
+                    victimSupplier = gamemode::getVictimSpawn;
+                    hunterSupplier = gamemode::getHunterSpawn;
+                } else {
+                    safeLocationsHolder.selectSafeLocations();
+                    victimSupplier = safeLocationsHolder::getVictimLocation;
+                    hunterSupplier = safeLocationsHolder::getHunterLocation;
+                }
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 scoreboardHolder = new ScoreboardHolder(Bukkit.getScoreboardManager());
                 statsCollector = new StatsCollector();
@@ -478,7 +488,7 @@ public class Engine extends JavaPlugin {
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
-                Location outlawLocation = safeLocationsHolder.getVictimLocation();
+                Location outlawLocation = victimSupplier.get();
                 outlaw.preparePlayer(outlawLocation);
                 //give handicap effects
                 if (Cfg.enablePotionHandicap) {
@@ -487,7 +497,7 @@ public class Engine extends JavaPlugin {
 
                 //process others
                 Hunter.setupHunter(outlaw);
-                spawnLocation = safeLocationsHolder.getHunterLocation();
+                spawnLocation = hunterSupplier.get();
                 Bukkit.getWorlds().get(0).setSpawnLocation(spawnLocation);     //for new players and respawns
                 for (Player p : onlinePlayers) {
                     //skip outlaw

@@ -1,5 +1,8 @@
 package ru.sooslick.outlaw.gamemode;
 
+import org.bukkit.Location;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * The main gamemode interface
  */
@@ -55,4 +58,28 @@ public interface GameModeBase {
      * @return detailed description of this gamemode
      */
     String getDescription();
+
+    /**
+     * Test if the gamemode selects spawns for players
+     * @return true if the gamemode selects spawns for players
+     */
+    default boolean customSpawnEnabled() {
+        return false;
+    }
+
+    /**
+     * Return the location where the Victim will spawn
+     * @return location where the Victim will spawn
+     */
+    default @NotNull Location getVictimSpawn() {
+        return new Location(null, 0, 0, 0);
+    }
+
+    /**
+     * Return the location where Hunters will spawn
+     * @return location where Hunters will spawn
+     */
+    default @NotNull Location getHunterSpawn() {
+        return new Location(null, 0, 0, 0);
+    }
 }
