@@ -1,6 +1,7 @@
 package ru.sooslick.outlaw;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -10,20 +11,37 @@ import ru.sooslick.outlaw.gamemode.GameModeConfig;
 import ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase;
 import ru.sooslick.outlaw.util.LoggerUtil;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Represents the main Manhunt config
  */
 public class Cfg {
+    private static final String DEBUG_MODE = "debugMode";
+    private static final String BPS_LIMIT = "blocksPerSecondLimit";
+    private static final String GAMEMODES = "gamemodes";
+    private static final String PREFERRED_GAMEMODE = "preferredGamemode";
+    private static final String MIN_START_VOTES = "minStartVotes";
+    private static final String PRESTART_TIMER = "prestartTimer";
+    private static final String SPAWN_RADIUS = "spawnRadius";
+    private static final String SPAWN_DISTANCE = "spawnDistance";
+    private static final String HIDE_ABOVE = "hideVictimNametagAboveHunters";
+    private static final String EN_POTION_HANDICAP = "enablePotionHandicap";
+    private static final String EN_START_INVENTORY = "enableStartInventory";
+    private static final String ALERT_RADIUS = "alertRadius";
+    private static final String ALERT_TIMEOUT = "alertTimeout";
+    private static final String COMPASS_UPDATES = "compassUpdates";
+    private static final String COMPASS_UPDATES_PERIOD = "compassUpdatesPeriod";
+    private static final String EN_VICTIM_GLOWING = "enableVictimGlowing";
+    private static final String IMMUNITY_DURATION = "milkGlowImmunityDuration";
+    private static final String START_INVENTORY = "startInventory";
 
     private static final String CANNOT_LOAD_GAMEMODE = "§4Cannot load gamemode class %s";
-    private static final String CANNOT_READ_PARAMETER = "Cannot read parameter %s";
     private static final String INVALID_CLASS_EXCEPTION = " is not GameModeBase class";
     private static final String READ_STARTINV_ENTRY = "read startInventory entry: %s x %s";
     private static final String UNKNOWN_ITEM = "Unknown item in start inventory: %s";
@@ -32,9 +50,11 @@ public class Cfg {
     private static final String VALUE_TEMPLATE = "%s: %s";
 
     private static final ImmutableList<String> PARAMETERS;
+    private static final ImmutableMap<String, Object> defaultValues;
 
     private static FileConfiguration currentCfg;
     private static GameModeConfig gameModeCfg;
+    private static Map<String, Object> tempValues;
 
     public static boolean debugMode;
     public static int blocksPerSecondLimit;
@@ -56,11 +76,28 @@ public class Cfg {
     public static HashMap<Material, Integer> startInventory;
 
     static {
-        PARAMETERS = ImmutableList.copyOf(Arrays.asList("debugMode", "blocksPerSecondLimit", "gamemodes",
-                "preferredGamemode", "minStartVotes", "prestartTimer", "spawnRadius", "spawnDistance",
-                "hideVictimNametagAboveHunters", "enablePotionHandicap", "enableStartInventory",
-                "alertRadius", "alertTimeout", "compassUpdates", "compassUpdatesPeriod",
-                "enableVictimGlowing", "milkGlowImmunityDuration", "startInventory"));
+        PARAMETERS = ImmutableList.copyOf(Arrays.asList(DEBUG_MODE, BPS_LIMIT, GAMEMODES,
+                PREFERRED_GAMEMODE, MIN_START_VOTES, PRESTART_TIMER, SPAWN_RADIUS, SPAWN_DISTANCE,
+                HIDE_ABOVE, EN_POTION_HANDICAP, EN_START_INVENTORY,
+                ALERT_RADIUS, ALERT_TIMEOUT, COMPASS_UPDATES, COMPASS_UPDATES_PERIOD,
+                EN_VICTIM_GLOWING, IMMUNITY_DURATION, START_INVENTORY));
+
+        defaultValues = ImmutableMap.copyOf(new HashMap<String, Object>() {{
+            put(DEBUG_MODE, false);
+            put(BPS_LIMIT, 100000);
+            put(MIN_START_VOTES, 2);
+            put(PRESTART_TIMER, 60);
+            put(SPAWN_RADIUS, 250);
+            put(SPAWN_DISTANCE, 240);
+            put(HIDE_ABOVE, 2);
+            put(EN_POTION_HANDICAP, true);
+            put(EN_START_INVENTORY, true);
+            put(ALERT_RADIUS, 50);
+            put(ALERT_TIMEOUT, 60);
+            put(COMPASS_UPDATES_PERIOD, 1);
+            put(EN_VICTIM_GLOWING, false);
+            put(IMMUNITY_DURATION, 180);
+        }});
     }
 
     //disable constructor for utility class
@@ -71,36 +108,41 @@ public class Cfg {
      * @param f Manhunt's configuration file
      */
     public static void readConfig(FileConfiguration f) {
-
+        tempValues = new HashMap<>();
         currentCfg = f;
-        readValue("debugMode", false);
-        readValue("blocksPerSecondLimit", 100000);
-        readValue("minStartVotes", 2);
-        readValue("prestartTimer", 60);
-        readValue("spawnRadius", 250);
-        readValue("spawnDistance", 240);
-        readValue("hideVictimNametagAboveHunters", 2);
-        readValue("enablePotionHandicap", true);
-        readValue("enableStartInventory", true);
-        readValue("alertRadius", 50);
-        readValue("alertTimeout", 60);
-        readValue("compassUpdatesPeriod", 1);
-        readValue("enableVictimGlowing", false);
-        readValue("milkGlowImmunityDuration", 180);
+        readValue(DEBUG_MODE);
+        readValue(BPS_LIMIT);
+        readValue(MIN_START_VOTES);
+        readValue(PRESTART_TIMER);
+        readValue(SPAWN_RADIUS);
+        readValue(SPAWN_DISTANCE);
+        readValue(HIDE_ABOVE);
+        readValue(EN_POTION_HANDICAP);
+        readValue(EN_START_INVENTORY);
+        readValue(ALERT_RADIUS);
+        readValue(ALERT_TIMEOUT);
+        readValue(COMPASS_UPDATES_PERIOD);
+        readValue(EN_VICTIM_GLOWING);
+        readValue(IMMUNITY_DURATION);
 
         //validate
-        if (prestartTimer <= 0) prestartTimer = 10;
-        if (spawnRadius <= 0) spawnRadius = 10;
-        if (spawnDistance <= 0) spawnDistance = 10;
-        if (alertRadius <= 0) alertRadius = 10;
-        if (alertTimeout <= 0) alertTimeout = 10;
-        if (compassUpdatesPeriod <= 0) compassUpdatesPeriod = 1;
-        if (milkGlowImmunityDuration <= 0) milkGlowImmunityDuration = 10;
-        if (blocksPerSecondLimit < 10000) blocksPerSecondLimit = 10000;
+        debugMode = validateBool(debugMode, DEBUG_MODE);
+        blocksPerSecondLimit = validateInt(blocksPerSecondLimit, BPS_LIMIT, i -> i >= 10000);
+        minStartVotes = validateInt(minStartVotes, MIN_START_VOTES, i -> true);
+        prestartTimer = validateInt(prestartTimer, PRESTART_TIMER, i -> i > 0);
+        spawnRadius = validateInt(spawnRadius, SPAWN_RADIUS, i -> i > 0);
+        spawnDistance = validateInt(spawnDistance, SPAWN_DISTANCE, i -> i > 0);
+        hideVictimNametagAboveHunters = validateInt(hideVictimNametagAboveHunters, HIDE_ABOVE, i -> true);
+        enablePotionHandicap = validateBool(enablePotionHandicap, EN_POTION_HANDICAP);
+        enableStartInventory = validateBool(enableStartInventory, EN_START_INVENTORY);
+        alertRadius = validateInt(alertRadius, ALERT_RADIUS, i -> i > 0);
+        alertTimeout = validateInt(alertTimeout, ALERT_TIMEOUT, i -> i > 0);
+        compassUpdatesPeriod = validateInt(compassUpdatesPeriod, COMPASS_UPDATES_PERIOD, i -> i > 0);
+        enableVictimGlowing = validateBool(enableVictimGlowing, EN_VICTIM_GLOWING);
+        milkGlowImmunityDuration = validateInt(milkGlowImmunityDuration, IMMUNITY_DURATION, i -> i > 0);
 
         //something special for CompassUpdates
-        String key = "compassUpdates";
-        String compassUpdateCfg = currentCfg.getString(key, "ALWAYS");
+        String compassUpdateCfg = currentCfg.getString(COMPASS_UPDATES, "ALWAYS");
         CompassUpdates old = compassUpdates;
         try {
             //noinspection ConstantConditions
@@ -110,11 +152,11 @@ public class Cfg {
             compassUpdates = CompassUpdates.ALWAYS;
         }
         if (old != compassUpdates)
-            Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, key, compassUpdates));
+            Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, COMPASS_UPDATES, compassUpdates));
 
         //something special for start inventory
         startInventory = new HashMap<>();
-        ConfigurationSection cs = f.getConfigurationSection("startInventory");
+        ConfigurationSection cs = f.getConfigurationSection(START_INVENTORY);
         if (cs != null) {
             for (String itemName : cs.getKeys(false)) {
                 try {
@@ -132,11 +174,11 @@ public class Cfg {
 
         //something special for gamemodes
         gamemodes = new HashMap<>();
-        cs = f.getConfigurationSection("gamemodes");
+        cs = f.getConfigurationSection(GAMEMODES);
         if (cs != null)
             for (String gmName : cs.getKeys(false))
                 gamemodes.put(gmName, cs.getString(gmName));
-        String className = gamemodes.get(f.getString("preferredGamemode"));
+        String className = gamemodes.get(f.getString(PREFERRED_GAMEMODE));
         try {
             Class<?> clazz = Class.forName(className);
             if (!GameModeBase.class.isAssignableFrom(clazz))
@@ -187,62 +229,62 @@ public class Cfg {
      */
     //method can return value of any field in this class include non-config variables. Not a bug, but kinda sus
     public static String getValue(String key) {
-        Field f = getField(key);
-        if (f == null) {
+        if (!PARAMETERS.contains(key)) {
             String str = gameModeCfg == null ? null : gameModeCfg.getValueOf(key);
             return str == null ? String.format(UNKNOWN_PARAMETER, key) : String.format(VALUE_TEMPLATE, key, str);
-        }
-        try {
-            return String.format(VALUE_TEMPLATE, key, f.get(null));
-        } catch (Exception e) {
-            return String.format(CANNOT_READ_PARAMETER, key);
+        } else {
+            switch (key) {
+                case DEBUG_MODE: return String.format(VALUE_TEMPLATE, key, debugMode);
+                case BPS_LIMIT: return String.format(VALUE_TEMPLATE, key, blocksPerSecondLimit);
+                case GAMEMODES: return String.format(VALUE_TEMPLATE, key, gamemodes);
+                case PREFERRED_GAMEMODE: return String.format(VALUE_TEMPLATE, key, Engine.getInstance().getGameMode().getName());
+                case MIN_START_VOTES: return String.format(VALUE_TEMPLATE, key, minStartVotes);
+                case PRESTART_TIMER: return String.format(VALUE_TEMPLATE, key, prestartTimer);
+                case SPAWN_RADIUS: return String.format(VALUE_TEMPLATE, key, spawnRadius);
+                case SPAWN_DISTANCE: return String.format(VALUE_TEMPLATE, key, spawnDistance);
+                case HIDE_ABOVE: return String.format(VALUE_TEMPLATE, key, hideVictimNametagAboveHunters);
+                case EN_POTION_HANDICAP: return String.format(VALUE_TEMPLATE, key, enablePotionHandicap);
+                case EN_START_INVENTORY: return String.format(VALUE_TEMPLATE, key, enableStartInventory);
+                case ALERT_RADIUS: return String.format(VALUE_TEMPLATE, key, alertRadius);
+                case ALERT_TIMEOUT: return String.format(VALUE_TEMPLATE, key, alertTimeout);
+                case COMPASS_UPDATES: return String.format(VALUE_TEMPLATE, key, compassUpdates);
+                case COMPASS_UPDATES_PERIOD: return String.format(VALUE_TEMPLATE, key, compassUpdatesPeriod);
+                case EN_VICTIM_GLOWING: return String.format(VALUE_TEMPLATE, key, enableVictimGlowing);
+                case IMMUNITY_DURATION: return String.format(VALUE_TEMPLATE, key, milkGlowImmunityDuration);
+                case START_INVENTORY: return String.format(VALUE_TEMPLATE, key, startInventory);
+                default: return String.format(UNKNOWN_PARAMETER, key);
+            }
         }
     }
 
     //returns true only when field changed
-    private static void readValue(String key, Object defaultValue) {
-        //identify Cfg.class field
-        Field f = getField(key);
-        if (f == null) {
-            LoggerUtil.warn(String.format(UNKNOWN_PARAMETER, key));
-            return;
-        }
-
-        //read and set value
-        Object oldVal;
-        Object newVal;
-        boolean modified;
-        try {
-            oldVal = f.get(null);
-            if (f.getType() == Integer.TYPE) {
-                int cfgVal = currentCfg.getInt(key, (int) defaultValue);
-                modified = cfgVal != (int) oldVal;
-                f.set(null, cfgVal);
-            } else if (f.getType() == Boolean.TYPE) {
-                boolean cfgVal = currentCfg.getBoolean(key, (boolean) defaultValue);
-                modified = cfgVal != (boolean) oldVal;
-                f.set(null, cfgVal);
-            } else {
-                //currently this else-branch is unreachable
-                throw new Exception();
-            }
-            newVal = f.get(null);
-        } catch (Exception e) {
-            LoggerUtil.warn(String.format(CANNOT_READ_PARAMETER, key));
-            return;
-        }
-
-        //detect changes
-        if (modified) {
-            Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, key, newVal));
-        }
+    private static void readValue(String key) {
+        tempValues.put(key, currentCfg.get(key, defaultValues.get(key)));
     }
 
-    private static Field getField(String key) {
+    private static boolean validateBool(boolean oldVal, String key) {
+        boolean newVal;
         try {
-            return Cfg.class.getField(key);
-        } catch (Exception e) {
-            return null;
+            newVal = (boolean) tempValues.get(key);
+        } catch (ClassCastException e) {
+            newVal = (boolean) defaultValues.get(key);
         }
+        if (newVal != oldVal)
+            Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, key, newVal));
+        return newVal;
+    }
+
+    private static int validateInt(int oldVal, String key, Predicate<Integer> validator) {
+        int def = (int) defaultValues.get(key);
+        int newVal;
+        try {
+            int current = (int) tempValues.get(key);
+            newVal = validator.test(current) ? current : def;
+        } catch (ClassCastException e) {
+            newVal = def;
+        }
+        if (newVal != oldVal)
+            Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, key, newVal));
+        return newVal;
     }
 }

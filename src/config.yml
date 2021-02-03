@@ -50,7 +50,7 @@ airSpotQty: 2
 undergroundSpotQty: 5
 
 #Duration of Evacuation stages
-waitTime: 1500
-landingTime: 300
+waitTime: 720
+landingTime: 600
 cordonTime: 300
 cordonZoneSize: 16
