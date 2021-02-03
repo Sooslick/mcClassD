@@ -143,6 +143,10 @@ public class Engine extends JavaPlugin {
         safeLocationsHolder = new SafeLocationsHolder();
         changeGameState(GameState.IDLE);
         LoggerUtil.info(PLUGIN_INIT_SUCCESS);
+
+        //init metrics
+        Metrics metrics = new Metrics(this, 10210);
+        metrics.addCustomChart(new Metrics.SimplePie("preferred_gamemode", () -> gamemode.getName()));
     }
 
     @Override
