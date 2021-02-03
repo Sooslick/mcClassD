@@ -37,7 +37,7 @@ class EventListener implements Listener {
     @EventHandler
     public void onDamage(EntityDamageEvent e) {
         Engine engine = Engine.getInstance();
-        if (!engine.getGameState().equals(GameState.GAME))
+        if (engine.getGameState() != GameState.GAME)
             return;
 
         Entity damagedEntity = e.getEntity();
@@ -89,11 +89,12 @@ class EventListener implements Listener {
     @EventHandler
     public void onDeath(EntityDeathEvent ede) {
         Engine engine = Engine.getInstance();
+        if (engine.getGameState() != GameState.GAME)
+            return;
+
         if (ede instanceof PlayerDeathEvent) {
             PlayerDeathEvent pde = (PlayerDeathEvent) ede;
             pde.setDeathMessage(null);
-            if (engine.getGameState() != GameState.GAME)
-                return;
             Hunter h = engine.getHunter(pde.getEntity().getPlayer());
             if (h != null)
                 engine.getStatsCollector().countDeath(h);
@@ -107,7 +108,11 @@ class EventListener implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {
-        Hunter h = Engine.getInstance().getHunter(e.getPlayer());
+        Engine engine = Engine.getInstance();
+        if (engine.getGameState() != GameState.GAME)
+            return;
+
+        Hunter h = engine.getHunter(e.getPlayer());
         if (h != null) {
             h.onRespawn();
         }

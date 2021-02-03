@@ -18,9 +18,11 @@ public class AnyPercentBase implements GameModeBase {
 
     @Override
     public void onIdle() {
-        WorldBorder wb = Bukkit.getWorlds().get(0).getWorldBorder();
-        wb.setCenter(0, 0);
-        wb.setSize(5500);           //radius of first stronghold's ring is 2688 blocks
+        Bukkit.getWorlds().forEach(w -> {
+            WorldBorder wb = w.getWorldBorder();
+            wb.setCenter(0, 0);
+            wb.setSize(5500);           //radius of first stronghold's ring is 2688 blocks
+        });
         Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
     }
 

@@ -19,6 +19,8 @@ import ru.sooslick.outlaw.util.Filler;
 import ru.sooslick.outlaw.util.LoggerUtil;
 import ru.sooslick.outlaw.util.WorldUtil;
 
+import java.util.List;
+
 @SuppressWarnings("unused")
 public class EvacuationBase implements GameModeBase {
     private EvacuationConfig evaCfg;
@@ -62,6 +64,8 @@ public class EvacuationBase implements GameModeBase {
 
     private final Runnable EVAC = () -> {
         score.setScore((int) WorldUtil.distance2d(Engine.getInstance().getOutlaw().getLocation(), evacPoint));
+        //fix cross-world compass
+        Engine.getInstance().getOutlaw().getPlayer().setCompassTarget(evacPoint);
 
         //check escape
         int bx = evacPoint.getBlockX();
@@ -79,6 +83,8 @@ public class EvacuationBase implements GameModeBase {
     //calculated amount of ticks between landing
     private final Runnable LANDING = () -> {
         score.setScore(timeLeft / 20);
+        //fix cross-world compass
+        Engine.getInstance().getOutlaw().getPlayer().setCompassTarget(evacPoint);
 
         boolean free = true;
         int bx = evacPoint.getBlockX();
@@ -117,6 +123,13 @@ public class EvacuationBase implements GameModeBase {
             dx = evacPoint.getX() / (timeLeft * 20);
             dz = evacPoint.getZ() / (timeLeft * 20);
             jobId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), ZONE_ALIGN, 1, 1);
+
+            //other worldborders without align
+            Bukkit.getWorlds().forEach(w -> {
+                if (world == w)
+                    return;
+                w.getWorldBorder().setSize(evaCfg.cordonZoneSize, evaCfg.cordonTime);
+            });
 
             Bukkit.broadcastMessage(Messages.EVAC_VEHICLE_READY);
         }
@@ -180,10 +193,14 @@ public class EvacuationBase implements GameModeBase {
 
     @Override
     public void onIdle() {
-        wb = Bukkit.getWorlds().get(0).getWorldBorder();
-        wb.setCenter(0d, 0d);
-        wb.setSize(evaCfg.playzoneSize);
-        wb.setWarningDistance(16);
+        List<World> worlds = Bukkit.getWorlds();
+        wb = worlds.get(0).getWorldBorder();
+        worlds.forEach(w -> {
+            WorldBorder cwb = w.getWorldBorder();
+            cwb.setCenter(0d, 0d);
+            cwb.setSize(evaCfg.playzoneSize);
+            cwb.setWarningDistance(10);
+        });
         Bukkit.getScheduler().cancelTask(jobId);
         Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
     }
