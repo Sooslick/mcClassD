@@ -125,9 +125,9 @@ public class Hunter extends AbstractPlayer {
             meta.setDisplayName(Messages.COMPASS_NAME);
 
         //third: update meta
-        if (w.getEnvironment() == World.Environment.NETHER) {
+        if (w.getEnvironment() != World.Environment.NORMAL) {
             meta.setLodestone(trackedLocation);
-            meta.setLodestoneTracked(true);
+            meta.setLodestoneTracked(false);
         } else {
             //or reset for overworld
             meta.setLodestone(null);

@@ -40,9 +40,7 @@ public class Engine extends JavaPlugin {
     private static final String GAMEMODE_UNLOAD = "Unload gamemode ";
     private static final String PLUGIN_CREATE_DATAFOLDER = "Created plugin data folder";
     private static final String PLUGIN_CREATE_DATAFOLDER_FAILED = "§eCannot create plugin data folder. Default config will be loaded.\n Do you have sufficient rights?";
-    private static final String PLUGIN_DISABLE = "Disable ClassD Plugin";
     private static final String PLUGIN_DISABLE_SUCCESS = "Disable ClassD Plugin - success";
-    private static final String PLUGIN_INIT = "Init ClassD Plugin";
     private static final String PLUGIN_INIT_SUCCESS = "Init ClassD Plugin - success";
     private static final String SELECTOR_EXCLUDE = "No suggesters, choices are %s/%s online players";
     private static final String SELECTOR_ONLINE_PLAYERS = "Choosing victim through the whole online players";
@@ -116,7 +114,6 @@ public class Engine extends JavaPlugin {
         instance = this;
 
         //init working folder and config file
-        LoggerUtil.info(PLUGIN_INIT);
         if (!(getDataFolder().exists())) {
             if (getDataFolder().mkdir()) {
                 LoggerUtil.info(PLUGIN_CREATE_DATAFOLDER);
@@ -151,7 +148,6 @@ public class Engine extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        LoggerUtil.info(PLUGIN_DISABLE);
         if (state == GameState.GAME) {
             outlaw.onEndGame();
             hunters.forEach(Hunter::onEndGame);
@@ -188,7 +184,19 @@ public class Engine extends JavaPlugin {
      * @param victimWin is Victim the winner
      */
     public void triggerEndgame(boolean victimWin) {
-        Bukkit.broadcastMessage(victimWin ? Messages.VICTIM_ESCAPED : Messages.VICTIM_DEAD);
+        triggerEndgame(victimWin, null);
+    }
+
+    /**
+     * End the game and announce the winner
+     * @param victimWin is Victim the winner
+     * @param customMessage announce text
+     */
+    public void triggerEndgame(boolean victimWin, String customMessage) {
+        String message = customMessage == null ?
+                (victimWin ? Messages.VICTIM_ESCAPED : Messages.VICTIM_DEAD) :
+                customMessage;
+        Bukkit.broadcastMessage(message);
         outlaw.onEndGame();
         hunters.forEach(Hunter::onEndGame);
         statsCollector.scheduleBroadcast();

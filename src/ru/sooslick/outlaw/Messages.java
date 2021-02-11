@@ -93,6 +93,7 @@ public class Messages {
     public static final String EVAC_NAME = "Evacuation Point";
     public static final String EVAC_OBJECTIVE = "GET ON EVACUATION VEHICLE";
     public static final String EVAC_DESCRIPTION = "§6Evacuation Point mode\n§eThe Victim is waiting for evacuation vehicle and must get on as soon as it lands";
+    public static final String EVAC_TIMEOUT = "§cVictim could not escape. §eHunters win!";
 
     //deny constructors
     private Messages() {}

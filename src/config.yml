@@ -49,8 +49,9 @@ groundSpotQty: 3
 airSpotQty: 2
 undergroundSpotQty: 5
 
-#Duration of Evacuation stages
+#Evacuation stages
 waitTime: 720
 landingTime: 600
 cordonTime: 300
 cordonZoneSize: 16
+endGameAfterCordon: true

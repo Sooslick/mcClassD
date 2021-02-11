@@ -21,9 +21,11 @@ public class EvacuationConfig implements GameModeConfig {
     int landingTime;
     int cordonTime;
     int cordonZoneSize;
+    boolean endGameAfterCordon;
 
     static {
-        AVAILABLE_COMMANDS = ImmutableList.copyOf(Arrays.asList("playzoneSize", "waitTime", "landingTime", "cordonTime", "cordonZoneSize"));
+        AVAILABLE_COMMANDS = ImmutableList.copyOf(Arrays.asList("playzoneSize", "waitTime", "landingTime",
+                "cordonTime", "cordonZoneSize", "endGameAfterCordon"));
     }
 
     @Override
@@ -36,6 +38,7 @@ public class EvacuationConfig implements GameModeConfig {
         landingTime = readAndDetectChanges(cfg, "landingTime", 300, landingTime);
         cordonTime = readAndDetectChanges(cfg, "cordonTime", 300, cordonTime);
         cordonZoneSize = readAndDetectChanges(cfg, "cordonZoneSize", 16, cordonZoneSize);
+        endGameAfterCordon = readAndDetectChanges(cfg, "endGameAfterCordon", true, endGameAfterCordon);
 
         //validate
         if (playzoneSize < Cfg.spawnRadius + Cfg.spawnDistance) playzoneSize = Cfg.spawnRadius + Cfg.spawnDistance + 10;
@@ -55,6 +58,7 @@ public class EvacuationConfig implements GameModeConfig {
             case "landingtime": return String.valueOf(landingTime);
             case "cordontime": return String.valueOf(cordonTime);
             case "cordonzonesize": return String.valueOf(cordonZoneSize);
+            case "endgameaftercordon": return String.valueOf(endGameAfterCordon);
             default: return null;
         }
     }
@@ -67,6 +71,15 @@ public class EvacuationConfig implements GameModeConfig {
     //weird copypaste from Wall
     private int readAndDetectChanges(FileConfiguration cfg, String param, int def, int oldVal) {
         int newVal = cfg.getInt(param, def);
+        if (!firstRead && oldVal != newVal) {
+            Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, param, newVal));
+        }
+        return newVal;
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private boolean readAndDetectChanges(FileConfiguration cfg, String param, boolean def, boolean oldVal) {
+        boolean newVal = cfg.getBoolean(param, def);
         if (!firstRead && oldVal != newVal) {
             Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, param, newVal));
         }

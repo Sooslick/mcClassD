@@ -1,7 +1,6 @@
 package ru.sooslick.outlaw;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import ru.sooslick.outlaw.roles.Outlaw;
 
@@ -40,15 +39,17 @@ public class TrackedLocationCache {
         Location trackedLocation = cache.get(w);
         if (trackedLocation != null)
             return trackedLocation;
-        //get actual tracked pos and put it to cache and create lodestone for nether
+        //get actual tracked pos and put it to cache
         trackedLocation = outlaw.getTrackedLocation(w);
         //if no tracked loc for current world
         if (trackedLocation == null)
             return null;
+        /*
         if (w.getEnvironment() == World.Environment.NETHER) {
             trackedLocation.setY(128);
             trackedLocation.getBlock().setType(Material.LODESTONE);
         }
+         */
         cache.put(w, trackedLocation);
         return trackedLocation;
     }

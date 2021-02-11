@@ -58,6 +58,10 @@ public class EvacuationBase implements GameModeBase {
             cx = evacPoint.getX();
             cz = evacPoint.getZ();
             Bukkit.getScheduler().cancelTask(jobId);
+            //check cfg
+            if (evaCfg.endGameAfterCordon) {
+                Engine.getInstance().triggerEndgame(false, Messages.EVAC_TIMEOUT);
+            }
         }
         wb.setCenter(cx, cz);
     };
