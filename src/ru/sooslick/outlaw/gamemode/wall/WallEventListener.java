@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -98,22 +99,26 @@ public class WallEventListener implements Listener {
         Engine engine = Engine.getInstance();
         if (engine.getGameState() != GameState.GAME)
             return;
-
-        //recalculate wall remainder
-        base.recalculateScore(e.getBlock().getLocation());
-
-        if (firstBlockAlerted)
-            return;
-
-        //alert first block
         Player p = e.getPlayer();
         if (!p.equals(engine.getOutlaw().getPlayer()))
             return;
-        Location l = e.getBlock().getLocation();
+
+        // detect broken block is inside
+        Block b = e.getBlock();
+        Location l = b.getLocation();
         int halfsize = base.getHalfSize();
         if ((Math.abs(l.getBlockX()) >= halfsize) || (Math.abs(l.getBlockZ()) >= halfsize)) {
-            firstBlockAlerted = true;
-            Bukkit.broadcastMessage(Messages.WALL_BREAK_ALERT);
+            // alert hunters
+            if (!firstBlockAlerted) {
+                firstBlockAlerted = true;
+                Bukkit.broadcastMessage(Messages.WALL_BREAK_ALERT);
+            }
+            // disable drops
+            if (b.getType() == Material.OBSIDIAN)
+                e.setDropItems(false);
+            //recalculate Victim's score
+            int blocksPassed = Math.max(Math.abs(l.getBlockX()) - halfsize,  Math.abs(l.getBlockZ()) - halfsize) + 1;
+            base.setScore(blocksPassed);
         }
     }
 
@@ -132,6 +137,20 @@ public class WallEventListener implements Listener {
 
         //detect towering escape attempts
         WorldUtil.generateBarrier(Collections.singletonList(b));
+    }
+
+    @EventHandler
+    public void onBlockForm(BlockFormEvent e) {
+        //detect wall restoring by buckets
+        Block b = e.getBlock();
+        Material m = b.getType();
+        if (m == Material.LAVA) {
+            int halfsize = base.getHalfSize();
+            if ((Math.abs(b.getX()) >= halfsize - 1) || (Math.abs(b.getZ()) >= halfsize - 1)) {
+                e.setCancelled(true);
+                b.setType(Material.COBBLESTONE);
+            }
+        }
     }
 
     @EventHandler

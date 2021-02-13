@@ -3,6 +3,7 @@ package ru.sooslick.outlaw;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
+import org.bukkit.block.data.type.EndPortalFrame;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.InventoryHolder;
@@ -17,11 +18,12 @@ import java.util.LinkedHashSet;
  * Class for tracking and rolling back players' stuff
  */
 public class ChestTracker {
-    private static final String REPORT_TEMPLATE = "ChestTracker cleanup report:\nContainers: %s\nBeds: %s\nBlocks: %s\nEntities: %s";
+    private static final String REPORT_TEMPLATE = "ChestTracker cleanup report:\nContainers: %s\nBeds: %s\nBlocks: %s\nEnd frames: %s\nEntities: %s";
     private static final String TRACKED_FORCE = "Force tracking on block %s";
     private static final String TRACKED_CONTAINER = "Tracked container %s at %s";
     private static final String TRACKED_BED = "Tracked bed at %s";
     private static final String TRACKED_BLOCK = "Tracked important block %s at %s";
+    private static final String TRACKED_FRAME = "Tracked end portal frame at %s";
     private static final String TRACKED_ENTITY = "Tracked entity %s at %s";
 
     private static final ArrayList<EntityType> TRACKED_ENTITY_TYPES;
@@ -30,6 +32,7 @@ public class ChestTracker {
     private final LinkedHashSet<Block> trackedContainers;
     private final LinkedHashSet<Block> trackedBeds;
     private final LinkedHashSet<Block> trackedBlocks;
+    private final LinkedHashSet<Block> trackedEndFrames;
     private final LinkedHashSet<Entity> trackedEntities;
 
     static {
@@ -61,6 +64,7 @@ public class ChestTracker {
         trackedBeds = new LinkedHashSet<>();
         trackedBlocks = new LinkedHashSet<>();
         trackedEntities = new LinkedHashSet<>();
+        trackedEndFrames = new LinkedHashSet<>();
     }
 
     /**
@@ -91,6 +95,9 @@ public class ChestTracker {
         } else if (TRACKED_BLOCKS.contains(b.getType())) {
             if (trackedBlocks.add(b))
                 LoggerUtil.debug(String.format(TRACKED_BLOCK, b.getType(), WorldUtil.formatLocation(b.getLocation())));
+        } else if (b.getType() == Material.END_PORTAL_FRAME) {
+            if (trackedEndFrames.add(b))
+                LoggerUtil.debug(String.format(TRACKED_FRAME, WorldUtil.formatLocation(b.getLocation())));
         }
     }
 
@@ -113,6 +120,7 @@ public class ChestTracker {
         int beds = trackedBeds.size();
         int blocks = trackedBlocks.size();
         int ent = trackedEntities.size();
+        int frames = trackedEndFrames.size();
         //clear and delete containers
         trackedContainers.forEach(b -> {
             if (b.getState() instanceof InventoryHolder) {
@@ -132,6 +140,18 @@ public class ChestTracker {
         //clear simple blocks and fluids
         trackedBlocks.forEach(b -> b.setType(Material.AIR));
         trackedBlocks.clear();
+        //rollback end frames
+        trackedEndFrames.forEach(b -> {
+            if (b.getBlockData() instanceof EndPortalFrame) {
+                EndPortalFrame epf = (EndPortalFrame) b.getBlockData();
+                epf.setEye(false);
+                b.setBlockData(epf);
+                //track nearby blocks to remove end gateway
+                b.getRelative(epf.getFacing(), 1).setType(Material.AIR);
+                b.getRelative(epf.getFacing(), 2).setType(Material.AIR);
+                b.getRelative(epf.getFacing(), 3).setType(Material.AIR);
+            }
+        });
         //clear entities (via iterator because concurrent modification exception)
         Iterator<Entity> i = trackedEntities.iterator();
         //noinspection WhileLoopReplaceableByForEach
@@ -140,6 +160,6 @@ public class ChestTracker {
             if (e != null)
                 e.remove();
         }
-        LoggerUtil.info(String.format(REPORT_TEMPLATE, chests, beds, blocks, ent));
+        LoggerUtil.info(String.format(REPORT_TEMPLATE, chests, beds, blocks, frames, ent));
     }
 }

@@ -28,6 +28,7 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.vehicle.VehicleCreateEvent;
+import org.bukkit.event.world.PortalCreateEvent;
 import ru.sooslick.outlaw.roles.Hunter;
 import ru.sooslick.outlaw.roles.Outlaw;
 import ru.sooslick.outlaw.util.CommonUtil;
@@ -184,6 +185,16 @@ class EventListener implements Listener {
         if (engine.getGameState() != GameState.GAME)
             return;
         engine.getChestTracker().detectEntity(e.getRightClicked());
+    }
+
+    @EventHandler
+    public void onPortalCreate(PortalCreateEvent e) {
+        //detect portals for rollback
+        Engine engine = Engine.getInstance();
+        if (engine.getGameState() != GameState.GAME)
+            return;
+        ChestTracker ct = engine.getChestTracker();
+        e.getBlocks().forEach(bs -> ct.detectBlock(bs.getBlock(), true));
     }
 
     @EventHandler

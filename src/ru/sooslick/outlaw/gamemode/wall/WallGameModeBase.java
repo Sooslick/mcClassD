@@ -127,12 +127,10 @@ public class WallGameModeBase implements GameModeBase {
         score.setScore(wallCfg.wallThickness);
     }
 
-    public void recalculateScore(Location l) {
+    public void setScore(int blocksPassed) {
         if (score == null)
             return;
-
-        int blocks = Math.max(Math.abs(l.getBlockX()) - halfSize,  Math.abs(l.getBlockZ()) - halfSize) + 1;
-        int newScore = wallCfg.wallThickness - blocks;
+        int newScore = wallCfg.wallThickness - blocksPassed;
         if (newScore < score.getScore())
             score.setScore(newScore);
     }
