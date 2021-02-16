@@ -28,6 +28,8 @@ public class CommonUtil {
      * @return random element of collection
      */
     public static <E> E getRandomOf(Collection<E> set) {
+        if (set.size() <= 0)
+            return null;
         return set.stream().skip(random.nextInt(set.size())).findFirst().orElse(null);
     }
 

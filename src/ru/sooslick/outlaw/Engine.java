@@ -492,6 +492,7 @@ public class Engine extends JavaPlugin {
                 }
                 //validate selected player
                 if (selectedPlayer == null) {
+                    LoggerUtil.warn("No players online. Skipping GAME state and going to IDLE");
                     changeGameState(GameState.IDLE);
                     return;
                 }
@@ -528,7 +529,7 @@ public class Engine extends JavaPlugin {
                 //debug: check distance btw runner and hunters
                 if (hunters.size() > 0) {
                     Bukkit.broadcastMessage(String.format(Messages.SELECTED_HANDICAP,
-                            WorldUtil.distance2d(outlaw.getLocation(), hunters.get(0).getLocation())));
+                            Math.round(WorldUtil.distance2d(outlaw.getLocation(), hunters.get(0).getLocation()))));
                 }
 
                 //run game

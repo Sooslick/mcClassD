@@ -45,7 +45,11 @@ public class WallGameModeConfig implements GameModeConfig {
         undergroundSpotQty = readAndDetectChanges(cfg, "undergroundSpotQty", 5, undergroundSpotQty);
 
         //validate
-        if (playzoneSize < Cfg.spawnRadius + Cfg.spawnDistance) playzoneSize = Cfg.spawnRadius + Cfg.spawnDistance + 10;
+        int spawnArea = (Cfg.spawnRadius + Cfg.spawnDistance) * 2 + 10;
+        if (playzoneSize < spawnArea) {
+            playzoneSize = spawnArea;
+            LoggerUtil.warn("\n\nplayzoneSize is too small for current spawnArea + spawnRadius. New playzoneSize is " + spawnArea + "\n");
+        }
         if (wallThickness <= 0) wallThickness = 1;
         if (spotSize <= 0) spotSize = 1;
         else if (spotSize > 30) spotSize = 30;

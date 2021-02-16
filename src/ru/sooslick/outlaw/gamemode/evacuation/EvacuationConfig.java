@@ -41,7 +41,8 @@ public class EvacuationConfig implements GameModeConfig {
         endGameAfterCordon = readAndDetectChanges(cfg, "endGameAfterCordon", true, endGameAfterCordon);
 
         //validate
-        if (playzoneSize < Cfg.spawnRadius + Cfg.spawnDistance) playzoneSize = Cfg.spawnRadius + Cfg.spawnDistance + 10;
+        int spawnArea = (Cfg.spawnRadius + Cfg.spawnDistance) * 2 + 10;
+        if (playzoneSize < spawnArea) playzoneSize = spawnArea;
         if (waitTime <= 0) waitTime = 10;
         if (landingTime <= 0) landingTime = 10;
         if (cordonTime <= 0) cordonTime = 10;

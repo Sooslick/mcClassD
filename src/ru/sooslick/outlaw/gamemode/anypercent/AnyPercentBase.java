@@ -3,6 +3,7 @@ package ru.sooslick.outlaw.gamemode.anypercent;
 import org.bukkit.Bukkit;
 import org.bukkit.WorldBorder;
 import org.bukkit.event.HandlerList;
+import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.gamemode.GameModeBase;
@@ -18,10 +19,12 @@ public class AnyPercentBase implements GameModeBase {
 
     @Override
     public void onIdle() {
+        int spawnArea = Cfg.spawnRadius + Cfg.spawnDistance;
+        int wbSize = spawnArea > 2750 ? spawnArea*2 + 10 : 5500;    //radius of first stronghold's ring is 2688 blocks
         Bukkit.getWorlds().forEach(w -> {
             WorldBorder wb = w.getWorldBorder();
             wb.setCenter(0, 0);
-            wb.setSize(5500);           //radius of first stronghold's ring is 2688 blocks
+            wb.setSize(wbSize);
         });
         Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
     }
