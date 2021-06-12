@@ -1,5 +1,6 @@
 package ru.sooslick.outlaw;
 
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -487,6 +488,7 @@ public class Engine extends JavaPlugin {
                     selectedPlayer = CommonUtil.getRandomOf(onlinePlayers);
                     LoggerUtil.debug(SELECTOR_ONLINE_PLAYERS);
                 } else {
+                    //noinspection ConstantConditions
                     selectedPlayer = Bukkit.getPlayer(CommonUtil.getRandomOf(volunteers));
                     LoggerUtil.debug(SELECTOR_SUGGESTERS);
                 }
@@ -553,7 +555,7 @@ public class Engine extends JavaPlugin {
             //try to load new gamemode
             try {
                 LoggerUtil.debug(GAMEMODE_LOAD_CLASS + Cfg.preferredGamemode);
-                gamemode = Cfg.preferredGamemode.newInstance();
+                gamemode = Cfg.preferredGamemode.getDeclaredConstructor().newInstance();
                 LoggerUtil.debug(GAMEMODE_LOADED + gamemode.getName());
             }
             //cannot load gamemode, load default AnyPercent

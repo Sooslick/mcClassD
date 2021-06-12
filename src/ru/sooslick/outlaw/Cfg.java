@@ -145,7 +145,6 @@ public class Cfg {
         String compassUpdateCfg = currentCfg.getString(COMPASS_UPDATES, "ALWAYS");
         CompassUpdates old = compassUpdates;
         try {
-            //noinspection ConstantConditions
             compassUpdates = CompassUpdates.valueOf(compassUpdateCfg.toUpperCase());
         } catch (IllegalArgumentException e) {
             LoggerUtil.warn(String.format(UNKNOWN_METHOD, compassUpdateCfg));

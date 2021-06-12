@@ -42,6 +42,7 @@ public class ChestTracker {
         TRACKED_ENTITY_TYPES.add(EntityType.MINECART_HOPPER);
         TRACKED_ENTITY_TYPES.add(EntityType.ARMOR_STAND);
         TRACKED_ENTITY_TYPES.add(EntityType.ITEM_FRAME);
+        TRACKED_ENTITY_TYPES.add(EntityType.GLOW_ITEM_FRAME);
         TRACKED_ENTITY_TYPES.add(EntityType.HORSE);
         TRACKED_ENTITY_TYPES.add(EntityType.MULE);
         TRACKED_ENTITY_TYPES.add(EntityType.DONKEY);

@@ -44,6 +44,8 @@ public class WorldUtil {
         DANGERS.add(Material.MAGMA_BLOCK);
         DANGERS.add(Material.SEAGRASS);
         DANGERS.add(Material.TALL_SEAGRASS);
+        DANGERS.add(Material.DRIPSTONE_BLOCK);
+        DANGERS.add(Material.POWDER_SNOW);
 
         EXCLUDES = new ArrayList<>();
         EXCLUDES.add(Material.AIR);
