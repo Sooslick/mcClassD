@@ -1,8 +1,13 @@
 package ru.sooslick.outlaw.util;
 
+import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import ru.sooslick.outlaw.Cfg;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Utility builder for filling area with certain type of blocks
@@ -107,6 +112,35 @@ public class Filler {
      */
     public int size() {
         return (Math.abs(endX - startX) + 1) * (Math.abs(endY - startY) + 1) * (Math.abs(endZ - startZ) + 1);
+    }
+
+    /**
+     * Get Set of chunks involved in operation
+     * @return Set of Chunks
+     */
+    public Set<Chunk> getChunks() {
+        // collect chunks
+        Set<Chunk> chunks = new HashSet<>();
+        int x = startX;
+        int z = startZ;
+        while (x <= endX) {
+            while (z <= endZ) {
+                chunks.add(new Location(world, x, 0, z).getChunk());
+                if (z != endZ) {
+                    z += 16;
+                    if (z > endZ) z = endZ;
+                } else {
+                    z++;
+                }
+            }
+            if (x != endX) {
+                x += 16;
+                if (x > endX) x = endX;
+            } else {
+                x++;
+            }
+        }
+        return chunks;
     }
 
     /**

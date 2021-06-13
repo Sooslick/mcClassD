@@ -15,7 +15,6 @@ import ru.sooslick.outlaw.util.LoggerUtil;
 import java.util.LinkedList;
 
 public class Wall {
-    private static final String BROADCAST_BUILD_PREDICTION = "§cPlease wait until the Wall is done. Estimated wait time: ";
     private static final String DEBUG_KILLED = "All tasks completed, remove Wall from scheduler";
     private static final String DEBUG_LIMITER = "Wall limiter is %s. Expected volume: %s";
     private static final String DEBUG_MAX_HEIGHT = "World's max height is ";
@@ -25,6 +24,7 @@ public class Wall {
     private static final String DEBUG_TASK_SUSPICIOUS = "Suspicious task state, marked as completed";
     private static final String DEBUG_WALL_ROLLBACK = "The Wall will be rebuilt completely";
     private static final String WARN_BUILD_LIMIT_TOO_SMALL = "blocksPerSecondLimit value too small, fixed it";
+    private static final String WARN_BUILDING_LAG = "blocksPerSecondLimit value too large, server has performance issues. Average build tick is %sms";
 
     private static int queueTaskId;
     private static WallGameModeConfig wallCfg;
@@ -45,6 +45,15 @@ public class Wall {
     private static Task currentTask;
     private static boolean taskFinished;
     private static boolean killed;
+
+    //performance detector
+    private static LinkedList<Long> tickIntervals;
+    private static long lastTickStartTime;
+    private static boolean skip;
+    private static int skipCount;
+    private static int ticksLeft;
+    private static int ticksTotal;
+    private static int ticksFromLastLagAlert;
 
     private static final Runnable queueTick = () -> {
         //if gamemode unloaded and all tasks completed
@@ -191,6 +200,12 @@ public class Wall {
         GENERATE_WALL(
                 //INIT RUNNABLE
                 () -> {
+                    tickIntervals = new LinkedList<>();
+                    skip = false;
+                    skipCount = 0;
+                    lastTickStartTime = System.currentTimeMillis();
+                    ticksFromLastLagAlert = 0;
+
                     size = wallCfg.playzoneSize;
                     halfSize = size / 2;
                     startWallCoord = halfSize + 1;
@@ -205,31 +220,62 @@ public class Wall {
                         LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
                     }
                     world = Bukkit.getWorlds().get(0);
-                    String duration = CommonUtil.formatDuration(size * 4 / limiter);
-                    Bukkit.broadcastMessage(BROADCAST_BUILD_PREDICTION + duration);
+                    ticksTotal = size * 4 / limiter;
+                    ticksLeft = ticksTotal;
+                    Bukkit.broadcastMessage(Messages.WALL_BROADCAST_BUILD_PREDICTION + CommonUtil.formatDuration((long) (ticksLeft * 1.5)));
                 },
                 //TICK RUNNABLE
                 () -> {
-                    int from = currentBlock;
-                    int to = currentBlock + limiter - 1;
-                    if (to > endWallCoord)
-                        to = endWallCoord;
-                    Filler f = getSideBasedFiller(side, from, to)
-                            .setStartY(0)
-                            .setEndY(maxY)
-                            .setMaterial(Material.BEDROCK);
-                    if (f.fill()) {
-                        rollbackWallFillers.add(f);
-                        currentBlock += limiter;
-                        if (currentBlock >= endWallCoord) {
-                            currentBlock = -startWallCoord;
-                            side++;
-                            if (side > 3) {
-                                taskFinished = true;
-                                if (Engine.getInstance().getGameState() == GameState.IDLE)
-                                    Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
+                    // todo: fix bukkit chunk load warnings (tileEntity corruption)
+                    // timer
+                    long newStartTime = System.currentTimeMillis();
+                    tickIntervals.add(newStartTime - lastTickStartTime);
+                    lastTickStartTime = newStartTime;
+                    ticksFromLastLagAlert++;
+                    // filler
+                    if (!skip) {
+                        //prepare
+                        ticksLeft--;
+                        int from = currentBlock;
+                        int to = currentBlock + limiter - 1;
+                        if (to > endWallCoord)
+                            to = endWallCoord;
+                        Filler f = getSideBasedFiller(side, from, to)
+                                .setStartY(0)
+                                .setEndY(maxY)
+                                .setMaterial(Material.BEDROCK);
+                        //fill
+                        if (f.fill()) {
+                            rollbackWallFillers.add(f);
+                            currentBlock += limiter;
+                            if (currentBlock >= endWallCoord) {
+                                currentBlock = -startWallCoord;
+                                side++;
+                                if (side > 3) {
+                                    taskFinished = true;
+                                    if (Engine.getInstance().getGameState() == GameState.IDLE)
+                                        Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
+                                }
                             }
                         }
+                    } else {
+                        skip = false;
+                        skipCount++;
+                        if (ticksFromLastLagAlert > 25) {
+                            double skipModifier = (double) skipCount / (ticksTotal - ticksLeft) + 1;
+                            Bukkit.broadcastMessage(Messages.WALL_LAG_DETECTED);
+                            Bukkit.broadcastMessage(Messages.WALL_BROADCAST_BUILD_PREDICTION + CommonUtil.formatDuration((long) (ticksLeft*skipModifier)));
+                            ticksFromLastLagAlert = 0;
+                        }
+                    }
+                    //detect lag
+                    if (tickIntervals.size() > 20) {
+                        tickIntervals.removeFirst();
+                    }
+                    double avgInterval = tickIntervals.stream().mapToLong(Long::longValue).average().orElse(0);
+                    if (avgInterval > 2000) {
+                        skip = true;
+                        LoggerUtil.warn(String.format(WARN_BUILDING_LAG, avgInterval));
                     }
                 }),
         ROLLBACK_WALL(
@@ -246,7 +292,7 @@ public class Wall {
                     }
                     int mpl = taskQueue.contains(Task.GENERATE_WALL) ? 2 : 1;
                     String duration = CommonUtil.formatDuration(rollbackWallFillers.size() * mpl / limiter);
-                    Bukkit.broadcastMessage(BROADCAST_BUILD_PREDICTION + duration);
+                    Bukkit.broadcastMessage(Messages.WALL_BROADCAST_BUILD_PREDICTION + duration);
                 },
                 //TICK RUNNABLE
                 () -> {
