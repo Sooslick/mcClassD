@@ -35,6 +35,7 @@ public class Cfg {
     private static final String EN_START_INVENTORY = "enableStartInventory";
     private static final String ALERT_RADIUS = "alertRadius";
     private static final String ALERT_TIMEOUT = "alertTimeout";
+    private static final String FRIENDLY_FIRE_ENABLED = "friendlyFireEnabled";
     private static final String COMPASS_UPDATES = "compassUpdates";
     private static final String COMPASS_UPDATES_PERIOD = "compassUpdatesPeriod";
     private static final String EN_VICTIM_GLOWING = "enableVictimGlowing";
@@ -69,6 +70,7 @@ public class Cfg {
     public static boolean enableStartInventory;
     public static int alertRadius;
     public static int alertTimeout;
+    public static boolean friendlyFireEnabled;
     public static CompassUpdates compassUpdates;
     public static int compassUpdatesPeriod;
     public static boolean enableVictimGlowing;
@@ -79,7 +81,7 @@ public class Cfg {
         PARAMETERS = ImmutableList.copyOf(Arrays.asList(DEBUG_MODE, BPS_LIMIT, GAMEMODES,
                 PREFERRED_GAMEMODE, MIN_START_VOTES, PRESTART_TIMER, SPAWN_RADIUS, SPAWN_DISTANCE,
                 HIDE_ABOVE, EN_POTION_HANDICAP, EN_START_INVENTORY,
-                ALERT_RADIUS, ALERT_TIMEOUT, COMPASS_UPDATES, COMPASS_UPDATES_PERIOD,
+                ALERT_RADIUS, ALERT_TIMEOUT, FRIENDLY_FIRE_ENABLED, COMPASS_UPDATES, COMPASS_UPDATES_PERIOD,
                 EN_VICTIM_GLOWING, IMMUNITY_DURATION, START_INVENTORY));
 
         defaultValues = ImmutableMap.copyOf(new HashMap<String, Object>() {{
@@ -94,6 +96,7 @@ public class Cfg {
             put(EN_START_INVENTORY, true);
             put(ALERT_RADIUS, 50);
             put(ALERT_TIMEOUT, 60);
+            put(FRIENDLY_FIRE_ENABLED, true);
             put(COMPASS_UPDATES_PERIOD, 1);
             put(EN_VICTIM_GLOWING, false);
             put(IMMUNITY_DURATION, 180);
@@ -121,6 +124,7 @@ public class Cfg {
         readValue(EN_START_INVENTORY);
         readValue(ALERT_RADIUS);
         readValue(ALERT_TIMEOUT);
+        readValue(FRIENDLY_FIRE_ENABLED);
         readValue(COMPASS_UPDATES_PERIOD);
         readValue(EN_VICTIM_GLOWING);
         readValue(IMMUNITY_DURATION);
@@ -137,6 +141,7 @@ public class Cfg {
         enableStartInventory = validateBool(enableStartInventory, EN_START_INVENTORY);
         alertRadius = validateInt(alertRadius, ALERT_RADIUS, i -> i > 0);
         alertTimeout = validateInt(alertTimeout, ALERT_TIMEOUT, i -> i > 0);
+        friendlyFireEnabled = validateBool(friendlyFireEnabled, FRIENDLY_FIRE_ENABLED);
         compassUpdatesPeriod = validateInt(compassUpdatesPeriod, COMPASS_UPDATES_PERIOD, i -> i > 0);
         enableVictimGlowing = validateBool(enableVictimGlowing, EN_VICTIM_GLOWING);
         milkGlowImmunityDuration = validateInt(milkGlowImmunityDuration, IMMUNITY_DURATION, i -> i > 0);
@@ -246,6 +251,7 @@ public class Cfg {
                 case EN_START_INVENTORY: return String.format(VALUE_TEMPLATE, key, enableStartInventory);
                 case ALERT_RADIUS: return String.format(VALUE_TEMPLATE, key, alertRadius);
                 case ALERT_TIMEOUT: return String.format(VALUE_TEMPLATE, key, alertTimeout);
+                case FRIENDLY_FIRE_ENABLED: return String.format(VALUE_TEMPLATE, key, friendlyFireEnabled);
                 case COMPASS_UPDATES: return String.format(VALUE_TEMPLATE, key, compassUpdates);
                 case COMPASS_UPDATES_PERIOD: return String.format(VALUE_TEMPLATE, key, compassUpdatesPeriod);
                 case EN_VICTIM_GLOWING: return String.format(VALUE_TEMPLATE, key, enableVictimGlowing);

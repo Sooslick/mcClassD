@@ -32,6 +32,7 @@ public class ScoreboardHolder {
             //pre-setup
             teamVictim.setColor(ChatColor.GOLD);
             teamHunter.setColor(ChatColor.WHITE);
+            teamHunter.setAllowFriendlyFire(Cfg.friendlyFireEnabled);
         } else
             enabled = false;
         LoggerUtil.debug(DEBUG_HOLDER_CREATED + enabled);

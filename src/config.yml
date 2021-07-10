@@ -27,6 +27,7 @@ enableStartInventory: true
 #Gameplay parameters
 alertRadius: 50
 alertTimeout: 60
+friendlyFireEnabled: true
 #Allowed values for compassUpdates (case insensitive): Always, OnClick, Never
 compassUpdates: ALWAYS
 compassUpdatesPeriod: 1
