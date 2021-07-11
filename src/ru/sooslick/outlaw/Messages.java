@@ -18,9 +18,10 @@ public class Messages {
     public static final String DEATH_BY_ATTACK = "beaten up";
     public static final String DEATH_BY_DEFAULT = "became dead";
     public static final String DEATH_BY_EXPLOSION = "was destroyed";
-    public static final String DEATH_BY_FALL = "jumped and died";
+    public static final String DEATH_BY_FALL = "experienced gravity issues";
     public static final String DEATH_BY_FIRE = "met the inquisition";
     public static final String DEATH_BY_PROJECTILE = "was shot";
+    public static final String DEATH_BY_SUFFOCATION = "ran out of free oxygen";
     public static final String GAME_IS_NOT_RUNNING = "§cGame is not running.";
     public static final String GAME_IS_RUNNING = "§cGame is running.";
     public static final String GAME_STARTED = "§eGame started. Run!";
@@ -60,6 +61,7 @@ public class Messages {
     public static final String STATS_DEATH_HUNTERS = "§cHunters' death counter:";
     public static final String STATS_TOTAL_DAMAGE = "§eTotal damage: ";
     public static final String UNPLAYABLE_WORLD_WARNING = "We strongly recommend to generate a new game world, otherwise it may be unplayable";
+    public static final String VICTIM_CHICKEN_DEAD = "§cVictim Chicken died. §eHunters win!";
     public static final String VICTIM_DEAD = "§cVictim died. §eHunters win!";
     public static final String VICTIM_ESCAPED = "§eVictim escaped and won the game!";
     public static final String VICTIM_OFFLINE = "§cVictim left the game, but there is §eVictim Chicken§c. Kill it!";

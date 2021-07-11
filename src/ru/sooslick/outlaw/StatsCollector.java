@@ -56,6 +56,9 @@ class StatsCollector {
     }
 
     void scheduleBroadcast() {
+        if (!Cfg.printEndgameStatistics)
+            return;
+
         BukkitScheduler sch = Bukkit.getScheduler();
         // DAMAGE TO OUTLAW
         long baseDelay = 80;

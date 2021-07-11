@@ -73,6 +73,7 @@ public class CommonUtil {
             case FIRE_TICK:
             case LAVA: reason = Messages.DEATH_BY_FIRE; break;
             case PROJECTILE: reason = Messages.DEATH_BY_PROJECTILE; break;
+            case SUFFOCATION: reason = Messages.DEATH_BY_SUFFOCATION; break;
             default: reason = Messages.DEATH_BY_DEFAULT;
         }
         String by = killer == null ? PLACEHOLDER : Messages.BY + killer.getName();

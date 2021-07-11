@@ -43,7 +43,7 @@ class EventListener implements Listener {
 
         Entity damagedEntity = e.getEntity();
         double dmg = e.getFinalDamage();
-        double statDmg = dmg > 20 ? 20 : dmg;
+        double statDmg = dmg > 30 ? 30 : dmg;
         if (damagedEntity instanceof Player) {
             // who (almost for stats)
             Player damagedPlayer = (Player) damagedEntity;
@@ -103,8 +103,13 @@ class EventListener implements Listener {
         }
 
         //chickens
-        if (ede.getEntity() instanceof Chicken)
+        Entity deadEntity = ede.getEntity();
+        if (deadEntity instanceof Chicken) {
             engine.getStatsCollector().countChicken();
+            if (engine.getOutlaw().getEntity().equals(deadEntity)) {
+                engine.triggerEndgame(false, Messages.VICTIM_CHICKEN_DEAD);
+            }
+        }
     }
 
     @EventHandler

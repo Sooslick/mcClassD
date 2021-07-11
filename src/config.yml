@@ -16,6 +16,7 @@ gamemodes:
 #Lobby parameters
 minStartVotes: 2
 prestartTimer: 60
+printEndgameStatistics: true
 
 #Startgame parameters
 spawnRadius: 250

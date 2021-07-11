@@ -28,6 +28,7 @@ public class Cfg {
     private static final String PREFERRED_GAMEMODE = "preferredGamemode";
     private static final String MIN_START_VOTES = "minStartVotes";
     private static final String PRESTART_TIMER = "prestartTimer";
+    private static final String PRINT_ENDGAME_STATS = "printEndgameStatistics";
     private static final String SPAWN_RADIUS = "spawnRadius";
     private static final String SPAWN_DISTANCE = "spawnDistance";
     private static final String HIDE_ABOVE = "hideVictimNametagAboveHunters";
@@ -63,6 +64,7 @@ public class Cfg {
     public static Class<? extends GameModeBase> preferredGamemode;
     public static int minStartVotes;
     public static int prestartTimer;
+    public static boolean printEndgameStatistics;
     public static int spawnRadius;
     public static int spawnDistance;
     public static int hideVictimNametagAboveHunters;
@@ -79,7 +81,7 @@ public class Cfg {
 
     static {
         PARAMETERS = ImmutableList.copyOf(Arrays.asList(DEBUG_MODE, BPS_LIMIT, GAMEMODES,
-                PREFERRED_GAMEMODE, MIN_START_VOTES, PRESTART_TIMER, SPAWN_RADIUS, SPAWN_DISTANCE,
+                PREFERRED_GAMEMODE, MIN_START_VOTES, PRESTART_TIMER, PRINT_ENDGAME_STATS, SPAWN_RADIUS, SPAWN_DISTANCE,
                 HIDE_ABOVE, EN_POTION_HANDICAP, EN_START_INVENTORY,
                 ALERT_RADIUS, ALERT_TIMEOUT, FRIENDLY_FIRE_ENABLED, COMPASS_UPDATES, COMPASS_UPDATES_PERIOD,
                 EN_VICTIM_GLOWING, IMMUNITY_DURATION, START_INVENTORY));
@@ -89,6 +91,7 @@ public class Cfg {
             put(BPS_LIMIT, 100000);
             put(MIN_START_VOTES, 2);
             put(PRESTART_TIMER, 60);
+            put(PRINT_ENDGAME_STATS, true);
             put(SPAWN_RADIUS, 250);
             put(SPAWN_DISTANCE, 240);
             put(HIDE_ABOVE, 2);
@@ -117,6 +120,7 @@ public class Cfg {
         readValue(BPS_LIMIT);
         readValue(MIN_START_VOTES);
         readValue(PRESTART_TIMER);
+        readValue(PRINT_ENDGAME_STATS);
         readValue(SPAWN_RADIUS);
         readValue(SPAWN_DISTANCE);
         readValue(HIDE_ABOVE);
@@ -134,6 +138,7 @@ public class Cfg {
         blocksPerSecondLimit = validateInt(blocksPerSecondLimit, BPS_LIMIT, i -> i >= 10000);
         minStartVotes = validateInt(minStartVotes, MIN_START_VOTES, i -> true);
         prestartTimer = validateInt(prestartTimer, PRESTART_TIMER, i -> i > 0);
+        printEndgameStatistics = validateBool(printEndgameStatistics, PRINT_ENDGAME_STATS);
         spawnRadius = validateInt(spawnRadius, SPAWN_RADIUS, i -> i > 0);
         spawnDistance = validateInt(spawnDistance, SPAWN_DISTANCE, i -> i > 0);
         hideVictimNametagAboveHunters = validateInt(hideVictimNametagAboveHunters, HIDE_ABOVE, i -> true);
@@ -244,6 +249,7 @@ public class Cfg {
                 case PREFERRED_GAMEMODE: return String.format(VALUE_TEMPLATE, key, Engine.getInstance().getGameMode().getName());
                 case MIN_START_VOTES: return String.format(VALUE_TEMPLATE, key, minStartVotes);
                 case PRESTART_TIMER: return String.format(VALUE_TEMPLATE, key, prestartTimer);
+                case PRINT_ENDGAME_STATS: return String.format(VALUE_TEMPLATE, key, printEndgameStatistics);
                 case SPAWN_RADIUS: return String.format(VALUE_TEMPLATE, key, spawnRadius);
                 case SPAWN_DISTANCE: return String.format(VALUE_TEMPLATE, key, spawnDistance);
                 case HIDE_ABOVE: return String.format(VALUE_TEMPLATE, key, hideVictimNametagAboveHunters);
