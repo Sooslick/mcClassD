@@ -78,6 +78,7 @@ public class Messages {
     public static final String ANYP_DESCRIPTION = "§6Minecraft Any% gamemode\n§eLike in a vanilla Minecraft, Victim has to beat the Ender Dragon while Hunters try to prevent this.";
     public static final String ANYP_NAME = "Minecraft Any%";
     public static final String ANYP_OBJECTIVE = "KILL THE DRAGON";
+    public static final String ANYP_SUMMON_ALERT = "§cThe End seems broken. Probably the Victim must summon a new dragon to proceed";
 
     // WALL
     public static final String WALL_BREAK_ALERT = "§cVictim is trying to break the Wall";

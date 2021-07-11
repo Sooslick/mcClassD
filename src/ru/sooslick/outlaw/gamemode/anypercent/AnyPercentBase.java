@@ -19,6 +19,7 @@ public class AnyPercentBase implements GameModeBase {
 
     @Override
     public void onIdle() {
+        events.init();
         int spawnArea = Cfg.spawnRadius + Cfg.spawnDistance;
         int wbSize = spawnArea > 2750 ? spawnArea*2 + 10 : 5500;    //radius of first stronghold's ring is 2688 blocks
         Bukkit.getWorlds().forEach(w -> {
