@@ -12,6 +12,9 @@ public class Messages {
     public static final String COMMANDS_AVAILABLE = "\n§e - Available commands:";
     public static final String COMMANDS_UNAVAILABLE = "\n§e - Other commands:";
     public static final String COMPASS_NAME = "Victim Tracker";
+    public static final String COMPASS_COOLDOWN = "§cCompass on cooldown, you will be able to use it in §6%s §cseconds";
+    public static final String COMPASS_DISABLED = "§cVictim tracking is unavailable in this game";
+    public static final String COMPASS_UNAVAILABLE = "§cUnable to update compass now";
     public static final String COMPASS_UPDATED = "§aCompass is pointing to §c%s";
     public static final String CONFIG_MODIFIED = "§cGame parameter modified: §e%s = %s";
     public static final String CONSOLE_CANNOT_DO_THIS = "Console cannot do this. Try §6/manhunt help";

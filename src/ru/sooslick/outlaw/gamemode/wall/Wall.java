@@ -216,6 +216,7 @@ public class Wall {
         //launch job
         skips = 0;
         proceeded = 0;
+        percent = 0;
         lastTickStartTime = System.currentTimeMillis();
         wallIterator = wallParts.listIterator();
         scheduleTick(this::rollbackWallTick, 1);
@@ -428,13 +429,13 @@ public class Wall {
             Filler current = wallIterator.next();
             int startY = current.getStartY();
             int endY = current.getEndY();
-            if (startY > 64)
+            if (startY > 63)
                 current.setMaterial(Material.AIR).fill();
-            else if (endY <= 64)
+            else if (endY <= 63)
                 current.setMaterial(Material.STONE).fill();
             else {
-                current.setEndY(64).setMaterial(Material.STONE).fill();
-                current.setStartY(65).setEndY(endY).fill();
+                current.setEndY(63).setMaterial(Material.STONE).fill();
+                current.setStartY(64).setEndY(endY).setMaterial(Material.AIR).fill();
             }
             scheduleTick(this::rollbackWallTick, 20);
             percent = (double) ++proceeded / wallParts.size();

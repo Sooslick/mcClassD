@@ -70,6 +70,14 @@ public class Hunter extends AbstractPlayer {
     }
 
     /**
+     * Returns current cooldown of the compass
+     * @return cooldown in seconds
+     */
+    public int getCompassCooldown() {
+        return compassCooldown;
+    }
+
+    /**
      * Update Hunter's compass
      * @return true if compass updated successfully, false otherwise
      */

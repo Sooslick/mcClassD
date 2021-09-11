@@ -180,8 +180,14 @@ class EventListener implements Listener {
         if (h == null)
             return;
         if (e.getMaterial() == Material.COMPASS)
-            if (h.updateCompass())
+            if (Cfg.compassUpdates == CompassUpdates.NEVER)
+                p.sendMessage(Messages.COMPASS_DISABLED);
+            else if (h.updateCompass() || Cfg.compassUpdates == CompassUpdates.ALWAYS)
                 p.sendMessage(String.format(Messages.COMPASS_UPDATED, engine.getOutlaw().getName()));
+            else if (h.getCompassCooldown() > 0)
+                p.sendMessage(String.format(Messages.COMPASS_COOLDOWN, h.getCompassCooldown()));
+            else
+                p.sendMessage(Messages.COMPASS_UNAVAILABLE);
     }
 
     @EventHandler
