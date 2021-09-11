@@ -20,6 +20,7 @@ public class WallGameModeBase implements GameModeBase {
     private final Engine engine = Engine.getInstance();
 
     private final WallEventListener events;
+    private final Wall wall;
     private boolean hunterAlert;
     private int halfSize;
     private int escapeArea;
@@ -44,7 +45,7 @@ public class WallGameModeBase implements GameModeBase {
 
     public WallGameModeBase() {
         wallCfg = new WallGameModeConfig();
-        Wall.initWith(wallCfg);
+        wall = new Wall(wallCfg);
         events = new WallEventListener(this);
         engine.getServer().getPluginManager().registerEvents(events, engine);
     }
@@ -59,13 +60,13 @@ public class WallGameModeBase implements GameModeBase {
         wb.setCenter(0, 0);
         wb.setSize(escapeArea*2 + 20);
         //generate wall or rollback spots from previous game
-        Wall.prepareWall();
+        wall.prepareWall();
     }
 
     @Override
     public void onPreStart() {
         //generate exit spots
-        Wall.prepareSpots();
+        wall.prepareSpots();
     }
 
     @Override
@@ -81,7 +82,7 @@ public class WallGameModeBase implements GameModeBase {
 
     @Override
     public void unload() {
-        Wall.rollback();
+        wall.rollback();
         HandlerList.unregisterAll(events);
         LoggerUtil.warn(Messages.UNPLAYABLE_WORLD_WARNING);
     }

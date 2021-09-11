@@ -1,13 +1,9 @@
 package ru.sooslick.outlaw.util;
 
-import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import ru.sooslick.outlaw.Cfg;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Utility builder for filling area with certain type of blocks
@@ -25,6 +21,13 @@ public class Filler {
     private int endY;
     private int endZ;
     private Material material;
+
+    public Filler() {}
+
+    public Filler(World world, Material m) {
+        this.world = world;
+        this.material = m;
+    }
 
     /**
      * Set world where filler will operate
@@ -115,35 +118,6 @@ public class Filler {
     }
 
     /**
-     * Get Set of chunks involved in operation
-     * @return Set of Chunks
-     */
-    public Set<Chunk> getChunks() {
-        // collect chunks
-        Set<Chunk> chunks = new HashSet<>();
-        int x = startX;
-        int z = startZ;
-        while (x <= endX) {
-            while (z <= endZ) {
-                chunks.add(new Location(world, x, 0, z).getChunk());
-                if (z != endZ) {
-                    z += 16;
-                    if (z > endZ) z = endZ;
-                } else {
-                    z++;
-                }
-            }
-            if (x != endX) {
-                x += 16;
-                if (x > endX) x = endX;
-            } else {
-                x++;
-            }
-        }
-        return chunks;
-    }
-
-    /**
      * Fill the area by specified coordinates (both boundaries included)
      * @return true if filled successfully, false otherwise
      */
@@ -166,9 +140,57 @@ public class Filler {
         //proceed
         for (int x = startX; x <= endX; x++)
             for (int y = startY; y <= endY; y++)
-                for (int z = startZ; z <= endZ; z++)
-                    world.getBlockAt(x, y, z).setType(material);
+                for (int z = startZ; z <= endZ; z++) {
+                    Block b = world.getBlockAt(x, y, z);
+                    Material m = b.getType();
+                    if (m == Material.CHEST || m == Material.SPAWNER)
+                        b.breakNaturally();
+                    b.setType(material);
+                }
         LoggerUtil.debug(String.format(FILL_SUCCESS, startX, startY, startZ, endX, endY, endZ));
         return true;
+    }
+
+    /**
+     * clone
+     * @return copy of current filler
+     */
+    public Filler copy() {
+        return new Filler(world, material)
+                .setStartX(startX).setEndX(endX)
+                .setStartY(startY).setEndY(endY)
+                .setStartZ(startZ).setEndZ(endZ);
+    }
+
+    public World getWorld() {
+        return world;
+    }
+
+    public int getStartX() {
+        return startX;
+    }
+
+    public int getStartY() {
+        return startY;
+    }
+
+    public int getStartZ() {
+        return startZ;
+    }
+
+    public int getEndX() {
+        return endX;
+    }
+
+    public int getEndY() {
+        return endY;
+    }
+
+    public int getEndZ() {
+        return endZ;
+    }
+
+    public Material getMaterial() {
+        return material;
     }
 }

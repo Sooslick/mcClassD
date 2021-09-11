@@ -82,11 +82,12 @@ public class Messages {
 
     // WALL
     public static final String WALL_BREAK_ALERT = "§cVictim is trying to break the Wall";
-    public static final String WALL_BROADCAST_BUILD_PREDICTION = "§cPlease wait until the Wall is done. Estimated wait time: ";
     public static final String WALL_BUILD_RESTRICTION = "§4Obsidian is restricted here";
+    public static final String WALL_CHUNK_GEN_PROGRESS = "§4Wall generation progress: checked %d%% chunks";
     public static final String WALL_DESCRIPTION = "§6The Wall gamemode\n§ePlayers start in square zone restricted by wall of bedrock. This wall has some obsidian spots and Victim has to escape the zone by breaking through one of them.\nWall thickness: §c%s\n§eZone size: §c%s";
+    public static final String WALL_GEN_PROGRESS = "§4Wall generation progress: %d%%";
+    public static final String WALL_GEN_ROLLBACK_PROGRESS = "§4Wall rollback progress: %d%%";
     public static final String WALL_GOLDEN_PICKAXE_ALERT = "§cGolden pickaxe detected";
-    public static final String WALL_LAG_DETECTED = "§cThe Wall generation is causing server lags. Don't worry, lags will stop after The Wall is built";
     public static final String WALL_NAME = "The Wall";
     public static final String WALL_OBJECTIVE = "ESCAPE THE WALL";
     public static final String WALL_WALKTHROUGH_ALERT = "§cVictim is breaking through the Wall";

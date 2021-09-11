@@ -1,415 +1,517 @@
 package ru.sooslick.outlaw.gamemode.wall;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.Engine;
-import ru.sooslick.outlaw.GameState;
 import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.util.CommonUtil;
 import ru.sooslick.outlaw.util.Filler;
 import ru.sooslick.outlaw.util.LoggerUtil;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 public class Wall {
-    private static final String DEBUG_KILLED = "All tasks completed, remove Wall from scheduler";
+    // strings
     private static final String DEBUG_LIMITER = "Wall limiter is %s. Expected volume: %s";
-    private static final String DEBUG_MAX_HEIGHT = "World's max height is ";
-    private static final String DEBUG_TASK_FINISHED = "Init new Wall Task ";
-    private static final String DEBUG_TASK_IGNORED = "Task %s not queued due to killed state";
-    private static final String DEBUG_TASK_QUEUED = "Queued task ";
-    private static final String DEBUG_TASK_SUSPICIOUS = "Suspicious task state, marked as completed";
-    private static final String DEBUG_WALL_ROLLBACK = "The Wall will be rebuilt completely";
-    private static final String WARN_BUILD_LIMIT_TOO_SMALL = "blocksPerSecondLimit value too small, fixed it";
-    private static final String WARN_BUILDING_LAG = "blocksPerSecondLimit value too large, server has performance issues. Average build tick is %sms";
+    private static final String INFO_GENERATE_CHUNKS = "Started generating new chunks (first wall building or play area extension)";
+    private static final String INFO_GENERATE_CHUNKS_END = "Wall chunks generated";
+    private static final String INFO_GENERATE_SPOTS = "Started generating exit spots";
+    private static final String INFO_GENERATE_SPOTS_END = "Exit spots generated";
+    private static final String INFO_GENERATE_WALL = "Started generating wall";
+    private static final String INFO_ROLLBACK_SPOTS = "Started removing exit spots";
+    private static final String INFO_ROLLBACK_SPOTS_END = "All exit spots removed";
+    private static final String INFO_ROLLBACK_WALL = "Started removing wall";
+    private static final String INFO_ROLLBACK_WALL_END = "Wall removed";
+    private static final String WARN_BUILD_LIMIT_TOO_SMALL = "blocksPerSecondLimit value too small, fixed it. New limit is ";
 
-    private static int queueTaskId;
-    private static WallGameModeConfig wallCfg;
-    private static LinkedList<Integer> spotPositions;
-    private static int groundCurr, airCurr, undergroundCurr;
-    private static int oldSize, oldThickness;       //rollback variables
-    private static int size, halfSize, spotSize;
-    private static int side;                        //current side of square
-    private static int currentBlock;                //current block of side
-    private static int limiter;
-    private static int startWallCoord;
-    private static int endWallCoord;
-    private static int maxY;
-    private static World world;
-    private static LinkedList<Task> taskQueue;
-    private static LinkedList<Filler> rollbackWallFillers;
-    private static LinkedList<Filler> rollbackSpotFillers;
-    private static Task currentTask;
-    private static boolean taskFinished;
-    private static boolean killed;
+    private static final long NOTIFY_INTERVAL = 25565;
 
-    //performance detector
-    private static LinkedList<Long> tickIntervals;
-    private static long lastTickStartTime;
-    private static boolean skip;
-    private static int skipCount;
-    private static int ticksLeft;
-    private static int ticksTotal;
-    private static int ticksFromLastLagAlert;
+    // general
+    private final WallGameModeConfig wallCfg;
 
-    private static final Runnable queueTick = () -> {
-        //if gamemode unloaded and all tasks completed
-        if (killed && taskFinished && taskQueue.isEmpty()) {
-            Bukkit.getScheduler().cancelTask(queueTaskId);
-            LoggerUtil.debug(DEBUG_KILLED);
-            return;
-        }
+    // world
+    private final Set<Chunk> chunks = new HashSet<>();
+    private List<Filler> wallParts = new LinkedList<>();
+    private final List<Filler> spots = new LinkedList<>();
+    private final List<Filler> spotBalconies = new LinkedList<>();
+    private final World world = Bukkit.getWorlds().get(0);
 
-        //nothing to run, try to get the next task
-        if (taskFinished) {
-            if (!taskQueue.isEmpty()) {
-                currentTask = taskQueue.getFirst();
-                currentTask.runInit();
-                taskFinished = false;
-                taskQueue.removeFirst();
-                LoggerUtil.debug(DEBUG_TASK_FINISHED + currentTask.toString());
-            }
-            //otherwise just wait
-        }
-        //run task's tick
-        else {
-            //unreachable branch, safety check
-            if (currentTask == null) {
-                taskFinished = true;
-                LoggerUtil.debug(DEBUG_TASK_SUSPICIOUS);
-            } else {
-                currentTask.runTick();
-            }
-        }
-    };
+    // limiters
+    private static final int maxY = Bukkit.getWorlds().get(0).getMaxHeight() - 1;
+    private int size = 0;
+    private int thickness = 0;
+    private int startWallCoord = 0;
+    private int endWallCoord = 0;
 
-    //disable constructor for utility class
-    private Wall() {
-    }
+    // spot limiters
+    private int spotSize;
+    private int groundSpots;
+    private int airSpots;
+    private int undergroundSpots;
+    private int spotLimiter;
 
-    public static void initWith(WallGameModeConfig cfg) {
+    // current state
+    private int cProceeded = 0;
+    private int proceeded = 0;
+    private double cPercent = 0;
+    private double percent = 0;
+    private Iterator<Chunk> chunkIterator;
+    private Iterator<Filler> wallIterator;
+    private Iterator<Filler> spotIterator;
+    private boolean wallGenerated = false;
+    private boolean wallGenQueued = false;
+
+    //performance
+    private long lastNotifyTime;
+    private long lastTickStartTime;
+    private long cLastTickStartTime;
+    private int cSkips = 0;
+    private int skips = 0;
+
+    public Wall(WallGameModeConfig cfg) {
         wallCfg = cfg;
-        taskQueue = new LinkedList<>();
-        rollbackWallFillers = new LinkedList<>();
-        rollbackSpotFillers = new LinkedList<>();
-        killed = false;
-        currentTask = null;
-        taskFinished = true;
-        oldSize = 0;
-        oldThickness = 0;
-        maxY = Bukkit.getWorlds().get(0).getMaxHeight() - 1;
-        LoggerUtil.debug(DEBUG_MAX_HEIGHT + maxY);
-        queueTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), queueTick, 20, 20);
     }
 
-    public static void prepareWall() {
-        if (wallCfg.wallThickness != oldThickness || wallCfg.playzoneSize != oldSize) {
-            LoggerUtil.debug(DEBUG_WALL_ROLLBACK);
-            oldSize = wallCfg.playzoneSize;
-            oldThickness = wallCfg.wallThickness;
-            if (!rollbackWallFillers.isEmpty())
-                queueTask(Task.ROLLBACK_WALL);
-            queueTask(Task.GENERATE_WALL);
+    public void prepareWall() {
+        // sizes
+        int oldSize = size;
+        int oldThickness = thickness;
+        size = wallCfg.playzoneSize;
+        thickness = wallCfg.wallThickness;
+        wallGenQueued = true;
+
+        int halfSize = size / 2;
+        startWallCoord = halfSize + 1;
+        endWallCoord = startWallCoord + thickness - 1;
+
+        boolean reqRebuild = wallGenerated && (size != oldSize || thickness != oldThickness);
+        if (reqRebuild)
+            rollbackWallInit();
+        else if (wallGenerated)
+            rollbackSpotsInit();
+        else
+            generateChunksInit();
+    }
+
+    public void prepareSpots() {
+        spotSize = wallCfg.spotSize;
+        groundSpots = wallCfg.groundSpotQty;
+        airSpots = wallCfg.airSpotQty;
+        undergroundSpots = wallCfg.undergroundSpotQty;
+        generateSpotsInit();
+    }
+
+    public void rollback() {
+        wallGenQueued = false;
+        rollbackWallInit();
+    }
+
+    private void generateChunksInit() {
+        LoggerUtil.info(INFO_GENERATE_CHUNKS);
+        int cThickness = calcChunk(endWallCoord) - calcChunk(startWallCoord);
+
+        // fill gen queue
+        // +x
+        for (int cz = calcChunk(-startWallCoord); cz <= calcChunk(endWallCoord); cz++)
+            for (int cx = calcChunk(startWallCoord); cx <= calcChunk(startWallCoord) + cThickness; cx++)
+                chunks.add(world.getChunkAt(cx, cz));
+        // +z
+        for (int cx = calcChunk(startWallCoord); cx >= calcChunk(-endWallCoord); cx--)
+            for (int cz = calcChunk(startWallCoord); cz <= calcChunk(startWallCoord) + cThickness; cz++)
+                chunks.add(world.getChunkAt(cx, cz));
+        // -x
+        for (int cz = calcChunk(startWallCoord); cz >= calcChunk(-endWallCoord); cz--)
+            for (int cx = calcChunk(-startWallCoord); cx >= calcChunk(-startWallCoord) - cThickness; cx--)
+                chunks.add(world.getChunkAt(cx, cz));
+        // -z
+        for (int cx = calcChunk(-startWallCoord); cx <= calcChunk(endWallCoord); cx++)
+            for (int cz = calcChunk(-startWallCoord); cz >= calcChunk(-startWallCoord) - cThickness; cz--)
+                chunks.add(world.getChunkAt(cx, cz));
+
+        //launch job
+        cPercent = 0;
+        cProceeded = 0;
+        cLastTickStartTime = System.currentTimeMillis();
+        cSkips = 0;
+        chunkIterator = chunks.iterator();
+        scheduleTick(this::generateChunksTick, 1);
+    }
+
+    private void generateWallInit() {
+        LoggerUtil.info(INFO_GENERATE_WALL);
+        int limiter = Cfg.blocksPerSecondLimit / 256 / thickness;
+        if (limiter < 2) {
+            limiter = 2;
+            Cfg.blocksPerSecondLimit = thickness * 512;
+            LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL + Cfg.blocksPerSecondLimit);
+        }
+        LoggerUtil.debug(String.format(DEBUG_LIMITER, limiter, limiter * 256 * thickness));
+
+        // fill wall queue
+        // +x
+        for (int z = -startWallCoord; z <= endWallCoord; z += limiter) {
+            int endZ = Math.min(z + limiter - 1, endWallCoord);
+            wallParts.add(getTemplateFiller(world, Material.BEDROCK)
+                    .setStartX(startWallCoord).setEndX(endWallCoord)
+                    .setStartZ(z).setEndZ(endZ));
+        }
+        // +z
+        for (int x = startWallCoord; x >= -endWallCoord; x -= limiter) {
+            int startX = Math.max(x - limiter + 1, -endWallCoord);
+            wallParts.add(getTemplateFiller(world, Material.BEDROCK)
+                    .setStartX(startX).setEndX(x)
+                    .setStartZ(startWallCoord).setEndZ(endWallCoord));
+        }
+        // -x
+        for (int z = startWallCoord; z >= -endWallCoord; z -= limiter) {
+            int startZ = Math.max(z - limiter + 1, -endWallCoord);
+            wallParts.add(getTemplateFiller(world, Material.BEDROCK)
+                    .setStartX(-endWallCoord).setEndX(-startWallCoord)
+                    .setStartZ(startZ).setEndZ(z));
+        }
+        // -z
+        for (int x = -startWallCoord; x <= endWallCoord; x += limiter) {
+            int endX = Math.min(x + limiter - 1, endWallCoord);
+            wallParts.add(getTemplateFiller(world, Material.BEDROCK)
+                    .setStartX(x).setEndX(endX)
+                    .setStartZ(-endWallCoord).setEndZ(-startWallCoord));
+        }
+
+        //launch job
+        skips = 0;
+        proceeded = 0;
+        lastTickStartTime = System.currentTimeMillis();
+        wallIterator = wallParts.listIterator();
+        scheduleTick(this::generateWallTick, 1);
+    }
+
+    private void rollbackWallInit() {
+        LoggerUtil.info(INFO_ROLLBACK_WALL);
+        // split fillers to fit new limit
+        int maxVolume = calcMaxFillerVolume(wallParts);
+        int cfgVolume = Cfg.blocksPerSecondLimit;
+        if (cfgVolume < maxVolume) {
+            // pre-calc dividers
+            double divider = (double) maxVolume / cfgVolume;
+            int limiter = Math.max((int) Math.ceil((maxY + 1) / divider), 1);
+            // map original list
+            List<Filler> dividedParts = new LinkedList<>();
+            for (Filler original : wallParts)
+                for (int endY = maxY; endY >= 0; endY -= limiter)
+                    dividedParts.add(original.copy().setEndY(endY).setStartY(Math.max(endY - limiter + 1, 0)));
+            wallParts = dividedParts;
+            // re-calc bps limit
+            maxVolume = calcMaxFillerVolume(wallParts);
+            Cfg.blocksPerSecondLimit = maxVolume + 1;
+            LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL + Cfg.blocksPerSecondLimit);
+        }
+
+        //launch job
+        skips = 0;
+        proceeded = 0;
+        lastTickStartTime = System.currentTimeMillis();
+        wallIterator = wallParts.listIterator();
+        scheduleTick(this::rollbackWallTick, 1);
+    }
+
+    private void generateSpotsInit() {
+        LoggerUtil.info(INFO_GENERATE_SPOTS);
+        // calc spot volume and limiters
+        int spotVolume = thickness * spotSize * spotSize;
+        spotLimiter = (int) Math.floor((double) Cfg.blocksPerSecondLimit / spotVolume);
+        if (spotLimiter < 1) {
+            spotLimiter = 1;
+            Cfg.blocksPerSecondLimit = spotVolume + 1;
+            LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL + Cfg.blocksPerSecondLimit);
+        }
+
+        // pre calc spot coordinates
+        int spotsPerSide = undergroundSpots + groundSpots + airSpots;
+        LinkedList<Integer> positions = new LinkedList<>();
+        for (int i = 0; i < spotsPerSide * 4; i++)
+            positions.add(CommonUtil.random.nextInt(size - spotSize) - size / 2);
+        LinkedList<Integer> heights = new LinkedList<>();
+        for (int j = 0; j < 4; j++) {
+            for (int i = 0; i < undergroundSpots; i++) heights.add(-1);
+            for (int i = 0; i < groundSpots; i++) heights.add(0);
+            for (int i = 0; i < airSpots; i++) heights.add(1);
+        }
+
+        // generate fillers
+        // +x
+        for (int i = 0; i < spotsPerSide; i++) {
+            int startZ = positions.removeFirst();
+            int testX = startWallCoord - 1;
+            world.getBlockAt(testX, 0, startZ).getChunk().load();
+            int groundY = getRandomHeigth(world.getHighestBlockYAt(testX, startZ), spotSize, heights.removeFirst());
+            Filler spotFiller = getTemplateFiller(world, Material.OBSIDIAN)
+                    .setStartX(startWallCoord).setEndX(endWallCoord)
+                    .setStartY(groundY).setEndY(groundY + spotSize - 1)
+                    .setStartZ(startZ).setEndZ(startZ + spotSize - 1);
+            spots.add(spotFiller);
+            if (groundY > 64)
+                spotBalconies.add(spotFiller.copy().setMaterial(Material.GLASS)
+                        .setStartX(endWallCoord + 1).setEndX(endWallCoord + 1)
+                        .setStartY(groundY - 1).setEndY(groundY - 1));
+        }
+        // +z
+        for (int i = 0; i < spotsPerSide; i++) {
+            int startX = positions.removeFirst();
+            int testZ = startWallCoord - 1;
+            world.getBlockAt(startX, 0, testZ).getChunk().load();
+            int groundY = getRandomHeigth(world.getHighestBlockYAt(startX, testZ), spotSize, heights.removeFirst());
+            Filler spotFiller = getTemplateFiller(world, Material.OBSIDIAN)
+                    .setStartX(startX).setEndX(startX + spotSize - 1)
+                    .setStartY(groundY).setEndY(groundY + spotSize - 1)
+                    .setStartZ(startWallCoord).setEndZ(endWallCoord);
+            spots.add(spotFiller);
+            if (groundY > 64)
+                spotBalconies.add(spotFiller.copy().setMaterial(Material.GLASS)
+                        .setStartZ(endWallCoord + 1).setEndZ(endWallCoord + 1)
+                        .setStartY(groundY - 1).setEndY(groundY - 1));
+        }
+        // -x
+        for (int i = 0; i < spotsPerSide; i++) {
+            int startZ = positions.removeFirst();
+            int testX = startWallCoord - 1;
+            world.getBlockAt(testX, 0, startZ).getChunk().load();
+            int groundY = getRandomHeigth(world.getHighestBlockYAt(testX, startZ), spotSize, heights.removeFirst());
+            Filler spotFiller = getTemplateFiller(world, Material.OBSIDIAN)
+                    .setStartX(-endWallCoord).setEndX(-startWallCoord)
+                    .setStartY(groundY).setEndY(groundY + spotSize - 1)
+                    .setStartZ(startZ).setEndZ(startZ + spotSize - 1);
+            spots.add(spotFiller);
+            if (groundY > 64)
+                spotBalconies.add(spotFiller.copy().setMaterial(Material.GLASS)
+                        .setStartX(-endWallCoord - 1).setEndX(-endWallCoord - 1)
+                        .setStartY(groundY - 1).setEndY(groundY - 1));
+        }
+        // -z
+        for (int i = 0; i < spotsPerSide; i++) {
+            int startX = positions.removeFirst();
+            int testZ = startWallCoord - 1;
+            world.getBlockAt(startX, 0, testZ).getChunk().load();
+            int groundY = getRandomHeigth(world.getHighestBlockYAt(startX, testZ), spotSize, heights.removeFirst());
+            Filler spotFiller = getTemplateFiller(world, Material.OBSIDIAN)
+                    .setStartX(startX).setEndX(startX + spotSize - 1)
+                    .setStartY(groundY).setEndY(groundY + spotSize - 1)
+                    .setStartZ(-endWallCoord).setEndZ(-startWallCoord);
+            spots.add(spotFiller);
+            if (groundY > 64)
+                spotBalconies.add(spotFiller.copy().setMaterial(Material.GLASS)
+                        .setStartZ(-endWallCoord - 1).setEndZ(-endWallCoord - 1)
+                        .setStartY(groundY - 1).setEndY(groundY - 1));
+        }
+
+        //run job
+        spotIterator = spots.listIterator();
+        scheduleTick(this::generateSpotsTick, 1);
+    }
+
+    private void rollbackSpotsInit() {
+        LoggerUtil.info(INFO_ROLLBACK_SPOTS);
+        // calc max volume
+        int maxVolume = calcMaxFillerVolume(spots);
+        if (Cfg.blocksPerSecondLimit < maxVolume) {
+            Cfg.blocksPerSecondLimit = maxVolume + 1;
+            LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL + Cfg.blocksPerSecondLimit);
+        }
+
+        // run job
+        spotLimiter = (int) Math.floor((double) Cfg.blocksPerSecondLimit / maxVolume);
+        spotIterator = spots.listIterator();
+        scheduleTick(this::rollbackSpotsTick, 1);
+    }
+
+    private void generateChunksTick() {
+        long time = System.currentTimeMillis();
+        // progress notification
+        if (time - lastNotifyTime > NOTIFY_INTERVAL) {
+            Bukkit.broadcastMessage(String.format(Messages.WALL_CHUNK_GEN_PROGRESS, (int) (cPercent * 100)));
+            lastNotifyTime = time;
+        }
+        // check skip
+        long duration = time - cLastTickStartTime;
+        cLastTickStartTime = time;
+        if (duration > 100) {   // skip if current tps degraded to 10 and lower
+            cSkips++;
+            // force generate chunk if skipped too much ticks
+            if (cSkips < 10) {
+                scheduleTick(this::generateChunksTick, 1);
+                return;
+            }
+        }
+        // proceed
+        cSkips = 0;
+        if (chunkIterator.hasNext()) {
+            // generate chunk
+            chunkIterator.next().load(true);
+            scheduleTick(this::generateChunksTick, 1);
+            // update info and start gen wall
+            double oldPercent = cPercent;
+            cPercent = (double) ++cProceeded / chunks.size();
+            if (oldPercent < 0.25d && cPercent >= 0.25d)
+                generateWallInit();
         } else {
-            queueTask(Task.ROLLBACK_SPOTS);
+            // prune queue and finish task
+            cPercent = 1;
+            chunks.clear();
+            LoggerUtil.info(INFO_GENERATE_CHUNKS_END);
         }
     }
 
-    public static void prepareSpots() {
-        queueTask(Task.GENERATE_SPOTS);
-    }
-
-    public static void rollback() {
-        if (!rollbackSpotFillers.isEmpty())
-            queueTask(Task.ROLLBACK_SPOTS);
-        queueTask(Task.ROLLBACK_WALL);
-        killed = true;
-        //instantly stop generate tasks
-        if (currentTask == Task.GENERATE_WALL || currentTask == Task.GENERATE_SPOTS) {
-            taskFinished = true;
+    private void generateWallTick() {
+        long time = System.currentTimeMillis();
+        // progress notification
+        if (time - lastNotifyTime > NOTIFY_INTERVAL) {
+            Bukkit.broadcastMessage(String.format(Messages.WALL_GEN_PROGRESS, (int) (percent * 100)));
+            lastNotifyTime = time;
+        }
+        // check skip
+        long duration = time - lastTickStartTime;
+        lastTickStartTime = time;
+        if (duration > 2000) {   // skip if current tps degraded to 10 and lower
+            skips++;
+            // force generate wall piece if skipped too much ticks
+            if (skips < 10) {
+                scheduleTick(this::generateWallTick, 20);
+                return;
+            }
+        }
+        // assert that enough chunks checked
+        if (cPercent < 1) {
+            if (cPercent - percent < 0.25) {
+                scheduleTick(this::generateWallTick, 20);
+                return;
+            }
+        }
+        //proceed
+        skips = 0;
+        if (wallIterator.hasNext()) {
+            wallIterator.next().fill();
+            scheduleTick(this::generateWallTick, 20);
+            percent = (double) ++proceeded / wallParts.size();
+        } else {
+            wallGenerated = true;
+            Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
         }
     }
 
-    private static void queueTask(Task task) {
-        if (killed) {
-            LoggerUtil.debug(String.format(DEBUG_TASK_IGNORED, task));
+    private void rollbackWallTick() {
+        long time = System.currentTimeMillis();
+        // progress notification
+        if (time - lastNotifyTime > NOTIFY_INTERVAL) {
+            Bukkit.broadcastMessage(String.format(Messages.WALL_GEN_ROLLBACK_PROGRESS, (int) (percent * 100)));
+            lastNotifyTime = time;
+        }
+        // check skip
+        long duration = time - lastTickStartTime;
+        lastTickStartTime = time;
+        if (duration > 2000) {   // skip if current tps degraded to 10 and lower
+            skips++;
+            // force generate wall piece if skipped too much ticks
+            if (skips < 10) {
+                scheduleTick(this::generateWallTick, 20);
+                return;
+            }
+        }
+        //proceed
+        skips = 0;
+        if (wallIterator.hasNext()) {
+            Filler current = wallIterator.next();
+            int startY = current.getStartY();
+            int endY = current.getEndY();
+            if (startY > 64)
+                current.setMaterial(Material.AIR).fill();
+            else if (endY <= 64)
+                current.setMaterial(Material.STONE).fill();
+            else {
+                current.setEndY(64).setMaterial(Material.STONE).fill();
+                current.setStartY(65).setEndY(endY).fill();
+            }
+            scheduleTick(this::rollbackWallTick, 20);
+            percent = (double) ++proceeded / wallParts.size();
+        } else {
+            wallGenerated = false;
+            wallParts.clear();
+            if (wallGenQueued)
+                generateWallInit();
+            LoggerUtil.info(INFO_ROLLBACK_WALL_END);
+        }
+    }
+
+    private void generateSpotsTick() {
+        if (!wallGenerated) {
+            scheduleTick(this::generateSpotsTick, 20);
             return;
         }
-        taskQueue.add(task);
-        LoggerUtil.debug(DEBUG_TASK_QUEUED + task.toString());
-    }
-
-    private static Filler getSideBasedFiller(int side, int from, int to) {
-        Filler f = new Filler().setWorld(world);
-        switch (side) {
-            case 0:         //+x
-                f.setStartX(startWallCoord).setEndX(endWallCoord)
-                        .setStartZ(from).setEndZ(to);
-                break;
-            case 1:         //+z
-                f.setStartZ(startWallCoord).setEndZ(endWallCoord)
-                        .setStartX(from).setEndX(to);
-                break;
-            case 2:         //-x
-                f.setStartX(-endWallCoord).setEndX(-startWallCoord)
-                        .setStartZ(from).setEndZ(to);
-                break;
-            case 3:         //-z
-                f.setStartZ(-endWallCoord).setEndZ(-startWallCoord)
-                        .setStartX(from).setEndX(to);
+        int currentSpot = 0;
+        while (currentSpot < spotLimiter && spotIterator.hasNext()) {
+            currentSpot++;
+            spotIterator.next().fill();
         }
-        return f;
+        if (spotIterator.hasNext())
+            scheduleTick(this::generateSpotsTick, 20);
+        else {
+            spotBalconies.forEach(Filler::fill);
+            LoggerUtil.info(INFO_GENERATE_SPOTS_END);
+        }
     }
 
-    private static int getGroundLevel(int side, int center) {
-        Block b;
-        switch (side) {
-            case 0:                 //+x
-                b = world.getBlockAt(startWallCoord - 1, 0, center);
-                break;
-            case 1:                 //+z
-                b = world.getBlockAt(center, 0, startWallCoord - 1);
-                break;
-            case 2:                 //-x
-                b = world.getBlockAt(-startWallCoord + 1, 0, center);
-                break;
-            case 3:                 //-z
-                b = world.getBlockAt(center, 0, -startWallCoord + 1);
-                break;
+    private void rollbackSpotsTick() {
+        int currentSpot = 0;
+        while (currentSpot < spotLimiter && spotIterator.hasNext()) {
+            currentSpot++;
+            spotIterator.next().setMaterial(Material.BEDROCK).fill();
+        }
+        if (spotIterator.hasNext())
+            scheduleTick(this::generateSpotsTick, 20);
+        else {
+            spotBalconies.forEach(filler -> filler.setMaterial(Material.AIR).fill());
+            LoggerUtil.info(INFO_ROLLBACK_SPOTS_END);
+            spots.clear();
+            spotBalconies.clear();
+        }
+    }
+
+    // ======================================== //
+
+    private static int calcChunk(int coord) {
+        return (int) Math.floor((double) coord / 16d);
+    }
+
+    private static Filler getTemplateFiller(World world, Material mat) {
+        return new Filler(world, mat)
+                .setStartY(0)
+                .setEndY(maxY);
+    }
+
+    private static int calcMaxFillerVolume(List<Filler> fillers) {
+        return fillers.stream()
+                .mapToInt(Filler::size)
+                .max()
+                .orElse(0);
+    }
+
+    private static void scheduleTick(Runnable task, int delay) {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(Engine.getInstance(), task, delay);
+    }
+
+    private static int getRandomHeigth(int groundLevel, int deadzone, int level) {
+        switch (level) {
+            case -1:
+                return CommonUtil.random.nextInt(groundLevel - deadzone - 2) + 1;
+            case 1:
+                return CommonUtil.random.nextInt(maxY - groundLevel - deadzone - 2) + groundLevel;
             default:
-                return 65;
-        }
-        world.loadChunk(b.getChunk());
-        return world.getHighestBlockAt(b.getLocation()).getY() + 1;
-    }
-
-    private static int getAirLevel(int side, int center) {
-        int groundLevel = getGroundLevel(side, center);
-        return CommonUtil.random.nextInt(240 - groundLevel) + groundLevel + spotSize;
-    }
-
-    private static int getUndergroundLevel(int side, int center) {
-        int groundLevel = getGroundLevel(side, center);
-        return CommonUtil.random.nextInt(groundLevel - spotSize) + spotSize;
-    }
-
-    private enum Task {
-        GENERATE_WALL(
-                //INIT RUNNABLE
-                () -> {
-                    tickIntervals = new LinkedList<>();
-                    skip = false;
-                    skipCount = 0;
-                    lastTickStartTime = System.currentTimeMillis();
-                    ticksFromLastLagAlert = 0;
-
-                    size = wallCfg.playzoneSize;
-                    halfSize = size / 2;
-                    startWallCoord = halfSize + 1;
-                    endWallCoord = startWallCoord + wallCfg.wallThickness - 1;
-                    side = 0;
-                    currentBlock = -startWallCoord;         //from -start to +end
-                    limiter = Cfg.blocksPerSecondLimit / 256 / wallCfg.wallThickness;
-                    LoggerUtil.debug(String.format(DEBUG_LIMITER, limiter, limiter*256*wallCfg.wallThickness));
-                    if (limiter < 2) {
-                        limiter = 2;
-                        Cfg.blocksPerSecondLimit = wallCfg.wallThickness * 512;
-                        LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
-                    }
-                    world = Bukkit.getWorlds().get(0);
-                    ticksTotal = size * 4 / limiter;
-                    ticksLeft = ticksTotal;
-                    Bukkit.broadcastMessage(Messages.WALL_BROADCAST_BUILD_PREDICTION + CommonUtil.formatDuration((long) (ticksLeft * 1.5)));
-                },
-                //TICK RUNNABLE
-                () -> {
-                    // todo: fix bukkit chunk load warnings (tileEntity corruption)
-                    // timer
-                    long newStartTime = System.currentTimeMillis();
-                    tickIntervals.add(newStartTime - lastTickStartTime);
-                    lastTickStartTime = newStartTime;
-                    ticksFromLastLagAlert++;
-                    // filler
-                    if (!skip) {
-                        //prepare
-                        ticksLeft--;
-                        int from = currentBlock;
-                        int to = currentBlock + limiter - 1;
-                        if (to > endWallCoord)
-                            to = endWallCoord;
-                        Filler f = getSideBasedFiller(side, from, to)
-                                .setStartY(0)
-                                .setEndY(maxY)
-                                .setMaterial(Material.BEDROCK);
-                        //fill
-                        if (f.fill()) {
-                            rollbackWallFillers.add(f);
-                            currentBlock += limiter;
-                            if (currentBlock >= endWallCoord) {
-                                currentBlock = -startWallCoord;
-                                side++;
-                                if (side > 3) {
-                                    taskFinished = true;
-                                    if (Engine.getInstance().getGameState() == GameState.IDLE)
-                                        Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
-                                }
-                            }
-                        }
-                    } else {
-                        skip = false;
-                        skipCount++;
-                        if (ticksFromLastLagAlert > 25) {
-                            double skipModifier = (double) skipCount / (ticksTotal - ticksLeft) + 1;
-                            Bukkit.broadcastMessage(Messages.WALL_LAG_DETECTED);
-                            Bukkit.broadcastMessage(Messages.WALL_BROADCAST_BUILD_PREDICTION + CommonUtil.formatDuration((long) (ticksLeft*skipModifier)));
-                            ticksFromLastLagAlert = 0;
-                        }
-                    }
-                    //detect lag
-                    if (tickIntervals.size() > 20) {
-                        tickIntervals.removeFirst();
-                    }
-                    double avgInterval = tickIntervals.stream().mapToLong(Long::longValue).average().orElse(0);
-                    if (avgInterval > 2000) {
-                        skip = true;
-                        LoggerUtil.warn(String.format(WARN_BUILDING_LAG, avgInterval));
-                    }
-                }),
-        ROLLBACK_WALL(
-                //INIT RUNNABLE
-                () -> {
-                    if (rollbackWallFillers.isEmpty())
-                        return;
-                    int size = rollbackWallFillers.get(0).size();
-                    limiter = Cfg.blocksPerSecondLimit / size;
-                    if (limiter < 1) {
-                        limiter = 1;
-                        Cfg.blocksPerSecondLimit = size;
-                        LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
-                    }
-                    int mpl = taskQueue.contains(Task.GENERATE_WALL) ? 2 : 1;
-                    String duration = CommonUtil.formatDuration(rollbackWallFillers.size() * mpl / limiter);
-                    Bukkit.broadcastMessage(Messages.WALL_BROADCAST_BUILD_PREDICTION + duration);
-                },
-                //TICK RUNNABLE
-                () -> {
-                    for (int i = 0; i < limiter; i++) {
-                        if (rollbackWallFillers.isEmpty()) {
-                            taskFinished = true;
-                            return;
-                        }
-                        Filler f = rollbackWallFillers.getFirst();
-                        f.setStartY(1).setEndY(60).setMaterial(Material.STONE).fill();
-                        f.setStartY(61).setEndY(63).setMaterial(Material.DIRT).fill();
-                        f.setStartY(64).setEndY(maxY).setMaterial(Material.AIR).fill();
-                        rollbackWallFillers.removeFirst();
-                    }
-                }
-        ),
-        GENERATE_SPOTS(
-                //INIT RUNNABLE
-                () -> {
-                    spotSize = wallCfg.spotSize;
-                    side = 0;
-                    groundCurr = 0;
-                    undergroundCurr = 0;
-                    airCurr = 0;
-                    limiter = Cfg.blocksPerSecondLimit / ((spotSize*2+1)*(spotSize*2+1)*wallCfg.wallThickness);
-                    if (limiter < 1) {
-                        limiter = 1;
-                        Cfg.blocksPerSecondLimit = ((spotSize*2+1)*(spotSize*2+1)*wallCfg.wallThickness);
-                        LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
-                    } else if (limiter > 5)
-                        //force limiter due to hard chunk loads
-                        limiter = 5;
-
-                    //pre-generate spots
-                    spotPositions = new LinkedList<>();
-                    int total = (wallCfg.airSpotQty + wallCfg.groundSpotQty + wallCfg.undergroundSpotQty) * 4;
-                    for (int i = 0; i < total; i++) {
-                        spotPositions.add(CommonUtil.random.nextInt(size) - halfSize);
-                    }
-                },
-                //TICK RUNNABLE
-                () -> {
-                    for (int i = 0; i < limiter; i++) {
-                        //break condition
-                        if (spotPositions.isEmpty() || taskFinished) {
-                            taskFinished = true;
-                            return;
-                        }
-                        int center = spotPositions.getFirst();
-                        Filler f = getSideBasedFiller(side, center - spotSize, center + spotSize).setMaterial(Material.OBSIDIAN);
-                        if (groundCurr < wallCfg.groundSpotQty) {
-                            int h = getGroundLevel(side, center);
-                            f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
-                            groundCurr++;
-                        } else if (airCurr < wallCfg.airSpotQty) {
-                            int h = getAirLevel(side, center);
-                            f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
-                            airCurr++;
-                        } else if (undergroundCurr < wallCfg.undergroundSpotQty) {
-                            int h = getUndergroundLevel(side, center);
-                            f.setStartY(h - spotSize).setEndY(h + spotSize).fill();
-                            if (++undergroundCurr >= wallCfg.undergroundSpotQty) {
-                                groundCurr = 0;
-                                airCurr = 0;
-                                undergroundCurr = 0;
-                                if (++side > 3) {
-                                    taskFinished = true;
-                                }
-                            }
-                        }
-                        rollbackSpotFillers.add(f);
-                        spotPositions.removeFirst();
-                    }
-                }
-        ),
-        ROLLBACK_SPOTS(
-                //INIT RUNNABLE
-                () -> {
-                    if (rollbackSpotFillers.isEmpty())
-                        return;
-                    limiter = Cfg.blocksPerSecondLimit / rollbackSpotFillers.get(0).size();
-                    if (limiter < 1) {
-                        limiter = 1;
-                        Cfg.blocksPerSecondLimit = rollbackSpotFillers.get(0).size();
-                        LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL);
-                    } else if (limiter > 5)
-                        //force limit due to spamming with chunk loading
-                        limiter = 5;
-                },
-                //TICK RUNNABLE
-                () -> {
-                    for (int i = 0; i < limiter; i++) {
-                        if (rollbackSpotFillers.isEmpty()) {
-                            taskFinished = true;
-                            return;
-                        }
-                        Filler f = rollbackSpotFillers.getFirst();
-                        f.setMaterial(Material.BEDROCK).fill();
-                        rollbackSpotFillers.removeFirst();
-                    }
-                }
-        );
-
-        private final Runnable init;
-        private final Runnable tick;
-
-        Task(Runnable init, Runnable tick) {
-            this.init = init;
-            this.tick = tick;
-        }
-
-        private void runInit() {
-            init.run();
-        }
-
-        private void runTick() {
-            tick.run();
+                return groundLevel;
         }
     }
 }
