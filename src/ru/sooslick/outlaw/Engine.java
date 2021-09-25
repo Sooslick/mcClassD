@@ -589,4 +589,12 @@ public class Engine extends JavaPlugin {
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 1));
         selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
     }
+
+    //todo 1.2 updates:
+    // - denyNetherTravelling
+    // - split start inventory
+    // - custom potion handicap
+    // - addon feature
+    // - post-game state
+    // - change gamemode vote
 }

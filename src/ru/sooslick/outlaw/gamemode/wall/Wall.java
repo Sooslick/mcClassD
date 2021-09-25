@@ -10,6 +10,7 @@ import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.util.CommonUtil;
 import ru.sooslick.outlaw.util.Filler;
 import ru.sooslick.outlaw.util.LoggerUtil;
+import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,7 +38,7 @@ public class Wall {
     private final WallGameModeConfig wallCfg;
 
     // world
-    private final Set<Chunk> chunks = new HashSet<>();
+    private final Set<ChunkXZ> chunks = new HashSet<>();
     private List<Filler> wallParts = new LinkedList<>();
     private final List<Filler> spots = new LinkedList<>();
     private final List<Filler> spotBalconies = new LinkedList<>();
@@ -62,7 +63,7 @@ public class Wall {
     private int proceeded = 0;
     private double cPercent = 0;
     private double percent = 0;
-    private Iterator<Chunk> chunkIterator;
+    private Iterator<ChunkXZ> chunkIterator;
     private Iterator<Filler> wallIterator;
     private Iterator<Filler> spotIterator;
     private boolean wallGenerated = false;
@@ -70,10 +71,10 @@ public class Wall {
 
     //performance
     private long lastNotifyTime;
-    private long lastTickStartTime;
-    private long cLastTickStartTime;
-    private int cSkips = 0;
-    private int skips = 0;
+    private long nextLaunchTime;
+    private int skip;
+
+    //todo unite cVars and vars
 
     public Wall(WallGameModeConfig cfg) {
         wallCfg = cfg;
@@ -115,33 +116,33 @@ public class Wall {
 
     private void generateChunksInit() {
         LoggerUtil.info(INFO_GENERATE_CHUNKS);
-        int cThickness = calcChunk(endWallCoord) - calcChunk(startWallCoord);
+        int cThickness = WorldUtil.calcChunk(endWallCoord) - WorldUtil.calcChunk(startWallCoord);
 
         // fill gen queue
         // +x
-        for (int cz = calcChunk(-startWallCoord); cz <= calcChunk(endWallCoord); cz++)
-            for (int cx = calcChunk(startWallCoord); cx <= calcChunk(startWallCoord) + cThickness; cx++)
-                chunks.add(world.getChunkAt(cx, cz));
+        for (int cz = WorldUtil.calcChunk(-startWallCoord); cz <= WorldUtil.calcChunk(endWallCoord); cz++)
+            for (int cx = WorldUtil.calcChunk(startWallCoord); cx <= WorldUtil.calcChunk(startWallCoord) + cThickness; cx++)
+                chunks.add(new ChunkXZ(cx, cz));
         // +z
-        for (int cx = calcChunk(startWallCoord); cx >= calcChunk(-endWallCoord); cx--)
-            for (int cz = calcChunk(startWallCoord); cz <= calcChunk(startWallCoord) + cThickness; cz++)
-                chunks.add(world.getChunkAt(cx, cz));
+        for (int cx = WorldUtil.calcChunk(startWallCoord); cx >= WorldUtil.calcChunk(-endWallCoord); cx--)
+            for (int cz = WorldUtil.calcChunk(startWallCoord); cz <= WorldUtil.calcChunk(startWallCoord) + cThickness; cz++)
+                chunks.add(new ChunkXZ(cx, cz));
         // -x
-        for (int cz = calcChunk(startWallCoord); cz >= calcChunk(-endWallCoord); cz--)
-            for (int cx = calcChunk(-startWallCoord); cx >= calcChunk(-startWallCoord) - cThickness; cx--)
-                chunks.add(world.getChunkAt(cx, cz));
+        for (int cz = WorldUtil.calcChunk(startWallCoord); cz >= WorldUtil.calcChunk(-endWallCoord); cz--)
+            for (int cx = WorldUtil.calcChunk(-startWallCoord); cx >= WorldUtil.calcChunk(-startWallCoord) - cThickness; cx--)
+                chunks.add(new ChunkXZ(cx, cz));
         // -z
-        for (int cx = calcChunk(-startWallCoord); cx <= calcChunk(endWallCoord); cx++)
-            for (int cz = calcChunk(-startWallCoord); cz >= calcChunk(-startWallCoord) - cThickness; cz--)
-                chunks.add(world.getChunkAt(cx, cz));
+        for (int cx = WorldUtil.calcChunk(-startWallCoord); cx <= WorldUtil.calcChunk(endWallCoord); cx++)
+            for (int cz = WorldUtil.calcChunk(-startWallCoord); cz >= WorldUtil.calcChunk(-startWallCoord) - cThickness; cz--)
+                chunks.add(new ChunkXZ(cx, cz));
 
         //launch job
         cPercent = 0;
         cProceeded = 0;
-        cLastTickStartTime = System.currentTimeMillis();
-        cSkips = 0;
+        nextLaunchTime = System.currentTimeMillis();
+        skip = 0;
         chunkIterator = chunks.iterator();
-        scheduleTick(this::generateChunksTick, 1);
+        scheduleTick(this::generateChunksTick);
     }
 
     private void generateWallInit() {
@@ -185,11 +186,11 @@ public class Wall {
         }
 
         //launch job
-        skips = 0;
         proceeded = 0;
-        lastTickStartTime = System.currentTimeMillis();
+        nextLaunchTime = System.currentTimeMillis();
+        skip = 0;
         wallIterator = wallParts.listIterator();
-        scheduleTick(this::generateWallTick, 1);
+        scheduleTick(this::generateWallTick);
     }
 
     private void rollbackWallInit() {
@@ -214,12 +215,16 @@ public class Wall {
         }
 
         //launch job
-        skips = 0;
         proceeded = 0;
         percent = 0;
-        lastTickStartTime = System.currentTimeMillis();
+        nextLaunchTime = System.currentTimeMillis();
+        skip = 0;
         wallIterator = wallParts.listIterator();
-        scheduleTick(this::rollbackWallTick, 1);
+        scheduleTick(this::rollbackWallTick);
+
+        // balconies fix
+        spotBalconies.forEach(filler -> filler.setMaterial(Material.AIR).fill());
+        spotBalconies.clear();
     }
 
     private void generateSpotsInit() {
@@ -313,7 +318,8 @@ public class Wall {
 
         //run job
         spotIterator = spots.listIterator();
-        scheduleTick(this::generateSpotsTick, 1);
+        skip = 0;
+        scheduleTick(this::generateSpotsTick);
     }
 
     private void rollbackSpotsInit() {
@@ -328,7 +334,8 @@ public class Wall {
         // run job
         spotLimiter = (int) Math.floor((double) Cfg.blocksPerSecondLimit / maxVolume);
         spotIterator = spots.listIterator();
-        scheduleTick(this::rollbackSpotsTick, 1);
+        skip = 0;
+        scheduleTick(this::rollbackSpotsTick);
     }
 
     private void generateChunksTick() {
@@ -339,32 +346,23 @@ public class Wall {
             lastNotifyTime = time;
         }
         // check skip
-        long duration = time - cLastTickStartTime;
-        cLastTickStartTime = time;
-        if (duration > 100) {   // skip if current tps degraded to 10 and lower
-            cSkips++;
-            // force generate chunk if skipped too much ticks
-            if (cSkips < 10) {
-                scheduleTick(this::generateChunksTick, 1);
-                return;
-            }
+        if (time < nextLaunchTime) {
+            scheduleTick(this::generateChunksTick);
+            return;
         }
         // proceed
-        cSkips = 0;
         if (chunkIterator.hasNext()) {
             // generate chunk
-            chunkIterator.next().load(true);
-            scheduleTick(this::generateChunksTick, 1);
-            // update info and start gen wall
-            double oldPercent = cPercent;
+            chunkIterator.next().getChunk(world).load(true);
+            scheduleTick(this::generateChunksTick);
             cPercent = (double) ++cProceeded / chunks.size();
-            if (oldPercent < 0.25d && cPercent >= 0.25d)
-                generateWallInit();
+            nextLaunchTime = System.currentTimeMillis() + 50;
         } else {
             // prune queue and finish task
             cPercent = 1;
             chunks.clear();
             LoggerUtil.info(INFO_GENERATE_CHUNKS_END);
+            generateWallInit();
         }
     }
 
@@ -376,29 +374,19 @@ public class Wall {
             lastNotifyTime = time;
         }
         // check skip
-        long duration = time - lastTickStartTime;
-        lastTickStartTime = time;
-        if (duration > 2000) {   // skip if current tps degraded to 10 and lower
-            skips++;
-            // force generate wall piece if skipped too much ticks
-            if (skips < 10) {
-                scheduleTick(this::generateWallTick, 20);
-                return;
-            }
-        }
-        // assert that enough chunks checked
-        if (cPercent < 1) {
-            if (cPercent - percent < 0.25) {
-                scheduleTick(this::generateWallTick, 20);
-                return;
-            }
+        if (time < nextLaunchTime || skip > 0) {
+            skip--;
+            scheduleTick(this::generateWallTick);
+            return;
         }
         //proceed
-        skips = 0;
         if (wallIterator.hasNext()) {
             wallIterator.next().fill();
-            scheduleTick(this::generateWallTick, 20);
+            scheduleTick(this::generateWallTick);
             percent = (double) ++proceeded / wallParts.size();
+            long delta = System.currentTimeMillis() - time;
+            nextLaunchTime = time + 1000 + delta;
+            skip = 20 + (int) delta / 50;
         } else {
             wallGenerated = true;
             Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
@@ -413,18 +401,12 @@ public class Wall {
             lastNotifyTime = time;
         }
         // check skip
-        long duration = time - lastTickStartTime;
-        lastTickStartTime = time;
-        if (duration > 2000) {   // skip if current tps degraded to 10 and lower
-            skips++;
-            // force generate wall piece if skipped too much ticks
-            if (skips < 10) {
-                scheduleTick(this::generateWallTick, 20);
-                return;
-            }
+        if (time < nextLaunchTime || skip > 0) {
+            skip--;
+            scheduleTick(this::rollbackWallTick);
+            return;
         }
         //proceed
-        skips = 0;
         if (wallIterator.hasNext()) {
             Filler current = wallIterator.next();
             int startY = current.getStartY();
@@ -437,8 +419,11 @@ public class Wall {
                 current.setEndY(63).setMaterial(Material.STONE).fill();
                 current.setStartY(64).setEndY(endY).setMaterial(Material.AIR).fill();
             }
-            scheduleTick(this::rollbackWallTick, 20);
+            scheduleTick(this::rollbackWallTick);
             percent = (double) ++proceeded / wallParts.size();
+            long delta = System.currentTimeMillis() - time;
+            nextLaunchTime = time + 1000 + delta;
+            skip = 20 + (int) delta / 50;
         } else {
             wallGenerated = false;
             wallParts.clear();
@@ -450,7 +435,11 @@ public class Wall {
 
     private void generateSpotsTick() {
         if (!wallGenerated) {
-            scheduleTick(this::generateSpotsTick, 20);
+            scheduleTick(this::generateSpotsTick);
+            return;
+        }
+        if (--skip > 0) {
+            scheduleTick(this::generateSpotsTick);
             return;
         }
         int currentSpot = 0;
@@ -458,35 +447,38 @@ public class Wall {
             currentSpot++;
             spotIterator.next().fill();
         }
-        if (spotIterator.hasNext())
-            scheduleTick(this::generateSpotsTick, 20);
-        else {
+        if (spotIterator.hasNext()) {
+            skip = 20;
+            scheduleTick(this::generateSpotsTick);
+        } else {
             spotBalconies.forEach(Filler::fill);
             LoggerUtil.info(INFO_GENERATE_SPOTS_END);
         }
     }
 
     private void rollbackSpotsTick() {
+        if (--skip > 0) {
+            scheduleTick(this::generateSpotsTick);
+            return;
+        }
         int currentSpot = 0;
         while (currentSpot < spotLimiter && spotIterator.hasNext()) {
             currentSpot++;
             spotIterator.next().setMaterial(Material.BEDROCK).fill();
         }
-        if (spotIterator.hasNext())
-            scheduleTick(this::generateSpotsTick, 20);
-        else {
+        if (spotIterator.hasNext()) {
+            skip = 20;
+            scheduleTick(this::generateSpotsTick);
+        } else {
             spotBalconies.forEach(filler -> filler.setMaterial(Material.AIR).fill());
             LoggerUtil.info(INFO_ROLLBACK_SPOTS_END);
             spots.clear();
             spotBalconies.clear();
+            Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
         }
     }
 
     // ======================================== //
-
-    private static int calcChunk(int coord) {
-        return (int) Math.floor((double) coord / 16d);
-    }
 
     private static Filler getTemplateFiller(World world, Material mat) {
         return new Filler(world, mat)
@@ -501,8 +493,8 @@ public class Wall {
                 .orElse(0);
     }
 
-    private static void scheduleTick(Runnable task, int delay) {
-        Bukkit.getScheduler().scheduleSyncDelayedTask(Engine.getInstance(), task, delay);
+    private static void scheduleTick(Runnable task) {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(Engine.getInstance(), task, 1);
     }
 
     private static int getRandomHeigth(int groundLevel, int deadzone, int level) {
@@ -513,6 +505,21 @@ public class Wall {
                 return CommonUtil.random.nextInt(maxY - groundLevel - deadzone - 2) + groundLevel;
             default:
                 return groundLevel;
+        }
+    }
+
+    // Performance fix: world.getChunkAt loads chunk before returning it.
+    private static class ChunkXZ {
+        int x;
+        int z;
+
+        private ChunkXZ(int x, int z) {
+            this.x = x;
+            this.z = z;
+        }
+
+        private Chunk getChunk(World world) {
+            return world.getChunkAt(x, z);
         }
     }
 }

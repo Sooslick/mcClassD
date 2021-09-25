@@ -8,6 +8,7 @@ import ru.sooslick.outlaw.Cfg;
 /**
  * Utility builder for filling area with certain type of blocks
  */
+@SuppressWarnings("unused")
 public class Filler {
     private static final String FILL_SIZE_EXCEED = "fill operation cancelled, blocks limit exceed. Actual size: ";
     private static final String FILL_SUCCESS = "Filled area from %s, %s, %s to %s, %s, %s";
@@ -22,7 +23,8 @@ public class Filler {
     private int endZ;
     private Material material;
 
-    public Filler() {}
+    public Filler() {
+    }
 
     public Filler(World world, Material m) {
         this.world = world;
@@ -31,6 +33,7 @@ public class Filler {
 
     /**
      * Set world where filler will operate
+     *
      * @param world required world
      * @return filler instance
      */
@@ -41,6 +44,7 @@ public class Filler {
 
     /**
      * Set starting X coordinate
+     *
      * @param value starting X coordinate
      * @return filler instance
      */
@@ -51,6 +55,7 @@ public class Filler {
 
     /**
      * Set starting Y coordinate
+     *
      * @param value starting Y coordinate
      * @return filler instance
      */
@@ -61,6 +66,7 @@ public class Filler {
 
     /**
      * Set starting Z coordinate
+     *
      * @param value starting Z coordinate
      * @return filler instance
      */
@@ -71,6 +77,7 @@ public class Filler {
 
     /**
      * Set ending X coordinate
+     *
      * @param value ending X coordinate
      * @return filler instance
      */
@@ -81,6 +88,7 @@ public class Filler {
 
     /**
      * Set ending Y coordinate
+     *
      * @param value ending Y coordinate
      * @return filler instance
      */
@@ -91,6 +99,7 @@ public class Filler {
 
     /**
      * Set ending Z coordinate
+     *
      * @param value ending Z coordinate
      * @return filler instance
      */
@@ -101,6 +110,7 @@ public class Filler {
 
     /**
      * Set block type
+     *
      * @param value block type
      * @return filler instance
      */
@@ -111,6 +121,7 @@ public class Filler {
 
     /**
      * Return block count involved in fill operation
+     *
      * @return amount of blocks to fill
      */
     public int size() {
@@ -119,8 +130,10 @@ public class Filler {
 
     /**
      * Fill the area by specified coordinates (both boundaries included)
+     *
      * @return true if filled successfully, false otherwise
      */
+    @SuppressWarnings("UnusedReturnValue")
     public boolean fill() {
         // validate world
         if (world == null) {
@@ -138,21 +151,28 @@ public class Filler {
             material = Material.AIR;
         }
         //proceed
-        for (int x = startX; x <= endX; x++)
-            for (int y = startY; y <= endY; y++)
-                for (int z = startZ; z <= endZ; z++) {
-                    Block b = world.getBlockAt(x, y, z);
-                    Material m = b.getType();
-                    if (m == Material.CHEST || m == Material.SPAWNER)
-                        b.breakNaturally();
-                    b.setType(material);
-                }
+        int x1 = startX;
+        while (x1 <= endX) {
+            int x2 = WorldUtil.calcChunk(x1) * 16 + 15;
+            if (x2 > endX)
+                x2 = endX;
+            int z1 = startZ;
+            while (z1 <= endZ) {
+                int z2 = WorldUtil.calcChunk(z1) * 16 + 15;
+                if (z2 > endZ)
+                    z2 = endZ;
+                fillPart(x1, x2, z1, z2);
+                z1 = z2 + 1;
+            }
+            x1 = x2 + 1;
+        }
         LoggerUtil.debug(String.format(FILL_SUCCESS, startX, startY, startZ, endX, endY, endZ));
         return true;
     }
 
     /**
      * clone
+     *
      * @return copy of current filler
      */
     public Filler copy() {
@@ -192,5 +212,17 @@ public class Filler {
 
     public Material getMaterial() {
         return material;
+    }
+
+    private void fillPart(int x1, int x2, int z1, int z2) {
+        for (int x = x1; x <= x2; x++)
+            for (int z = z1; z <= z2; z++)
+                for (int y = startY; y <= endY; y++) {
+                    Block b = world.getBlockAt(x, y, z);
+                    Material m = b.getType();
+                    if (m == Material.CHEST || m == Material.SPAWNER || m == Material.BELL)
+                        b.breakNaturally();
+                    b.setType(material);
+                }
     }
 }

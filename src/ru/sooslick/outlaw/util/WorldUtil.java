@@ -244,6 +244,10 @@ public class WorldUtil {
         }
     }
 
+    public static int calcChunk(int coord) {
+        return (coord >> 4);
+    }
+
     private WorldUtil() {
     }
 }
