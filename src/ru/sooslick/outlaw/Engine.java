@@ -210,9 +210,11 @@ public class Engine extends JavaPlugin {
             Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_LEFT, name));
         }
         if (state == GameState.IDLE) {
-            if (votestarters.remove(name)) {
+            if (votestarters.remove(name))
                 Bukkit.broadcastMessage(String.format(Messages.START_VOTES_COUNT, votestarters.size(), Cfg.minStartVotes));
-            }
+            // if remaining players voted to start fix
+            if (votestarters.size() >= Bukkit.getOnlinePlayers().size() - 1)
+                changeGameState(GameState.PRESTART);
         }
     }
 
