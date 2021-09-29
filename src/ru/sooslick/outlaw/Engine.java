@@ -210,11 +210,14 @@ public class Engine extends JavaPlugin {
             Bukkit.broadcastMessage(String.format(Messages.VOLUNTEER_LEFT, name));
         }
         if (state == GameState.IDLE) {
-            if (votestarters.remove(name))
-                Bukkit.broadcastMessage(String.format(Messages.START_VOTES_COUNT, votestarters.size(), Cfg.minStartVotes));
-            // if remaining players voted to start fix
-            if (votestarters.size() >= Bukkit.getOnlinePlayers().size() - 1)
-                changeGameState(GameState.PRESTART);
+            votestarters.remove(name);
+            int online = Bukkit.getOnlinePlayers().size() - 1;
+            if (online > 0) {
+                broadcastVotesCount(online);
+                // if remaining players voted to start fix
+                if (votestarters.size() >= online)
+                    changeGameState(GameState.PRESTART);
+            }
         }
     }
 
@@ -230,11 +233,18 @@ public class Engine extends JavaPlugin {
         }
         votestarters.add(name);
         Bukkit.broadcastMessage(String.format(Messages.START_VOTE, name));
+        int online = Bukkit.getOnlinePlayers().size();
+        broadcastVotesCount(online);
         if (state == GameState.IDLE &&
-                (votestarters.size() >= Bukkit.getOnlinePlayers().size() || votestarters.size() >= Cfg.minStartVotes)) {
+                (votestarters.size() >= online || votestarters.size() >= Cfg.minStartVotes)) {
             changeGameState(GameState.PRESTART);
-        } else {
-            Bukkit.broadcastMessage(String.format(Messages.START_VOTES_COUNT, votestarters.size(), Cfg.minStartVotes));
+        }
+    }
+
+    void broadcastVotesCount(int online) {
+        if (getGameState() == GameState.IDLE) {
+            int required = Math.min(online, Cfg.minStartVotes);
+            Bukkit.broadcastMessage(String.format(Messages.START_VOTES_COUNT, votestarters.size(), required));
         }
     }
 

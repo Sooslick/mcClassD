@@ -215,6 +215,7 @@ class EventListener implements Listener {
         if (!engine.getGameState().equals(GameState.GAME)) {
             p.setGameMode(GameMode.SPECTATOR);
             p.sendMessage(String.format(Messages.ABOUT, engine.getGameMode().getName()));
+            engine.broadcastVotesCount(Bukkit.getOnlinePlayers().size());
             return;
         }
         Outlaw o = engine.getOutlaw();
