@@ -59,9 +59,7 @@ public class Wall {
     private int spotLimiter;
 
     // current state
-    private int cProceeded = 0;
     private int proceeded = 0;
-    private double cPercent = 0;
     private double percent = 0;
     private Iterator<ChunkXZ> chunkIterator;
     private Iterator<Filler> wallIterator;
@@ -73,8 +71,6 @@ public class Wall {
     private long lastNotifyTime;
     private long nextLaunchTime;
     private int skip;
-
-    //todo unite cVars and vars
 
     public Wall(WallGameModeConfig cfg) {
         wallCfg = cfg;
@@ -137,8 +133,8 @@ public class Wall {
                 chunks.add(new ChunkXZ(cx, cz));
 
         //launch job
-        cPercent = 0;
-        cProceeded = 0;
+        percent = 0;
+        proceeded = 0;
         nextLaunchTime = System.currentTimeMillis();
         skip = 0;
         chunkIterator = chunks.iterator();
@@ -342,7 +338,7 @@ public class Wall {
         long time = System.currentTimeMillis();
         // progress notification
         if (time - lastNotifyTime > NOTIFY_INTERVAL) {
-            Bukkit.broadcastMessage(String.format(Messages.WALL_CHUNK_GEN_PROGRESS, (int) (cPercent * 100)));
+            Bukkit.broadcastMessage(String.format(Messages.WALL_CHUNK_GEN_PROGRESS, (int) (percent * 100)));
             lastNotifyTime = time;
         }
         // check skip
@@ -355,11 +351,11 @@ public class Wall {
             // generate chunk
             chunkIterator.next().getChunk(world).load(true);
             scheduleTick(this::generateChunksTick);
-            cPercent = (double) ++cProceeded / chunks.size();
+            percent = (double) ++proceeded / chunks.size();
             nextLaunchTime = System.currentTimeMillis() + 50;
         } else {
             // prune queue and finish task
-            cPercent = 1;
+            percent = 1;
             chunks.clear();
             LoggerUtil.info(INFO_GENERATE_CHUNKS_END);
             generateWallInit();

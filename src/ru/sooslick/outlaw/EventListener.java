@@ -3,7 +3,6 @@ package ru.sooslick.outlaw;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -43,7 +42,8 @@ class EventListener implements Listener {
 
         Entity damagedEntity = e.getEntity();
         double dmg = e.getFinalDamage();
-        double statDmg = dmg > 30 ? 30 : dmg;
+        // cap max stat dmg near the charged creeper max damage
+        double statDmg = dmg > 150 ? 150 : dmg;
         if (damagedEntity instanceof Player) {
             // who (almost for stats)
             Player damagedPlayer = (Player) damagedEntity;
@@ -132,6 +132,8 @@ class EventListener implements Listener {
         Outlaw o = engine.getOutlaw();
         if (!e.getPlayer().equals(o.getPlayer()))
             return;
+
+        //todo check denyNetherTravelling
         o.setTrackedLocation(e.getFrom());
     }
 
@@ -150,10 +152,9 @@ class EventListener implements Listener {
         if (engine.getGameState() != GameState.GAME)
             return;
         //detect beds and chests
-        Block b = e.getBlockPlaced();
         ChestTracker ct = engine.getChestTracker();
         if (ct != null)
-            ct.detectBlock(b);
+            ct.detectBlock(e.getBlockPlaced());
     }
 
     @EventHandler
@@ -212,7 +213,7 @@ class EventListener implements Listener {
     public void onJoin(PlayerJoinEvent e) {
         Engine engine = Engine.getInstance();
         Player p = e.getPlayer();
-        if (!engine.getGameState().equals(GameState.GAME)) {
+        if (engine.getGameState() != GameState.GAME) {
             p.setGameMode(GameMode.SPECTATOR);
             p.sendMessage(String.format(Messages.ABOUT, engine.getGameMode().getName()));
             engine.broadcastVotesCount(Bukkit.getOnlinePlayers().size());
@@ -244,7 +245,7 @@ class EventListener implements Listener {
     @EventHandler
     public void onLeave(PlayerQuitEvent e) {
         Engine engine = Engine.getInstance();
-        if (!engine.getGameState().equals(GameState.GAME)) {
+        if (engine.getGameState() != GameState.GAME) {
             engine.unvote(e.getPlayer());
             return;
         }
@@ -279,10 +280,12 @@ class EventListener implements Listener {
         Engine engine = Engine.getInstance();
         if (engine.getGameState() != GameState.GAME)
             return;
-        if (!e.getPlayer().equals(engine.getOutlaw().getPlayer()))
+        Player player = e.getPlayer();
+        if (!player.equals(engine.getOutlaw().getPlayer()))
             return;
         if (e.getItem().getType() == Material.MILK_BUCKET) {
             engine.setGlowingRefreshTimer(Cfg.milkGlowImmunityDuration);
+            player.setGlowing(false);
         }
     }
 

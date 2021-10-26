@@ -70,6 +70,7 @@ public class Outlaw extends AbstractPlayer {
     @Override
     public void goOffline() {
         placeholder = (LivingEntity) player.getWorld().spawnEntity(player.getLocation(), EntityType.CHICKEN);
+        placeholder.setGlowing(Cfg.enableVictimGlowing);
         placeholder.setAI(false);
         placeholder.setCustomName(player.getName());
         offline = true;

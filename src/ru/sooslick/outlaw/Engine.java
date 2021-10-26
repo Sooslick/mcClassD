@@ -62,6 +62,7 @@ public class Engine extends JavaPlugin {
     private int gameTimerId;
     private long gameTimer;
     private int glowingRefreshTimer;
+    private Runnable victimGlowingImpl;
     private Location spawnLocation;
     private ScoreboardHolder scoreboardHolder;
     private GameState state;
@@ -78,12 +79,14 @@ public class Engine extends JavaPlugin {
         }
     };
 
-    private final Runnable victimGlowingImpl = () -> {
+    private final Runnable victimGlowingEnabled = () -> {
         if (--glowingRefreshTimer <= 0) {
-            outlaw.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, DEFAULT_REFRESH_TIMER*21, 1));
-            glowingRefreshTimer = DEFAULT_REFRESH_TIMER;
+            outlaw.getEntity().setGlowing(true);
+            setGlowingRefreshTimer(DEFAULT_REFRESH_TIMER);
         }
     };
+
+    private final Runnable doNothing = () -> {};
 
     private final Runnable gameProcessor = () -> {
         gameTimer++;
@@ -97,8 +100,7 @@ public class Engine extends JavaPlugin {
             h.triggerCompassUpdateTick();
         }
 
-        if (Cfg.enableVictimGlowing)
-            victimGlowingImpl.run();
+        victimGlowingImpl.run();
 
         //process join requests
         for (Map.Entry<String, TimedRequest> e : joinRequests.entrySet()) {
@@ -433,6 +435,10 @@ public class Engine extends JavaPlugin {
                 reloadGamemode();
                 Cfg.readGameModeConfig(gamemode);
 
+                // stop glowing
+                if (outlaw != null)
+                    outlaw.getEntity().setGlowing(false);
+
                 //reinit game variables
                 votestarters = new ArrayList<>();
                 excludes = new ArrayList<>();
@@ -537,6 +543,9 @@ public class Engine extends JavaPlugin {
                 //set nametag visiblity
                 scoreboardHolder.recalculateNametagVisiblity(hunters.size());
 
+                //set glowing implementation
+                victimGlowingImpl = Cfg.enableVictimGlowing ? victimGlowingEnabled : doNothing;
+
                 gamemode.onGame();
                 Bukkit.broadcastMessage(String.format(Messages.SELECTED_OBJECTIVE, gamemode.getObjective()));
 
@@ -609,4 +618,5 @@ public class Engine extends JavaPlugin {
     // - addon feature
     // - post-game state
     // - change gamemode vote
+    // - chicken bugfixes (game deadlock)
 }

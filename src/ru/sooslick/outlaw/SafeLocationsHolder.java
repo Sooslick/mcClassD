@@ -62,7 +62,8 @@ class SafeLocationsHolder {
         pendingLocation = null;
         safeLocationVictim = null;
         safeLocationHunter = null;
-        jobTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), job, 1, 1);
+        // performance fix: added 1 second delay before launch and increased interval between repeats
+        jobTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Engine.getInstance(), job, 20, 4);
         LoggerUtil.debug(JOB_LAUNCH);
     }
 
