@@ -11,6 +11,8 @@ import org.bukkit.potion.PotionEffectType;
 import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.Messages;
+import ru.sooslick.outlaw.ProtectedNetherPortal;
+import ru.sooslick.outlaw.util.LoggerUtil;
 import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.HashMap;
@@ -19,11 +21,14 @@ import java.util.HashMap;
  * Representation of the Victim
  */
 public class Outlaw extends AbstractPlayer {
+    private static final String DEBUG_LINKED_PORTAL = "Portal at %s is linked to the victim";
+
     private final HashMap<World, Location> trackedPositions;
 
     private LivingEntity placeholder;
     private boolean offline;
     private int alertTimeoutTimer;
+    private ProtectedNetherPortal trackedNetherPortal;
 
     public Outlaw(Player p) {
         super(p);
@@ -31,6 +36,7 @@ public class Outlaw extends AbstractPlayer {
         placeholder = null;
         offline = false;
         alertTimeoutTimer = 0;
+        trackedNetherPortal = null;
     }
 
     @Override
@@ -65,6 +71,23 @@ public class Outlaw extends AbstractPlayer {
 
         //else return last tracked position (i.e. portal position) in this world
         return trackedPositions.get(from);
+    }
+
+    /**
+     * Update Victim's tracked Nether Portal that will be protected from being destroyed
+     * @param portal protected portal
+     */
+    public void setTrackedNetherPortal(ProtectedNetherPortal portal) {
+        LoggerUtil.debug(String.format(DEBUG_LINKED_PORTAL, portal));
+        trackedNetherPortal = portal;
+    }
+
+    /**
+     * Return the protected Nether Portal
+     * @return protected Nether Portal
+     */
+    public ProtectedNetherPortal getTrackedNetherPortal() {
+        return trackedNetherPortal;
     }
 
     @Override

@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.jetbrains.annotations.Nullable;
 import ru.sooslick.outlaw.gamemode.GameModeBase;
 import ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase;
 import ru.sooslick.outlaw.roles.Hunter;
@@ -383,7 +384,9 @@ public class Engine extends JavaPlugin {
      * @param p player
      * @return Hunter or null if this player is not a Hunter
      */
-    public Hunter getHunter(Player p) {
+    public Hunter getHunter(@Nullable Player p) {
+        if (p == null)
+            return null;
         //comparing by name
         return hunters.stream()
                 .filter(h -> h.getPlayer().getName().equals(p.getName()))
@@ -448,6 +451,7 @@ public class Engine extends JavaPlugin {
                 votestartCountdown = Cfg.prestartTimer;
                 gameTimer = 0;
                 glowingRefreshTimer = 0;
+                ProtectedNetherPortal.clear();
 
                 //launch spawns finder
                 safeLocationsHolder.launchJob();
@@ -612,7 +616,6 @@ public class Engine extends JavaPlugin {
     }
 
     //todo 1.2 updates:
-    // - denyNetherTravelling
     // - split start inventory
     // - custom potion handicap
     // - addon feature

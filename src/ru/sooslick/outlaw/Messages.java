@@ -8,6 +8,7 @@ public class Messages {
     // CORE
     public static final String ABOUT = "§e«Class D» Manhunt gamemode\nType §6/manhunt help §efor more info\nSuggest yourself as Victim: §6/manhunt suggest\n§eType §6/manhunt votestart §eor simply §6/mh v §eto begin\n§ePreferred gamemode: §c%s";
     public static final String AVAILABLE_PARAMETERS = "\nAvailable parameters: ";
+    public static final String BUILD_RESTRICTION = "§4Building is restricted here";
     public static final String BY = "by ";
     public static final String COMMANDS_AVAILABLE = "\n§e - Available commands:";
     public static final String COMMANDS_UNAVAILABLE = "\n§e - Other commands:";
@@ -85,7 +86,6 @@ public class Messages {
 
     // WALL
     public static final String WALL_BREAK_ALERT = "§cVictim is trying to break the Wall";
-    public static final String WALL_BUILD_RESTRICTION = "§4Obsidian is restricted here";
     public static final String WALL_CHUNK_GEN_PROGRESS = "§4Wall generation progress: checked %d%% chunks";
     public static final String WALL_DESCRIPTION = "§6The Wall gamemode\n§ePlayers start in square zone restricted by wall of bedrock. This wall has some obsidian spots and Victim has to escape the zone by breaking through one of them.\nWall thickness: §c%s\n§eZone size: §c%s";
     public static final String WALL_GEN_PROGRESS = "§4Wall generation progress: %d%%";

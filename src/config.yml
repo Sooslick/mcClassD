@@ -29,6 +29,7 @@ enableStartInventory: true
 alertRadius: 50
 alertTimeout: 60
 friendlyFireEnabled: true
+denyNetherTravelling: true
 #Allowed values for compassUpdates (case insensitive): Always, OnClick, Never
 compassUpdates: ALWAYS
 compassUpdatesPeriod: 1

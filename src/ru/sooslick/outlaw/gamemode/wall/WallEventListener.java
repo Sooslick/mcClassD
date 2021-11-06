@@ -131,7 +131,7 @@ public class WallEventListener implements Listener {
             int halfsize = base.getHalfSize();
             if ((Math.abs(b.getX()) >= halfsize - 1) || (Math.abs(b.getZ()) >= halfsize - 1)) {
                 e.setCancelled(true);
-                e.getPlayer().sendMessage(Messages.WALL_BUILD_RESTRICTION);
+                e.getPlayer().sendMessage(Messages.BUILD_RESTRICTION);
             }
         }
 
