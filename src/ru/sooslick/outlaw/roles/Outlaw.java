@@ -2,10 +2,12 @@ package ru.sooslick.outlaw.roles;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import ru.sooslick.outlaw.Cfg;
@@ -16,6 +18,7 @@ import ru.sooslick.outlaw.util.LoggerUtil;
 import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Representation of the Victim
@@ -108,6 +111,16 @@ public class Outlaw extends AbstractPlayer {
         placeholder = null;
         Bukkit.broadcastMessage(Messages.VICTIM_ONLINE);
         newPlayer.sendMessage(String.format(Messages.VICTIM_REMINDER, Engine.getInstance().getGameMode().getObjective()));
+    }
+
+    @Override
+    public void preparePlayer(Location dest) {
+        super.preparePlayer(dest);
+        if (Cfg.enableStartInventory) {
+            for (Map.Entry<Material, Integer> e : Cfg.victimStartInventory.entrySet()) {
+                player.getInventory().addItem(new ItemStack(e.getKey(), e.getValue()));
+            }
+        }
     }
 
     /**

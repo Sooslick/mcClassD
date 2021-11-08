@@ -42,7 +42,8 @@ public class Cfg {
     private static final String COMPASS_UPDATES_PERIOD = "compassUpdatesPeriod";
     private static final String EN_VICTIM_GLOWING = "enableVictimGlowing";
     private static final String IMMUNITY_DURATION = "milkGlowImmunityDuration";
-    private static final String START_INVENTORY = "startInventory";
+    private static final String VICTIM_START_INVENTORY = "victimStartInventory";
+    private static final String HUNTER_START_INVENTORY = "hunterStartInventory";
 
     private static final String CANNOT_LOAD_GAMEMODE = "§4Cannot load gamemode class %s";
     private static final String INVALID_CLASS_EXCEPTION = " is not GameModeBase class";
@@ -79,14 +80,15 @@ public class Cfg {
     public static int compassUpdatesPeriod;
     public static boolean enableVictimGlowing;
     public static int milkGlowImmunityDuration;
-    public static HashMap<Material, Integer> startInventory;
+    public static HashMap<Material, Integer> victimStartInventory;
+    public static HashMap<Material, Integer> hunterStartInventory;
 
     static {
         PARAMETERS = ImmutableList.copyOf(Arrays.asList(DEBUG_MODE, BPS_LIMIT, GAMEMODES,
                 PREFERRED_GAMEMODE, MIN_START_VOTES, PRESTART_TIMER, PRINT_ENDGAME_STATS, SPAWN_RADIUS, SPAWN_DISTANCE,
                 HIDE_ABOVE, EN_POTION_HANDICAP, EN_START_INVENTORY,
                 ALERT_RADIUS, ALERT_TIMEOUT, EN_FRIENDLY_FIRE, DENY_NETHER_TRAVELLING,
-                COMPASS_UPDATES, COMPASS_UPDATES_PERIOD, EN_VICTIM_GLOWING, IMMUNITY_DURATION, START_INVENTORY));
+                COMPASS_UPDATES, COMPASS_UPDATES_PERIOD, EN_VICTIM_GLOWING, IMMUNITY_DURATION, VICTIM_START_INVENTORY, HUNTER_START_INVENTORY));
 
         defaultValues = ImmutableMap.copyOf(new HashMap<String, Object>() {{
             put(DEBUG_MODE, false);
@@ -169,26 +171,12 @@ public class Cfg {
             Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, COMPASS_UPDATES, compassUpdates));
 
         //something special for start inventory
-        startInventory = new HashMap<>();
-        ConfigurationSection cs = f.getConfigurationSection(START_INVENTORY);
-        if (cs != null) {
-            for (String itemName : cs.getKeys(false)) {
-                try {
-                    Material m = Material.valueOf(itemName);
-                    int qty = cs.getInt(itemName);
-                    if (qty > 0) {
-                        startInventory.put(m, qty);
-                        LoggerUtil.debug(String.format(READ_STARTINV_ENTRY, m.name(), qty));
-                    }
-                } catch (IllegalArgumentException e) {
-                    LoggerUtil.warn(String.format(UNKNOWN_ITEM, itemName));
-                }
-            }
-        }
+        victimStartInventory = fillInventoryMap(f.getConfigurationSection(VICTIM_START_INVENTORY));
+        hunterStartInventory = fillInventoryMap(f.getConfigurationSection(HUNTER_START_INVENTORY));
 
         //something special for gamemodes
         gamemodes = new HashMap<>();
-        cs = f.getConfigurationSection(GAMEMODES);
+        ConfigurationSection cs = f.getConfigurationSection(GAMEMODES);
         if (cs != null)
             for (String gmName : cs.getKeys(false))
                 gamemodes.put(gmName, cs.getString(gmName));
@@ -268,7 +256,8 @@ public class Cfg {
                 case COMPASS_UPDATES_PERIOD: return String.format(VALUE_TEMPLATE, key, compassUpdatesPeriod);
                 case EN_VICTIM_GLOWING: return String.format(VALUE_TEMPLATE, key, enableVictimGlowing);
                 case IMMUNITY_DURATION: return String.format(VALUE_TEMPLATE, key, milkGlowImmunityDuration);
-                case START_INVENTORY: return String.format(VALUE_TEMPLATE, key, startInventory);
+                case VICTIM_START_INVENTORY: return String.format(VALUE_TEMPLATE, key, victimStartInventory);
+                case HUNTER_START_INVENTORY: return String.format(VALUE_TEMPLATE, key, hunterStartInventory);
                 default: return String.format(UNKNOWN_PARAMETER, key);
             }
         }
@@ -303,5 +292,24 @@ public class Cfg {
         if (newVal != oldVal)
             Bukkit.broadcastMessage(String.format(Messages.CONFIG_MODIFIED, key, newVal));
         return newVal;
+    }
+
+    private static HashMap<Material, Integer> fillInventoryMap(ConfigurationSection cs) {
+        HashMap<Material, Integer> map = new HashMap<>();
+        if (cs != null) {
+            for (String itemName : cs.getKeys(false)) {
+                try {
+                    Material m = Material.valueOf(itemName);
+                    int qty = cs.getInt(itemName);
+                    if (qty > 0) {
+                        map.put(m, qty);
+                        LoggerUtil.debug(String.format(READ_STARTINV_ENTRY, m.name(), qty));
+                    }
+                } catch (IllegalArgumentException e) {
+                    LoggerUtil.warn(String.format(UNKNOWN_ITEM, itemName));
+                }
+            }
+        }
+        return map;
     }
 }

@@ -3,14 +3,9 @@ package ru.sooslick.outlaw.roles;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.util.WorldUtil;
-
-import java.util.Map;
 
 /**
  * Representation of Manhunt player
@@ -28,6 +23,7 @@ public abstract class AbstractPlayer {
 
     /**
      * Return player's name
+     *
      * @return player's name
      */
     public String getName() {
@@ -36,6 +32,7 @@ public abstract class AbstractPlayer {
 
     /**
      * Return the Minecraft player
+     *
      * @return Minecraft player
      */
     public Player getPlayer() {
@@ -44,6 +41,7 @@ public abstract class AbstractPlayer {
 
     /**
      * Return the entity representing the Manhunt player
+     *
      * @return LivingEntity representing the Manhunt player
      */
     public LivingEntity getEntity() {
@@ -52,6 +50,7 @@ public abstract class AbstractPlayer {
 
     /**
      * Return the current location of Manhunt player
+     *
      * @return the location of Manhunt player
      */
     public Location getLocation() {
@@ -60,6 +59,7 @@ public abstract class AbstractPlayer {
 
     /**
      * Spawn the Manhunt player at specified location and prepare him for the game
+     *
      * @param dest location where the Manhunt player will spawn
      */
     public void preparePlayer(Location dest) {
@@ -76,8 +76,6 @@ public abstract class AbstractPlayer {
         player.setBedSpawnLocation(null);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), String.format(ADVANCEMENT_REVOKE, player.getName()));
         player.setGameMode(GameMode.SURVIVAL);
-        if (Cfg.enableStartInventory)
-            giveStartInventory();
         onRespawn();
     }
 
@@ -91,10 +89,12 @@ public abstract class AbstractPlayer {
     /**
      * Do action after leaving the server
      */
-    public void goOffline() {}
+    public void goOffline() {
+    }
 
     /**
      * Do action after rejoining the server
+     *
      * @param newPlayer same Minecraft player
      */
     public void goOnline(Player newPlayer) {
@@ -107,11 +107,5 @@ public abstract class AbstractPlayer {
     public void onEndGame() {
         player.setGameMode(GameMode.SPECTATOR);
         WorldUtil.invToChest(getPlayer().getInventory(), getEntity().getLocation());
-    }
-
-    private void giveStartInventory() {
-        for (Map.Entry<Material, Integer> e : Cfg.startInventory.entrySet()) {
-            player.getInventory().addItem(new ItemStack(e.getKey(), e.getValue()));
-        }
     }
 }

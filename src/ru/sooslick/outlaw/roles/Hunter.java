@@ -15,6 +15,8 @@ import ru.sooslick.outlaw.Messages;
 import ru.sooslick.outlaw.TrackedLocationCache;
 import ru.sooslick.outlaw.util.CommonUtil;
 
+import java.util.Map;
+
 /**
  * Representation of the Hunter
  */
@@ -41,6 +43,11 @@ public class Hunter extends AbstractPlayer {
     @Override
     public void preparePlayer(Location dest) {
         super.preparePlayer(dest);
+        if (Cfg.enableStartInventory) {
+            for (Map.Entry<Material, Integer> e : Cfg.hunterStartInventory.entrySet()) {
+                player.getInventory().addItem(new ItemStack(e.getKey(), e.getValue()));
+            }
+        }
         updateCompass();
     }
 

@@ -32,7 +32,6 @@ import java.util.function.Supplier;
  * Main Manhunt class which contains all core functionality
  */
 public class Engine extends JavaPlugin {
-
     private static final String GAME_STATE_CHANGED = "ClassD game state has changed. New state: ";
     private static final String GAME_STATE_UNKNOWN = "Suspicious game state: ";
     private static final String GAMEMODE_ACTIVE = "Gamemode not changed, active gamemode: ";
@@ -47,6 +46,7 @@ public class Engine extends JavaPlugin {
     private static final String SELECTOR_EXCLUDE = "No suggesters, choices are %s/%s online players";
     private static final String SELECTOR_ONLINE_PLAYERS = "Choosing victim through the whole online players";
     private static final String SELECTOR_SUGGESTERS = "Choosing victim from one of suggested players";
+    private static final String WARN_NO_ONLINE = "No players online. Skipping GAME state and going to IDLE";
 
     private static final int DEFAULT_REFRESH_TIMER = 10;
 
@@ -516,7 +516,7 @@ public class Engine extends JavaPlugin {
                 }
                 //validate selected player
                 if (selectedPlayer == null) {
-                    LoggerUtil.warn("No players online. Skipping GAME state and going to IDLE");
+                    LoggerUtil.warn(WARN_NO_ONLINE);
                     changeGameState(GameState.IDLE);
                     return;
                 }
@@ -616,10 +616,10 @@ public class Engine extends JavaPlugin {
     }
 
     //todo 1.2 updates:
-    // - split start inventory
     // - custom potion handicap
     // - addon feature
     // - post-game state
     // - change gamemode vote
     // - chicken bugfixes (game deadlock)
+    // - too long safe location search issue
 }
