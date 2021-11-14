@@ -618,7 +618,6 @@ public class Engine extends JavaPlugin {
     // - chicken bugfixes (game deadlock)
     // - too long safe location search issue
     // - try/catch gamemode's methods
-    // - announce compass update method
 
     //todo 1.3 updates:
     // - rework ClassD events to Bukkit events

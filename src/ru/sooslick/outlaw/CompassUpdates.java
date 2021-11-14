@@ -7,17 +7,19 @@ import ru.sooslick.outlaw.roles.Hunter;
  */
 @SuppressWarnings("unused")
 public enum CompassUpdates {
-    ALWAYS((h) -> {
+    ALWAYS(Messages.COMPASS_METHOD_ALWAYS, (h) -> {
         h.cooldownTick();
         h.updateCompass();
     }),
-    ONCLICK(Hunter::cooldownTick),
-    NEVER((h) -> {});
+    ONCLICK(Messages.COMPASS_METHOD_CLICK, Hunter::cooldownTick),
+    NEVER(Messages.COMPASS_METHOD_NEVER, (h) -> {});
 
     private final CompassUpdateMethod compassUpdateMethod;
+    private final String comment;
 
-    CompassUpdates(CompassUpdateMethod method) {
-        compassUpdateMethod = method;
+    CompassUpdates(String comment, CompassUpdateMethod method) {
+        this.compassUpdateMethod = method;
+        this.comment = comment;
     }
 
     /**
@@ -26,6 +28,14 @@ public enum CompassUpdates {
      */
     public CompassUpdateMethod getCompassUpdateMethod() {
         return compassUpdateMethod;
+    }
+
+    /**
+     * Get info message for compass method
+     * @return short info message
+     */
+    public String getComment() {
+        return comment;
     }
 
     /**

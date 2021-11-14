@@ -12,6 +12,9 @@ public class Messages {
     public static final String BY = "by ";
     public static final String COMMANDS_AVAILABLE = "\n§e - Available commands:";
     public static final String COMMANDS_UNAVAILABLE = "\n§e - Other commands:";
+    public static final String COMPASS_METHOD_ALWAYS = "§eCompass always points to the Victim and updates automatically";
+    public static final String COMPASS_METHOD_CLICK = "§eCompass updates only by interacting";
+    public static final String COMPASS_METHOD_NEVER = "§eCompass does not track the Victim and never updates";
     public static final String COMPASS_NAME = "Victim Tracker";
     public static final String COMPASS_COOLDOWN = "§cCompass on cooldown, you will be able to use it in §6%s §cseconds";
     public static final String COMPASS_DISABLED = "§cVictim tracking is unavailable in this game";

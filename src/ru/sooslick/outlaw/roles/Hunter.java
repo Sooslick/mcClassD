@@ -43,6 +43,7 @@ public class Hunter extends AbstractPlayer {
     @Override
     public void preparePlayer(Location dest) {
         super.preparePlayer(dest);
+        player.sendMessage(Cfg.compassUpdates.getComment());
         if (Cfg.enableStartInventory) {
             for (Map.Entry<Material, Integer> e : Cfg.hunterStartInventory.entrySet()) {
                 player.getInventory().addItem(new ItemStack(e.getKey(), e.getValue()));
