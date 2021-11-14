@@ -393,4 +393,5 @@ class EventListener implements Listener {
 
     //todo: too many "state != game checks". Register separate events for game state only!
     //todo: overloaded logic for denyNetherTravelling - separate events too
+    //todo ignoreCancelled = true
 }

@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.potion.PotionEffectType;
 import ru.sooslick.outlaw.gamemode.GameModeBase;
 import ru.sooslick.outlaw.gamemode.GameModeConfig;
 import ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase;
@@ -44,9 +45,11 @@ public class Cfg {
     private static final String IMMUNITY_DURATION = "milkGlowImmunityDuration";
     private static final String VICTIM_START_INVENTORY = "victimStartInventory";
     private static final String HUNTER_START_INVENTORY = "hunterStartInventory";
+    private static final String POTION_HANDICAP = "potionHandicap";
 
     private static final String CANNOT_LOAD_GAMEMODE = "§4Cannot load gamemode class %s";
     private static final String INVALID_CLASS_EXCEPTION = " is not GameModeBase class";
+    private static final String READ_POTION_ENTRY = "read potionHandicap entry: %s x %s";
     private static final String READ_STARTINV_ENTRY = "read startInventory entry: %s x %s";
     private static final String UNKNOWN_ITEM = "Unknown item in start inventory: %s";
     private static final String UNKNOWN_METHOD = "Unknown compass update method: %s";
@@ -82,13 +85,15 @@ public class Cfg {
     public static int milkGlowImmunityDuration;
     public static HashMap<Material, Integer> victimStartInventory;
     public static HashMap<Material, Integer> hunterStartInventory;
+    public static HashMap<PotionEffectType, Double> potionHandicap;
 
     static {
         PARAMETERS = ImmutableList.copyOf(Arrays.asList(DEBUG_MODE, BPS_LIMIT, GAMEMODES,
                 PREFERRED_GAMEMODE, MIN_START_VOTES, PRESTART_TIMER, PRINT_ENDGAME_STATS, SPAWN_RADIUS, SPAWN_DISTANCE,
                 HIDE_ABOVE, EN_POTION_HANDICAP, EN_START_INVENTORY,
                 ALERT_RADIUS, ALERT_TIMEOUT, EN_FRIENDLY_FIRE, DENY_NETHER_TRAVELLING,
-                COMPASS_UPDATES, COMPASS_UPDATES_PERIOD, EN_VICTIM_GLOWING, IMMUNITY_DURATION, VICTIM_START_INVENTORY, HUNTER_START_INVENTORY));
+                COMPASS_UPDATES, COMPASS_UPDATES_PERIOD, EN_VICTIM_GLOWING, IMMUNITY_DURATION, VICTIM_START_INVENTORY,
+                HUNTER_START_INVENTORY, POTION_HANDICAP));
 
         defaultValues = ImmutableMap.copyOf(new HashMap<String, Object>() {{
             put(DEBUG_MODE, false);
@@ -112,10 +117,12 @@ public class Cfg {
     }
 
     //disable constructor for utility class
-    private Cfg() {}
+    private Cfg() {
+    }
 
     /**
      * Read Manhunt's config
+     *
      * @param f Manhunt's configuration file
      */
     public static void readConfig(FileConfiguration f) {
@@ -173,6 +180,7 @@ public class Cfg {
         //something special for start inventory
         victimStartInventory = fillInventoryMap(f.getConfigurationSection(VICTIM_START_INVENTORY));
         hunterStartInventory = fillInventoryMap(f.getConfigurationSection(HUNTER_START_INVENTORY));
+        potionHandicap = fillPotionMap(f.getConfigurationSection(POTION_HANDICAP));
 
         //something special for gamemodes
         gamemodes = new HashMap<>();
@@ -204,6 +212,7 @@ public class Cfg {
 
     /**
      * Return the list of parameters that are available in main and gamemode's config
+     *
      * @return list of parameters
      */
     public static List<String> availableParameters() {
@@ -218,6 +227,7 @@ public class Cfg {
 
     /**
      * Format string of parameters that are available in main and gamemode's config
+     *
      * @return formatted string
      */
     public static String formatAvailableParameters() {
@@ -226,6 +236,7 @@ public class Cfg {
 
     /**
      * Return string value of config's parameter
+     *
      * @param key parameter
      * @return String value
      */
@@ -258,6 +269,7 @@ public class Cfg {
                 case IMMUNITY_DURATION: return String.format(VALUE_TEMPLATE, key, milkGlowImmunityDuration);
                 case VICTIM_START_INVENTORY: return String.format(VALUE_TEMPLATE, key, victimStartInventory);
                 case HUNTER_START_INVENTORY: return String.format(VALUE_TEMPLATE, key, hunterStartInventory);
+                case POTION_HANDICAP: return String.format(VALUE_TEMPLATE, key, potionHandicap);
                 default: return String.format(UNKNOWN_PARAMETER, key);
             }
         }
@@ -306,6 +318,25 @@ public class Cfg {
                         LoggerUtil.debug(String.format(READ_STARTINV_ENTRY, m.name(), qty));
                     }
                 } catch (IllegalArgumentException e) {
+                    LoggerUtil.warn(String.format(UNKNOWN_ITEM, itemName));
+                }
+            }
+        }
+        return map;
+    }
+
+    private static HashMap<PotionEffectType, Double> fillPotionMap(ConfigurationSection cs) {
+        HashMap<PotionEffectType, Double> map = new HashMap<>();
+        if (cs != null) {
+            for (String itemName : cs.getKeys(false)) {
+                PotionEffectType m = PotionEffectType.getByName(itemName);
+                if (m != null) {
+                    double qty = cs.getDouble(itemName, 0);
+                    if (qty > 0) {
+                        map.put(m, qty);
+                        LoggerUtil.debug(String.format(READ_POTION_ENTRY, m.getName(), qty));
+                    }
+                } else {
                     LoggerUtil.warn(String.format(UNKNOWN_ITEM, itemName));
                 }
             }

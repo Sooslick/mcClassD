@@ -51,8 +51,10 @@ public class ChestTracker {
         TRACKED_BLOCKS = new ArrayList<>();
         TRACKED_BLOCKS.add(Material.IRON_ORE);
         TRACKED_BLOCKS.add(Material.IRON_BLOCK);
+        TRACKED_BLOCKS.add(Material.RAW_IRON_BLOCK);
         TRACKED_BLOCKS.add(Material.GOLD_ORE);
         TRACKED_BLOCKS.add(Material.GOLD_BLOCK);
+        TRACKED_BLOCKS.add(Material.RAW_GOLD_BLOCK);
         TRACKED_BLOCKS.add(Material.COAL_BLOCK);
         TRACKED_BLOCKS.add(Material.DIAMOND_BLOCK);
         TRACKED_BLOCKS.add(Material.ANCIENT_DEBRIS);

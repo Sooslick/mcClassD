@@ -45,6 +45,15 @@ hunterStartInventory:
   OAK_LOG: 2
   COOKIE: 2
 
+#Victim will get these effects if enablePotionHandicap is true
+#Duration of effect on game start is
+# (online_players² + 4) * 4 * duration_multiplier seconds
+#where duration_multiplier is number belonging to effect name
+potionHandicap:
+  FAST_DIGGING: 1.0
+  SATURATION: 1.0
+  DAMAGE_RESISTANCE: 0.5
+
 ####### THE WALL & EVACUATION ##########
 #Common
 playzoneSize: 1000

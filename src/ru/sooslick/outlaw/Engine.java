@@ -1,6 +1,6 @@
 package ru.sooslick.outlaw;
 
-import org.bstats.bukkit.Metrics;
+import org.bstats.bukkit.ClassDMetrics;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -11,7 +11,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.Nullable;
 import ru.sooslick.outlaw.gamemode.GameModeBase;
 import ru.sooslick.outlaw.gamemode.anypercent.AnyPercentBase;
@@ -146,8 +145,8 @@ public class Engine extends JavaPlugin {
         LoggerUtil.info(PLUGIN_INIT_SUCCESS);
 
         //init metrics
-        Metrics metrics = new Metrics(this, 10210);
-        metrics.addCustomChart(new Metrics.SimplePie("preferred_gamemode", () -> gamemode.getName()));
+        ClassDMetrics metrics = new ClassDMetrics(this, 10210);
+        metrics.addCustomChart(new ClassDMetrics.SimplePie("preferred_gamemode", () -> gamemode.getName()));
     }
 
     @Override
@@ -341,7 +340,7 @@ public class Engine extends JavaPlugin {
         //apply handicap potion effects if there are accepted requests
         if (acceptedRequests > 0) {
             if (Cfg.enablePotionHandicap)
-                applyPotionHandicap(sender, 400);
+                applyPotionHandicap(sender, 200);
         } else {
             sender.sendMessage(Messages.JOIN_REQUEST_NOT_EXISTS);
         }
@@ -606,20 +605,24 @@ public class Engine extends JavaPlugin {
 
     private void applyPotionHandicap(LivingEntity selectedPlayer) {
         int x = Bukkit.getOnlinePlayers().size();
-        applyPotionHandicap(selectedPlayer, (int) ((x * x / 5 + 0.8) * 400));
+        applyPotionHandicap(selectedPlayer, (x * x + 4) * 80);
     }
 
     private void applyPotionHandicap(LivingEntity selectedPlayer, int duration) {
-        selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, duration, 1));
-        selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 1));
-        selectedPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, duration, 1));
+        Cfg.potionHandicap.forEach((key, value) -> selectedPlayer.addPotionEffect(new PotionEffect(key, (int) (duration * value), 0)));
     }
 
     //todo 1.2 updates:
-    // - custom potion handicap
-    // - addon feature
     // - post-game state
     // - change gamemode vote
     // - chicken bugfixes (game deadlock)
     // - too long safe location search issue
+    // - try/catch gamemode's methods
+    // - announce compass update method
+
+    //todo 1.3 updates:
+    // - rework ClassD events to Bukkit events
+    // - addon feature
+    // - second chance addon
+    // - pearl trades addon
 }
