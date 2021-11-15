@@ -55,6 +55,7 @@ public class Cfg {
     private static final String UNKNOWN_METHOD = "Unknown compass update method: %s";
     private static final String UNKNOWN_PARAMETER = "Unknown parameter: %s";
     private static final String VALUE_TEMPLATE = "%s: %s";
+    private static final String WARN_GAMEMODE_READ_CFG = "Failed reading gamemode's config";
 
     private static final ImmutableList<String> PARAMETERS;
     private static final ImmutableMap<String, Object> defaultValues;
@@ -205,9 +206,13 @@ public class Cfg {
     }
 
     static void readGameModeConfig(GameModeBase gmb) {
-        gameModeCfg = gmb.getConfig();
-        if (gameModeCfg != null)
-            gameModeCfg.readConfig();
+        try {
+            gameModeCfg = gmb.getConfig();
+            if (gameModeCfg != null)
+                gameModeCfg.readConfig();
+        } catch (Exception e) {
+            LoggerUtil.exception(WARN_GAMEMODE_READ_CFG, e);
+        }
     }
 
     /**
@@ -250,7 +255,7 @@ public class Cfg {
                 case DEBUG_MODE: return String.format(VALUE_TEMPLATE, key, debugMode);
                 case BPS_LIMIT: return String.format(VALUE_TEMPLATE, key, blocksPerSecondLimit);
                 case GAMEMODES: return String.format(VALUE_TEMPLATE, key, gamemodes);
-                case PREFERRED_GAMEMODE: return String.format(VALUE_TEMPLATE, key, Engine.getInstance().getGameMode().getName());
+                case PREFERRED_GAMEMODE: return String.format(VALUE_TEMPLATE, key, Engine.getInstance().getGameModeName());
                 case MIN_START_VOTES: return String.format(VALUE_TEMPLATE, key, minStartVotes);
                 case PRESTART_TIMER: return String.format(VALUE_TEMPLATE, key, prestartTimer);
                 case PRINT_ENDGAME_STATS: return String.format(VALUE_TEMPLATE, key, printEndgameStatistics);

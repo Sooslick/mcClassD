@@ -110,7 +110,12 @@ public class Outlaw extends AbstractPlayer {
         offline = false;
         placeholder = null;
         Bukkit.broadcastMessage(Messages.VICTIM_ONLINE);
-        newPlayer.sendMessage(String.format(Messages.VICTIM_REMINDER, Engine.getInstance().getGameMode().getObjective()));
+        try {
+            newPlayer.sendMessage(String.format(Messages.VICTIM_REMINDER, Engine.getInstance().getGameMode().getObjective()));
+        } catch (Exception e) {
+            LoggerUtil.exception(e);
+            newPlayer.sendMessage(Messages.VICTIM_REMINDER_DEFAULT);
+        }
     }
 
     @Override

@@ -74,6 +74,7 @@ public class Messages {
     public static final String VICTIM_OFFLINE = "§cVictim left the game, but there is §eVictim Chicken§c. Kill it!";
     public static final String VICTIM_ONLINE = "§cVictim is back to the game!";
     public static final String VICTIM_REMINDER = "§cYou're still a Victim with a goal to: %s";
+    public static final String VICTIM_REMINDER_DEFAULT = "§cYou're still a Victim";
     public static final String VOLUNTEER_ALREADY_EXCLUDED = "§cYou have already excluded yourself from Victim list";
     public static final String VOLUNTEER_EXCLUDED = "§e%s doesn't want to be a Victim";
     public static final String VOLUNTEER_LEFT = "§c%s left and was removed from Victim suggesters";

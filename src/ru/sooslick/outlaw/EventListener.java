@@ -306,7 +306,7 @@ class EventListener implements Listener {
         Player p = e.getPlayer();
         if (engine.getGameState() != GameState.GAME) {
             p.setGameMode(GameMode.SPECTATOR);
-            p.sendMessage(String.format(Messages.ABOUT, engine.getGameMode().getName()));
+            p.sendMessage(String.format(Messages.ABOUT, engine.getGameModeName()));
             engine.broadcastVotesCount(Bukkit.getOnlinePlayers().size());
             return;
         }

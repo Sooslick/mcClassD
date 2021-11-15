@@ -1,7 +1,9 @@
 package ru.sooslick.outlaw.util;
 
+import org.jetbrains.annotations.Nullable;
 import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.Engine;
+import ru.sooslick.outlaw.Messages;
 
 import java.util.logging.Logger;
 
@@ -18,7 +20,8 @@ public class LoggerUtil {
     private static DebugLogger logFunc = DEBUG_NORMAL;
 
     //disable constructor for Utility class
-    private LoggerUtil() {}
+    private LoggerUtil() {
+    }
 
     /**
      * Define method for debug logging
@@ -29,6 +32,7 @@ public class LoggerUtil {
 
     /**
      * Log string at fine level or fake debug log at info level if debugMode is enabled
+     *
      * @param msg string to log
      */
     //just logs message at fine level in normal mode.
@@ -39,6 +43,7 @@ public class LoggerUtil {
 
     /**
      * Log string at normal level
+     *
      * @param msg string to log
      */
     public static void info(String msg) {
@@ -47,10 +52,34 @@ public class LoggerUtil {
 
     /**
      * Log string at warning level
+     *
      * @param msg string to log
      */
     public static void warn(String msg) {
         LOG.warning(msg);
+    }
+
+    /**
+     * Pring stack trace with warning
+     *
+     * @param e exception
+     */
+    public static void exception(Exception e) {
+        exception(null, e);
+    }
+
+    /**
+     * Print stack trace with warning
+     *
+     * @param msg additional exception message
+     * @param e   exception
+     */
+    public static void exception(@Nullable String msg, Exception e) {
+        if (msg != null)
+            warn(msg);
+        warn(e.getMessage());
+        e.printStackTrace();
+        warn(Messages.UNPLAYABLE_WORLD_WARNING);
     }
 
     @FunctionalInterface

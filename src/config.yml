@@ -51,7 +51,6 @@ hunterStartInventory:
 #where duration_multiplier is number belonging to effect name
 potionHandicap:
   FAST_DIGGING: 1.0
-  SATURATION: 1.0
   DAMAGE_RESISTANCE: 0.5
 
 ####### THE WALL & EVACUATION ##########

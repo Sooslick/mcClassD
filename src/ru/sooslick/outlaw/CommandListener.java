@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.TabCompleteEvent;
 import org.jetbrains.annotations.NotNull;
+import ru.sooslick.outlaw.util.LoggerUtil;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -157,7 +158,11 @@ class CommandListener implements CommandExecutor, Listener {
 
     private void printHelpInfo(CommandSender s) {
         s.sendMessage(Messages.RULES_GAMEMODE);
-        s.sendMessage(Engine.getInstance().getGameMode().getDescription());
+        try {
+            s.sendMessage(Engine.getInstance().getGameMode().getDescription());
+        } catch (Exception e) {
+            LoggerUtil.exception(e);
+        }
     }
 
     /////////////////////////// checks & executors

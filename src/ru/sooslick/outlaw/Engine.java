@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * Main Manhunt class which contains all core functionality
@@ -45,6 +44,11 @@ public class Engine extends JavaPlugin {
     private static final String SELECTOR_EXCLUDE = "No suggesters, choices are %s/%s online players";
     private static final String SELECTOR_ONLINE_PLAYERS = "Choosing victim through the whole online players";
     private static final String SELECTOR_SUGGESTERS = "Choosing victim from one of suggested players";
+    private static final String WARN_GAMEMODE_IDLE = "An error occurred while initializing gamemode ";
+    private static final String WARN_GAMEMODE_PREPARE = "An error occurred while preparing gamemode ";
+    private static final String WARN_GAMEMODE_SPAWN = "An error occured while selecting spawn location";
+    private static final String WARN_GAMEMODE_START = "An error occured while starting game ";
+    private static final String WARN_GAMEMODE_UNLOAD = "Cannot unload gamemode ";
     private static final String WARN_NO_ONLINE = "No players online. Skipping GAME state and going to IDLE";
 
     private static final int DEFAULT_REFRESH_TIMER = 10;
@@ -67,6 +71,7 @@ public class Engine extends JavaPlugin {
     private ScoreboardHolder scoreboardHolder;
     private GameState state;
     private GameModeBase gamemode;
+    private String gamemodeName;
     private SafeLocationsHolder safeLocationsHolder;
     private ChestTracker chestTracker;
     private StatsCollector statsCollector;
@@ -86,11 +91,17 @@ public class Engine extends JavaPlugin {
         }
     };
 
-    private final Runnable doNothing = () -> {};
+    private final Runnable doNothing = () -> {
+    };
 
     private final Runnable gameProcessor = () -> {
         gameTimer++;
-        gamemode.tick();
+
+        try {
+            gamemode.tick();
+        } catch (Exception e) {
+            LoggerUtil.exception(e);
+        }
 
         //wait for alert cooldown, then check distance between victim and hunters every second
         outlaw.huntersNearbyAlert();
@@ -146,7 +157,7 @@ public class Engine extends JavaPlugin {
 
         //init metrics
         ClassDMetrics metrics = new ClassDMetrics(this, 10210);
-        metrics.addCustomChart(new ClassDMetrics.SimplePie("preferred_gamemode", () -> gamemode.getName()));
+        metrics.addCustomChart(new ClassDMetrics.SimplePie("preferred_gamemode", () -> gamemodeName));
     }
 
     @Override
@@ -164,6 +175,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * Return the instance of Manhunt plugin
+     *
      * @return instance of Manhunt plugin
      */
     public static Engine getInstance() {
@@ -184,6 +196,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * End the game and announce the winner
+     *
      * @param victimWin is Victim the winner
      */
     public void triggerEndgame(boolean victimWin) {
@@ -192,7 +205,8 @@ public class Engine extends JavaPlugin {
 
     /**
      * End the game and announce the winner
-     * @param victimWin is Victim the winner
+     *
+     * @param victimWin     is Victim the winner
      * @param customMessage announce text
      */
     public void triggerEndgame(boolean victimWin, String customMessage) {
@@ -348,6 +362,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * Return the instance of currently loaded gamemode
+     *
      * @return current Manhunt's gamemode
      */
     public GameModeBase getGameMode() {
@@ -356,6 +371,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * Return the state of the game
+     *
      * @return current game state
      */
     public GameState getGameState() {
@@ -364,6 +380,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * Return the current Victim
+     *
      * @return Victim or null if the game is not running
      */
     public Outlaw getOutlaw() {
@@ -372,6 +389,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * Return the list of active Hunters
+     *
      * @return list of active Hunters
      */
     public List<Hunter> getHunters() {
@@ -380,6 +398,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * Search the Hunter by player
+     *
      * @param p player
      * @return Hunter or null if this player is not a Hunter
      */
@@ -395,6 +414,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * Return amount of seconds passed since the game start
+     *
      * @return amount of seconds since the start
      */
     public long getGameTimer() {
@@ -403,6 +423,7 @@ public class Engine extends JavaPlugin {
 
     /**
      * Return the current ChestTracker
+     *
      * @return current ChestTracker
      */
     public ChestTracker getChestTracker() {
@@ -411,10 +432,20 @@ public class Engine extends JavaPlugin {
 
     /**
      * Return the current ScoreboardHolder
+     *
      * @return current ScoreboardHolder
      */
     public ScoreboardHolder getScoreboardHolder() {
         return scoreboardHolder;
+    }
+
+    /**
+     * Returns name of last loaded gamemode.
+     *
+     * @return gamemode's name
+     */
+    public String getGameModeName() {
+        return gamemodeName;
     }
 
     StatsCollector getStatsCollector() {
@@ -458,7 +489,13 @@ public class Engine extends JavaPlugin {
                 //reset players gamemode
                 for (Player p : Bukkit.getOnlinePlayers())
                     p.setGameMode(GameMode.SPECTATOR);
-                gamemode.onIdle();
+
+                //custom action
+                try {
+                    gamemode.onIdle();
+                } catch (Exception e) {
+                    LoggerUtil.exception(WARN_GAMEMODE_IDLE + gamemodeName, e);
+                }
                 break;
             case PRESTART:
                 //removes created or found containers and beds
@@ -466,23 +503,19 @@ public class Engine extends JavaPlugin {
                     chestTracker.cleanup();
                 chestTracker = new ChestTracker();
 
-                gamemode.onPreStart();
-
                 //launch timer
                 votestartTimerId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, votestartTimerImpl, 1, 20);
                 Bukkit.broadcastMessage(String.format(Messages.START_COUNTDOWN, votestartCountdown));
+
+                //custom action
+                try {
+                    gamemode.onPreStart();
+                } catch (Exception e) {
+                    LoggerUtil.exception(WARN_GAMEMODE_PREPARE + gamemodeName, e);
+                }
                 break;
             case GAME:
-                Supplier<Location> victimSupplier;
-                Supplier<Location> hunterSupplier;
-                if (gamemode.customSpawnEnabled()) {
-                    victimSupplier = gamemode::getVictimSpawn;
-                    hunterSupplier = gamemode::getHunterSpawn;
-                } else {
-                    safeLocationsHolder.selectSafeLocations();
-                    victimSupplier = safeLocationsHolder::getVictimLocation;
-                    hunterSupplier = safeLocationsHolder::getHunterLocation;
-                }
+                safeLocationsHolder.selectSafeLocations();
                 Bukkit.getScheduler().cancelTask(votestartTimerId);
                 scoreboardHolder = new ScoreboardHolder(Bukkit.getScoreboardManager());
                 statsCollector = new StatsCollector();
@@ -524,7 +557,7 @@ public class Engine extends JavaPlugin {
 
                 //process outlaw
                 outlaw = new Outlaw(selectedPlayer);
-                Location outlawLocation = victimSupplier.get();
+                Location outlawLocation = getSpawnLocation(true);
                 outlaw.preparePlayer(outlawLocation);
                 //give handicap effects
                 if (Cfg.enablePotionHandicap) {
@@ -533,7 +566,7 @@ public class Engine extends JavaPlugin {
 
                 //process others
                 Hunter.setupHunter(outlaw);
-                spawnLocation = hunterSupplier.get();
+                spawnLocation = getSpawnLocation(false);
                 Bukkit.getWorlds().get(0).setSpawnLocation(spawnLocation);     //for new players and respawns
                 for (Player p : onlinePlayers) {
                     //skip outlaw
@@ -549,8 +582,12 @@ public class Engine extends JavaPlugin {
                 //set glowing implementation
                 victimGlowingImpl = Cfg.enableVictimGlowing ? victimGlowingEnabled : doNothing;
 
-                gamemode.onGame();
-                Bukkit.broadcastMessage(String.format(Messages.SELECTED_OBJECTIVE, gamemode.getObjective()));
+                try {
+                    gamemode.onGame();
+                    Bukkit.broadcastMessage(String.format(Messages.SELECTED_OBJECTIVE, gamemode.getObjective()));
+                } catch (Exception e) {
+                    LoggerUtil.exception(WARN_GAMEMODE_START + gamemodeName, e);
+                }
 
                 //debug: check distance btw runner and hunters
                 if (hunters.size() > 0) {
@@ -572,28 +609,34 @@ public class Engine extends JavaPlugin {
             boolean unload = false;
             //unload previous
             if (gamemode != null) {
-                LoggerUtil.debug(GAMEMODE_UNLOAD + gamemode.getName());
-                gamemode.unload();
+                LoggerUtil.debug(GAMEMODE_UNLOAD + gamemodeName);
+                try {
+                    gamemode.unload();
+                } catch (Exception e) {
+                    LoggerUtil.exception(WARN_GAMEMODE_UNLOAD + gamemode.getName(), e);
+                }
                 unload = true;
             }
             //try to load new gamemode
             try {
                 LoggerUtil.debug(GAMEMODE_LOAD_CLASS + Cfg.preferredGamemode);
                 gamemode = Cfg.preferredGamemode.getDeclaredConstructor().newInstance();
+                gamemodeName = gamemode.getName();
                 LoggerUtil.debug(GAMEMODE_LOADED + gamemode.getName());
             }
             //cannot load gamemode, load default AnyPercent
             catch (Exception e) {
                 LoggerUtil.warn(e.getMessage());
                 gamemode = new AnyPercentBase();
+                gamemodeName = gamemode.getName();
                 LoggerUtil.debug(GAMEMODE_LOAD_DEFAULT);
             }
             if (unload)
-                Bukkit.broadcastMessage(String.format(Messages.GAMEMODE_CHANGED, gamemode.getName()));
+                Bukkit.broadcastMessage(String.format(Messages.GAMEMODE_CHANGED, gamemodeName));
             return;
         }
         //log string if nothing changed
-        LoggerUtil.debug(GAMEMODE_ACTIVE + gamemode.getName());
+        LoggerUtil.debug(GAMEMODE_ACTIVE + gamemodeName);
     }
 
     private void joinHunter(Player p) {
@@ -612,16 +655,42 @@ public class Engine extends JavaPlugin {
         Cfg.potionHandicap.forEach((key, value) -> selectedPlayer.addPotionEffect(new PotionEffect(key, (int) (duration * value), 0)));
     }
 
+    private Location getSpawnLocation(boolean isVictim) {
+        if (isVictim) {
+            try {
+                if (gamemode.customSpawnEnabled()) {
+                    return gamemode.getVictimSpawn();
+                } else {
+                    return safeLocationsHolder.getVictimLocation();
+                }
+            } catch (Exception e) {
+                LoggerUtil.exception(WARN_GAMEMODE_SPAWN, e);
+                return safeLocationsHolder.getVictimLocation();
+            }
+        } else {
+            try {
+                if (gamemode.customSpawnEnabled()) {
+                    return gamemode.getHunterSpawn();
+                } else {
+                    return safeLocationsHolder.getHunterLocation();
+                }
+            } catch (Exception e) {
+                LoggerUtil.exception(WARN_GAMEMODE_SPAWN, e);
+                return safeLocationsHolder.getHunterLocation();
+            }
+        }
+    }
+
     //todo 1.2 updates:
-    // - post-game state
-    // - change gamemode vote
     // - chicken bugfixes (game deadlock)
     // - too long safe location search issue
-    // - try/catch gamemode's methods
+    // - freeze time
 
     //todo 1.3 updates:
     // - rework ClassD events to Bukkit events
     // - addon feature
     // - second chance addon
     // - pearl trades addon
+    // - post-game state
+    // - change gamemode vote
 }
