@@ -52,6 +52,7 @@ public class Engine extends JavaPlugin {
     private static final String WARN_NO_ONLINE = "No players online. Skipping GAME state and going to IDLE";
 
     private static final int DEFAULT_REFRESH_TIMER = 10;
+    private static final int DEFAULT_GAMEOVER_TIMER = 60;
 
     private static Engine instance;
 
@@ -65,6 +66,7 @@ public class Engine extends JavaPlugin {
     private int votestartTimerId;
     private int gameTimerId;
     private long gameTimer;
+    private int gameOverTimer;
     private int glowingRefreshTimer;
     private Runnable victimGlowingImpl;
     private Location spawnLocation;
@@ -110,6 +112,16 @@ public class Engine extends JavaPlugin {
         for (Hunter h : hunters) {
             h.triggerCompassUpdateTick();
         }
+
+        // check if game has players online
+        if (Bukkit.getOnlinePlayers().stream().noneMatch(p -> p.getGameMode() == GameMode.SURVIVAL)) {
+            gameOverTimer-= 1;
+            if (gameOverTimer <= 0) {
+                LoggerUtil.info(WARN_NO_ONLINE);
+                triggerEndgame(false);
+            }
+        } else
+            gameOverTimer = DEFAULT_GAMEOVER_TIMER;
 
         victimGlowingImpl.run();
 
@@ -480,6 +492,7 @@ public class Engine extends JavaPlugin {
                 joinRequests = new HashMap<>();
                 votestartCountdown = Cfg.prestartTimer;
                 gameTimer = 0;
+                gameOverTimer = DEFAULT_GAMEOVER_TIMER;
                 glowingRefreshTimer = 0;
                 ProtectedNetherPortal.clear();
 
@@ -682,9 +695,8 @@ public class Engine extends JavaPlugin {
     }
 
     //todo 1.2 updates:
-    // - chicken bugfixes (game deadlock)
-    // - too long safe location search issue
-    // - freeze time
+    // - evac rollback
+    // - 1.18 Wall builder
 
     //todo 1.3 updates:
     // - rework ClassD events to Bukkit events
@@ -692,5 +704,9 @@ public class Engine extends JavaPlugin {
     // - second chance addon
     // - pearl trades addon
     // - post-game state
+    // - freeze state
+    // - rework onIdle / onPreStart / onGame to onChangeGameState
     // - change gamemode vote
+    // - force stop game command
+    // - adjust cfg command (+ cfg save / reload feature)
 }

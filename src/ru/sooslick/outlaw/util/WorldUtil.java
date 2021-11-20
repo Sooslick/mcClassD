@@ -25,6 +25,7 @@ public class WorldUtil {
     private static final String SAFELOC_FAIL = "getSafeRandomLocation - fail, reason: %s | %s";
     private static final String SAFELOC_FAIL_LIQUID = "liquid";
     private static final String SAFELOC_FAIL_OBSTRUCTION = "obstruction";
+    private static final String SAFELOC_FAIL_VOID = "void";
 
     public static final List<Material> DANGERS;
     public static final List<Material> EXCLUDES;
@@ -107,6 +108,10 @@ public class WorldUtil {
         l.getChunk().load();
         Block groundBlock = l.getBlock().getRelative(0, -1, 0);
         Material m = groundBlock.getType();
+        if (l.getY() < 1 || groundBlock.isEmpty()) {
+            LoggerUtil.debug(String.format(SAFELOC_FAIL, SAFELOC_FAIL_VOID, formatLocation(groundBlock.getLocation())));
+            return false;
+        }
         if (groundBlock.isLiquid()) {
             LoggerUtil.debug(String.format(SAFELOC_FAIL, SAFELOC_FAIL_LIQUID, formatLocation(groundBlock.getLocation())));
             return false;
@@ -159,6 +164,10 @@ public class WorldUtil {
      * @return this location
      */
     public static Location safetizeLocation(Location l) {
+        // void bugfix
+        if (l.getY() < 2)
+            l.setY(2);
+
         World w = l.getWorld();
         int x = l.getBlockX();
         int y = l.getBlockY();

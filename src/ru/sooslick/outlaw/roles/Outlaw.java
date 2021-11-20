@@ -99,6 +99,7 @@ public class Outlaw extends AbstractPlayer {
         placeholder.setGlowing(Cfg.enableVictimGlowing);
         placeholder.setAI(false);
         placeholder.setCustomName(player.getName());
+        placeholder.getLocation().getChunk().addPluginChunkTicket(Engine.getInstance());
         offline = true;
         Bukkit.broadcastMessage(Messages.VICTIM_OFFLINE);
     }
@@ -106,6 +107,7 @@ public class Outlaw extends AbstractPlayer {
     @Override
     public void goOnline(Player newPlayer) {
         super.goOnline(newPlayer);
+        placeholder.getLocation().getChunk().removePluginChunkTicket(Engine.getInstance());
         placeholder.remove();
         offline = false;
         placeholder = null;

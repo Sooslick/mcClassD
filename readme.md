@@ -115,16 +115,7 @@ The `Messages` class contains all messages that appeare in the game chat.
 ##### Custom game modes
 
 If you want to create a custom game mode, 
-you should create a class implementing `GameModeBase` interface and its methods:
-
-`onIdle` - called at plugin loading and after round ending. 
-Use this method for initialization and environment preparing;  
-`onPreStart` - late initialization. Called when enough players vote to start. 
-Forced start DOES NOT skip this stage, but sets its duration to zero.  
-`onGame` - called at game start after Victim and Hunters role distribution and world environment settings.  
-`tick` - the ingame event called every second.  
-`unload` - the method called instead of `onIdle` when `preferredGamemode` in config is changed. 
-Here you must cancel all scheduled tasks, unregister your events and rollback changes if required.
+you should create a class implementing `GameModeBase` interface and its methods.
 
 If the game mode utilizes a custom config, 
 you should create a class implementing `GameModeConfig` and 
@@ -143,6 +134,9 @@ such as nametag visiblity.
 
 To see an example, check the source code of The Wall game mode, which is located in 
 `ru.sooslick.outlaw.gamemode.wall`
+
+Or check the custom Game Mode implemented as independent plugin:
+[https://github.com/Sooslick/mcClassDExtension](https://github.com/Sooslick/mcClassDExtension)
 
 ##### Enable custom game mode
 
