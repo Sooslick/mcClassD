@@ -179,7 +179,7 @@ public class Engine extends JavaPlugin {
             hunters.forEach(Hunter::onEndGame);
         }
         if (chestTracker != null) {
-            chestTracker.cleanup();
+            chestTracker.cleanup(false);
         }
         LoggerUtil.info(PLUGIN_DISABLE_SUCCESS);
         LoggerUtil.info(Messages.UNPLAYABLE_WORLD_WARNING);
@@ -695,7 +695,6 @@ public class Engine extends JavaPlugin {
     }
 
     //todo 1.2 updates:
-    // - evac rollback
     // - 1.18 Wall builder
 
     //todo 1.3 updates:

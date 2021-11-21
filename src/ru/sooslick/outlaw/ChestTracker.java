@@ -1,5 +1,7 @@
 package ru.sooslick.outlaw;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
@@ -11,14 +13,21 @@ import ru.sooslick.outlaw.util.LoggerUtil;
 import ru.sooslick.outlaw.util.WorldUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Class for tracking and rolling back players' stuff
  */
 public class ChestTracker {
     private static final String REPORT_TEMPLATE = "ChestTracker cleanup report:\nContainers: %s\nBeds: %s\nBlocks: %s\nEnd frames: %s\nEntities: %s";
+    private static final String SCHEDULED_REPORT = "ChestTracker delayed cleanup: removed %s far away entites";
     private static final String TRACKED_FORCE = "Force tracking on block %s";
     private static final String TRACKED_CONTAINER = "Tracked container %s at %s";
     private static final String TRACKED_BED = "Tracked bed at %s";
@@ -72,6 +81,7 @@ public class ChestTracker {
 
     /**
      * Detect specified block and mark it for rollback if it meets rollback criteria
+     *
      * @param b tracked block
      */
     public void detectBlock(Block b) {
@@ -80,7 +90,8 @@ public class ChestTracker {
 
     /**
      * Detect specified block and mark it for rollback if it meets rollback criteria
-     * @param b tracked block
+     *
+     * @param b     tracked block
      * @param force forced track flag
      */
     public void detectBlock(Block b, boolean force) {
@@ -106,6 +117,7 @@ public class ChestTracker {
 
     /**
      * Detect the specified entity and mark it for rollback if it meets rollback criteria
+     *
      * @param e tracked entity
      */
     public void detectEntity(Entity e) {
@@ -119,10 +131,18 @@ public class ChestTracker {
      * Remove all tracked stuff
      */
     public void cleanup() {
+        cleanup(true);
+    }
+
+    /**
+     * Remove all tracked stuff
+     * @param enableDelayedTasks allow to schedule tasks to remove far away entities
+     */
+    public void cleanup(boolean enableDelayedTasks) {
         int chests = trackedContainers.size();
         int beds = trackedBeds.size();
         int blocks = trackedBlocks.size();
-        int ent = trackedEntities.size();
+        int ent = 0;
         int frames = trackedEndFrames.size();
         //clear and delete containers
         trackedContainers.forEach(b -> {
@@ -156,13 +176,44 @@ public class ChestTracker {
             }
         });
         //clear entities (via iterator because concurrent modification exception)
+        HashMap<Chunk, List<UUID>> cleanupQueue = new HashMap<>();
         Iterator<Entity> i = trackedEntities.iterator();
+        //remove entites in loaded chunks, collect UUIDs of remaining ones
         //noinspection WhileLoopReplaceableByForEach
         while (i.hasNext()) {
             Entity e = i.next();
-            if (e != null)
-                e.remove();
+            if (e != null) {
+                if (e.isValid()) {
+                    e.remove();
+                    ent++;
+                } else
+                    cleanupQueue.computeIfAbsent(e.getLocation().getChunk(), c -> new LinkedList<>()).add(e.getUniqueId());
+            }
         }
+        // schedule cleanup chunk by chunk
+        if (enableDelayedTasks) {
+            int delay = 0;
+            for (Map.Entry<Chunk, List<UUID>> entry : cleanupQueue.entrySet()) {
+                delay += 2;
+                // process one chunk every 2 ticks: load, get all entites, compare UUIDs, then remove
+                Bukkit.getScheduler().scheduleSyncDelayedTask(Engine.getInstance(), () -> {
+                    int count = 0;
+                    Chunk c = entry.getKey();
+                    c.load();
+                    List<UUID> uuids = entry.getValue();
+                    Iterator<Entity> iter = Arrays.stream(c.getEntities()).iterator();
+                    while (iter.hasNext()) {
+                        Entity e = iter.next();
+                        if (uuids.contains(e.getUniqueId())) {
+                            e.remove();
+                            count++;
+                        }
+                    }
+                    LoggerUtil.debug(String.format(SCHEDULED_REPORT, count));
+                }, delay);
+            }
+        }
+        // report
         LoggerUtil.info(String.format(REPORT_TEMPLATE, chests, beds, blocks, frames, ent));
     }
 }

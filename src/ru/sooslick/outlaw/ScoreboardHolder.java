@@ -2,6 +2,7 @@ package ru.sooslick.outlaw;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
@@ -47,6 +48,24 @@ public class ScoreboardHolder {
     }
 
     /**
+     * Return the Victim's Team in active scoreboard
+     * @return Minecraft team instance
+     */
+    @SuppressWarnings("unused")
+    public Team getTeamVictim() {
+        return teamVictim;
+    }
+
+    /**
+     * Return the Hunters' Team in active scoreboard
+     * @return Minecraft team instance
+     */
+    @SuppressWarnings("unused")
+    public Team getTeamHunter() {
+        return teamHunter;
+    }
+
+    /**
      * Fix custom scoreboard so the player can see current objectives and teams
      * @param p player requires the fix
      */
@@ -59,6 +78,12 @@ public class ScoreboardHolder {
 
     void addVictim(Player p) {
         addPlayerToTeam(p, teamVictim);
+    }
+
+    public void addVictimPlaceholder(LivingEntity e) {
+        if (enabled) {
+            teamVictim.addEntry(e.getUniqueId().toString());
+        }
     }
 
     void addHunter(Player p) {

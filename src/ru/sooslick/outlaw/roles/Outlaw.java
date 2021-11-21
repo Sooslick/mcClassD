@@ -8,8 +8,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import ru.sooslick.outlaw.Cfg;
 import ru.sooslick.outlaw.Engine;
 import ru.sooslick.outlaw.Messages;
@@ -99,6 +97,7 @@ public class Outlaw extends AbstractPlayer {
         placeholder.setGlowing(Cfg.enableVictimGlowing);
         placeholder.setAI(false);
         placeholder.setCustomName(player.getName());
+        Engine.getInstance().getScoreboardHolder().addVictimPlaceholder(placeholder);
         placeholder.getLocation().getChunk().addPluginChunkTicket(Engine.getInstance());
         offline = true;
         Bukkit.broadcastMessage(Messages.VICTIM_OFFLINE);
@@ -145,10 +144,6 @@ public class Outlaw extends AbstractPlayer {
             if (WorldUtil.distance2d(h.getLocation(), outlawLocation) < Cfg.alertRadius) {
                 alertTimeoutTimer = Cfg.alertTimeout;
                 outlawPlayer.sendMessage(Messages.HUNTERS_NEARBY);
-                //glow placeholder entity if Outlaw player is offline
-                if (!(outlawPlayer instanceof Player)) {
-                    outlawPlayer.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, Cfg.alertTimeout * 20, 3));
-                }
                 return;
             }
         }
