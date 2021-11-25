@@ -17,10 +17,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Wall {
     // strings
     private static final String DEBUG_LIMITER = "Wall limiter is %s. Expected volume: %s";
+    private static final String DEBUG_MIN_HEIGHT = "Wall starts from y = ";
     private static final String INFO_GENERATE_CHUNKS = "Started generating new chunks (first wall building or play area extension)";
     private static final String INFO_GENERATE_CHUNKS_END = "Wall chunks generated";
     private static final String INFO_GENERATE_SPOTS = "Started generating exit spots";
@@ -46,6 +49,7 @@ public class Wall {
 
     // limiters
     private static final int maxY = Bukkit.getWorlds().get(0).getMaxHeight() - 1;
+    private static final int minY = defineMinY();
     private int size = 0;
     private int thickness = 0;
     private int startWallCoord = 0;
@@ -66,6 +70,7 @@ public class Wall {
     private Iterator<Filler> spotIterator;
     private boolean wallGenerated = false;
     private boolean wallGenQueued = false;
+    private boolean wallRlbQueued = false;
 
     //performance
     private long lastNotifyTime;
@@ -79,7 +84,6 @@ public class Wall {
     public void prepareWall() {
         // sizes
         int oldSize = size;
-        int oldThickness = thickness;
         size = wallCfg.playzoneSize;
         thickness = wallCfg.wallThickness;
         wallGenQueued = true;
@@ -88,12 +92,14 @@ public class Wall {
         startWallCoord = halfSize + 1;
         endWallCoord = startWallCoord + thickness - 1;
 
-        boolean reqRebuild = wallGenerated && (size != oldSize || thickness != oldThickness);
-        if (reqRebuild)
-            rollbackWallInit();
-        else if (wallGenerated)
+        boolean reqRebuild = wallGenerated && size != oldSize;
+        if (wallGenerated) {
+            if (reqRebuild) {
+                wallRlbQueued = true;
+                LoggerUtil.warn(Messages.UNPLAYABLE_WORLD_WARNING);
+            }
             rollbackSpotsInit();
-        else
+        } else
             generateChunksInit();
     }
 
@@ -107,30 +113,26 @@ public class Wall {
 
     public void rollback() {
         wallGenQueued = false;
-        rollbackWallInit();
+        wallRlbQueued = true;
+        LoggerUtil.warn(Messages.UNPLAYABLE_WORLD_WARNING);
+        rollbackSpotsInit();
     }
 
     private void generateChunksInit() {
         LoggerUtil.info(INFO_GENERATE_CHUNKS);
-        int cThickness = WorldUtil.calcChunk(endWallCoord) - WorldUtil.calcChunk(startWallCoord);
-
         // fill gen queue
         // +x
         for (int cz = WorldUtil.calcChunk(-startWallCoord); cz <= WorldUtil.calcChunk(endWallCoord); cz++)
-            for (int cx = WorldUtil.calcChunk(startWallCoord); cx <= WorldUtil.calcChunk(startWallCoord) + cThickness; cx++)
-                chunks.add(new ChunkXZ(cx, cz));
+            chunks.add(new ChunkXZ(startWallCoord, cz));
         // +z
         for (int cx = WorldUtil.calcChunk(startWallCoord); cx >= WorldUtil.calcChunk(-endWallCoord); cx--)
-            for (int cz = WorldUtil.calcChunk(startWallCoord); cz <= WorldUtil.calcChunk(startWallCoord) + cThickness; cz++)
-                chunks.add(new ChunkXZ(cx, cz));
+            chunks.add(new ChunkXZ(cx, startWallCoord));
         // -x
         for (int cz = WorldUtil.calcChunk(startWallCoord); cz >= WorldUtil.calcChunk(-endWallCoord); cz--)
-            for (int cx = WorldUtil.calcChunk(-startWallCoord); cx >= WorldUtil.calcChunk(-startWallCoord) - cThickness; cx--)
-                chunks.add(new ChunkXZ(cx, cz));
+            chunks.add(new ChunkXZ(-startWallCoord, cz));
         // -z
         for (int cx = WorldUtil.calcChunk(-startWallCoord); cx <= WorldUtil.calcChunk(endWallCoord); cx++)
-            for (int cz = WorldUtil.calcChunk(-startWallCoord); cz >= WorldUtil.calcChunk(-startWallCoord) - cThickness; cz--)
-                chunks.add(new ChunkXZ(cx, cz));
+            chunks.add(new ChunkXZ(cx, -startWallCoord));
 
         //launch job
         percent = 0;
@@ -143,20 +145,22 @@ public class Wall {
 
     private void generateWallInit() {
         LoggerUtil.info(INFO_GENERATE_WALL);
-        int limiter = Cfg.blocksPerSecondLimit / 256 / thickness;
+        int h = maxY - minY + 1;
+        int limiter = Cfg.blocksPerSecondLimit / h;
         if (limiter < 2) {
             limiter = 2;
-            Cfg.blocksPerSecondLimit = thickness * 512;
+            Cfg.blocksPerSecondLimit = h * 2 + 1;
             LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL + Cfg.blocksPerSecondLimit);
-        }
-        LoggerUtil.debug(String.format(DEBUG_LIMITER, limiter, limiter * 256 * thickness));
+        } else if (limiter > 256)
+            limiter = 256;          // max 16 chunks per second sounds ok I guess?
+        LoggerUtil.debug(String.format(DEBUG_LIMITER, limiter, limiter * 256));
 
         // fill wall queue
         // +x
         for (int z = -startWallCoord; z <= endWallCoord; z += limiter) {
             int endZ = Math.min(z + limiter - 1, endWallCoord);
             wallParts.add(getTemplateFiller(world, Material.BEDROCK)
-                    .setStartX(startWallCoord).setEndX(endWallCoord)
+                    .setStartX(startWallCoord).setEndX(startWallCoord)
                     .setStartZ(z).setEndZ(endZ));
         }
         // +z
@@ -164,13 +168,13 @@ public class Wall {
             int startX = Math.max(x - limiter + 1, -endWallCoord);
             wallParts.add(getTemplateFiller(world, Material.BEDROCK)
                     .setStartX(startX).setEndX(x)
-                    .setStartZ(startWallCoord).setEndZ(endWallCoord));
+                    .setStartZ(startWallCoord).setEndZ(startWallCoord));
         }
         // -x
         for (int z = startWallCoord; z >= -endWallCoord; z -= limiter) {
             int startZ = Math.max(z - limiter + 1, -endWallCoord);
             wallParts.add(getTemplateFiller(world, Material.BEDROCK)
-                    .setStartX(-endWallCoord).setEndX(-startWallCoord)
+                    .setStartX(-startWallCoord).setEndX(-startWallCoord)
                     .setStartZ(startZ).setEndZ(z));
         }
         // -z
@@ -178,7 +182,7 @@ public class Wall {
             int endX = Math.min(x + limiter - 1, endWallCoord);
             wallParts.add(getTemplateFiller(world, Material.BEDROCK)
                     .setStartX(x).setEndX(endX)
-                    .setStartZ(-endWallCoord).setEndZ(-startWallCoord));
+                    .setStartZ(-startWallCoord).setEndZ(-startWallCoord));
         }
 
         //launch job
@@ -226,13 +230,14 @@ public class Wall {
     private void generateSpotsInit() {
         LoggerUtil.info(INFO_GENERATE_SPOTS);
         // calc spot volume and limiters
-        int spotVolume = thickness * spotSize * spotSize;
-        spotLimiter = (int) Math.floor((double) Cfg.blocksPerSecondLimit / spotVolume);
+        int spotVolume = thickness * (spotSize + 2) * (spotSize + 2);
+        spotLimiter = (int) Math.floor((double) Cfg.blocksPerSecondLimit / spotVolume / 2);
         if (spotLimiter < 1) {
             spotLimiter = 1;
             Cfg.blocksPerSecondLimit = spotVolume + 1;
             LoggerUtil.warn(WARN_BUILD_LIMIT_TOO_SMALL + Cfg.blocksPerSecondLimit);
-        }
+        } else if (spotLimiter > 4)
+            spotLimiter = 4;           // pretty hard to load chunks chaotic
 
         // pre calc spot coordinates
         int spotsPerSide = undergroundSpots + groundSpots + airSpots;
@@ -253,10 +258,10 @@ public class Wall {
             int testX = startWallCoord - 1;
             world.getBlockAt(testX, 0, startZ).getChunk().load();
             int groundY = getRandomHeigth(world.getHighestBlockYAt(testX, startZ), spotSize, heights.removeFirst());
-            Filler spotFiller = getTemplateFiller(world, Material.OBSIDIAN)
+            Filler spotFiller = getTemplateFiller(world, Material.BEDROCK)
                     .setStartX(startWallCoord).setEndX(endWallCoord)
-                    .setStartY(groundY).setEndY(groundY + spotSize - 1)
-                    .setStartZ(startZ).setEndZ(startZ + spotSize - 1);
+                    .setStartY(groundY - 1).setEndY(groundY + spotSize)
+                    .setStartZ(startZ - 1).setEndZ(startZ + spotSize);
             spots.add(spotFiller);
             if (groundY > 64)
                 spotBalconies.add(spotFiller.copy().setMaterial(Material.GLASS)
@@ -269,9 +274,9 @@ public class Wall {
             int testZ = startWallCoord - 1;
             world.getBlockAt(startX, 0, testZ).getChunk().load();
             int groundY = getRandomHeigth(world.getHighestBlockYAt(startX, testZ), spotSize, heights.removeFirst());
-            Filler spotFiller = getTemplateFiller(world, Material.OBSIDIAN)
-                    .setStartX(startX).setEndX(startX + spotSize - 1)
-                    .setStartY(groundY).setEndY(groundY + spotSize - 1)
+            Filler spotFiller = getTemplateFiller(world, Material.BEDROCK)
+                    .setStartX(startX - 1).setEndX(startX + spotSize)
+                    .setStartY(groundY - 1).setEndY(groundY + spotSize)
                     .setStartZ(startWallCoord).setEndZ(endWallCoord);
             spots.add(spotFiller);
             if (groundY > 64)
@@ -285,10 +290,10 @@ public class Wall {
             int testX = startWallCoord - 1;
             world.getBlockAt(testX, 0, startZ).getChunk().load();
             int groundY = getRandomHeigth(world.getHighestBlockYAt(testX, startZ), spotSize, heights.removeFirst());
-            Filler spotFiller = getTemplateFiller(world, Material.OBSIDIAN)
+            Filler spotFiller = getTemplateFiller(world, Material.BEDROCK)
                     .setStartX(-endWallCoord).setEndX(-startWallCoord)
-                    .setStartY(groundY).setEndY(groundY + spotSize - 1)
-                    .setStartZ(startZ).setEndZ(startZ + spotSize - 1);
+                    .setStartY(groundY - 1).setEndY(groundY + spotSize)
+                    .setStartZ(startZ - 1).setEndZ(startZ + spotSize);
             spots.add(spotFiller);
             if (groundY > 64)
                 spotBalconies.add(spotFiller.copy().setMaterial(Material.GLASS)
@@ -301,9 +306,9 @@ public class Wall {
             int testZ = startWallCoord - 1;
             world.getBlockAt(startX, 0, testZ).getChunk().load();
             int groundY = getRandomHeigth(world.getHighestBlockYAt(startX, testZ), spotSize, heights.removeFirst());
-            Filler spotFiller = getTemplateFiller(world, Material.OBSIDIAN)
-                    .setStartX(startX).setEndX(startX + spotSize - 1)
-                    .setStartY(groundY).setEndY(groundY + spotSize - 1)
+            Filler spotFiller = getTemplateFiller(world, Material.BEDROCK)
+                    .setStartX(startX - 1).setEndX(startX + spotSize)
+                    .setStartY(groundY - 1).setEndY(groundY + spotSize)
                     .setStartZ(-endWallCoord).setEndZ(-startWallCoord);
             spots.add(spotFiller);
             if (groundY > 64)
@@ -425,6 +430,7 @@ public class Wall {
             wallParts.clear();
             if (wallGenQueued)
                 generateWallInit();
+            Bukkit.broadcastMessage(String.format(Messages.WALL_GEN_ROLLBACK_PROGRESS, 100));
             LoggerUtil.info(INFO_ROLLBACK_WALL_END);
         }
     }
@@ -441,7 +447,19 @@ public class Wall {
         int currentSpot = 0;
         while (currentSpot < spotLimiter && spotIterator.hasNext()) {
             currentSpot++;
-            spotIterator.next().fill();
+            Filler spotBorder = spotIterator.next();
+            spotBorder.fill();
+            Filler spotFiller = spotBorder.copy().setMaterial(Material.OBSIDIAN);
+            if (Math.abs(spotFiller.getStartX()) >= size / 2) {
+                spotFiller.setStartZ(spotFiller.getStartZ() + 1);
+                spotFiller.setEndZ(spotFiller.getEndZ() - 1);
+            } else {
+                spotFiller.setStartX(spotFiller.getStartX() + 1);
+                spotFiller.setEndX(spotFiller.getEndX() - 1);
+            }
+            spotFiller.setStartY(spotFiller.getStartY() + 1);
+            spotFiller.setEndY(spotFiller.getEndY() - 1);
+            spotFiller.fill();
         }
         if (spotIterator.hasNext()) {
             skip = 20;
@@ -460,7 +478,20 @@ public class Wall {
         int currentSpot = 0;
         while (currentSpot < spotLimiter && spotIterator.hasNext()) {
             currentSpot++;
-            spotIterator.next().setMaterial(Material.BEDROCK).fill();
+            Filler spotFiller = spotIterator.next();
+            spotFiller.fill();
+            if (Math.abs(spotFiller.getStartX()) >= size / 2) {
+                if (spotFiller.getStartX() > 0)
+                    spotFiller.setStartX(spotFiller.getStartX() + 1);
+                else
+                    spotFiller.setEndX(spotFiller.getEndX() - 1);
+            } else {
+                if (spotFiller.getStartZ() > 0)
+                    spotFiller.setStartZ(spotFiller.getStartZ() + 1);
+                else
+                    spotFiller.setEndZ(spotFiller.getEndZ() - 1);
+            }
+            spotFiller.setMaterial(Material.AIR).fill();
         }
         if (spotIterator.hasNext()) {
             skip = 20;
@@ -470,15 +501,19 @@ public class Wall {
             LoggerUtil.info(INFO_ROLLBACK_SPOTS_END);
             spots.clear();
             spotBalconies.clear();
-            Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
+            if (wallRlbQueued)
+                rollbackWallInit();
+            else
+                Bukkit.broadcastMessage(Messages.READY_FOR_GAME);
         }
     }
 
     // ======================================== //
 
+    @SuppressWarnings("SameParameterValue")
     private static Filler getTemplateFiller(World world, Material mat) {
         return new Filler(world, mat)
-                .setStartY(0)
+                .setStartY(minY)
                 .setEndY(maxY);
     }
 
@@ -494,14 +529,34 @@ public class Wall {
     }
 
     private static int getRandomHeigth(int groundLevel, int deadzone, int level) {
+        if (groundLevel < 0)
+            groundLevel = 0;
+        else if (groundLevel >= maxY - 32)
+            groundLevel = maxY - 32;
         switch (level) {
             case -1:
-                return CommonUtil.random.nextInt(groundLevel - deadzone - 2) + 1;
+                return CommonUtil.random.nextInt(groundLevel - deadzone - 2 - minY) + 2 + minY;
             case 1:
-                return CommonUtil.random.nextInt(maxY - groundLevel - deadzone - 2) + groundLevel;
+                return CommonUtil.random.nextInt(maxY - groundLevel - deadzone - 1) + groundLevel;
             default:
                 return groundLevel;
         }
+    }
+
+    // weird solution to keep compatibility with both 1.17 and 1.18.
+    private static int defineMinY() {
+        int minY = 0;
+        try {
+            Matcher m = Pattern.compile("1\\.(\\d+)").matcher(Bukkit.getServer().getVersion());
+            if (m.find()) {
+                int v = Integer.parseInt(m.group(1));
+                if (v >= 18)
+                    minY = -64;
+            }
+        } catch (Exception ignored) {
+        }
+        LoggerUtil.debug(DEBUG_MIN_HEIGHT + minY);
+        return minY;
     }
 
     // Performance fix: world.getChunkAt loads chunk before returning it.

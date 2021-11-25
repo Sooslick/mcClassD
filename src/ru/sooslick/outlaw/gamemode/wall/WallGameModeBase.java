@@ -108,7 +108,8 @@ public class WallGameModeBase implements GameModeBase {
     }
 
     boolean isOutside(Location l) {
-        return ((Math.abs(l.getX()) > halfSize + 1) || (Math.abs(l.getZ()) > halfSize + 1) || l.getY() > 255);
+        int maxY = l.getWorld() != null ? l.getWorld().getMaxHeight() - 1 : 255;
+        return ((Math.abs(l.getX()) > halfSize + 1) || (Math.abs(l.getZ()) > halfSize + 1) || l.getY() > maxY);
     }
 
     int getHalfSize() {

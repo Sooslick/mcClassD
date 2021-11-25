@@ -70,6 +70,7 @@ public class Messages {
     public static final String UNPLAYABLE_WORLD_WARNING = "We strongly recommend to generate a new game world, otherwise it may be unplayable";
     public static final String VICTIM_CHICKEN_DEAD = "§cVictim Chicken died. §eHunters win!";
     public static final String VICTIM_DEAD = "§cVictim died. §eHunters win!";
+    public static final String VICTIM_DEAD_OFFLINE = "§cVictim gave up. §eHunters win!";
     public static final String VICTIM_ESCAPED = "§eVictim escaped and won the game!";
     public static final String VICTIM_OFFLINE = "§cVictim left the game, but there is §eVictim Chicken§c. Kill it!";
     public static final String VICTIM_ONLINE = "§cVictim is back to the game!";

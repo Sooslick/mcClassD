@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -73,7 +74,7 @@ public class WallEventListener implements Listener {
             Location from = e.getFrom();
             World worldFrom = from.getWorld();
             Location to = e.getTo();
-            if (to != null && base.isOutside(to)) {
+            if (to != null && (base.isOutside(to) || to.getBlock().getRelative(BlockFace.UP).getType() == Material.BARRIER)) {
                 e.setCancelled(true);
                 //effect
                 if (worldFrom != null) {

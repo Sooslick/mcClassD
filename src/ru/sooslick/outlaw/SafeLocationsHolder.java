@@ -20,8 +20,8 @@ class SafeLocationsHolder {
     private final static String SELECT_RANDOM = "selectSafeLocations - not selected, no reservations";
     private final static String SELECT_RESERVATION = "selectSafeLocations - not selected, get from reservations. Stored locations left: ";
     private final static int MAX_RESERVATION = 3;
-    private final static int MAX_TOTAL_ATTEMPTS = 200;
-    private final static int MAX_PAIR_ATTEMPTS = 20;
+    private final static int MAX_TOTAL_ATTEMPTS = 2000;
+    private final static int MAX_PAIR_ATTEMPTS = 200;
 
     private Location pendingLocation;
     private Location safeLocationVictim;

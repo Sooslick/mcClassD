@@ -114,11 +114,11 @@ public class Engine extends JavaPlugin {
         }
 
         // check if game has players online
-        if (Bukkit.getOnlinePlayers().stream().noneMatch(p -> p.getGameMode() == GameMode.SURVIVAL)) {
+        if (Bukkit.getOnlinePlayers().stream().noneMatch(this::isPlaying)) {
             gameOverTimer-= 1;
             if (gameOverTimer <= 0) {
                 LoggerUtil.info(WARN_NO_ONLINE);
-                triggerEndgame(false);
+                triggerEndgame(false, Messages.VICTIM_DEAD_OFFLINE);
             }
         } else
             gameOverTimer = DEFAULT_GAMEOVER_TIMER;
@@ -422,6 +422,14 @@ public class Engine extends JavaPlugin {
                 .filter(h -> h.getPlayer().getName().equals(p.getName()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public boolean isPlaying(Player p) {
+        if (getGameState() != GameState.GAME)
+            return false;
+        if (outlaw.getPlayer().equals(p))
+            return true;
+        return hunters.stream().anyMatch(h -> h.getPlayer().equals(p));
     }
 
     /**
