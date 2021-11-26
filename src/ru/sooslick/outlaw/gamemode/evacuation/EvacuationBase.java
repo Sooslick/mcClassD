@@ -68,7 +68,6 @@ public class EvacuationBase implements GameModeBase {
 
     private final Runnable EVAC = () -> {
         score.setScore((int) WorldUtil.distance2d(Engine.getInstance().getOutlaw().getLocation(), evacPoint));
-        //fix cross-world compass
         Engine.getInstance().getOutlaw().getPlayer().setCompassTarget(evacPoint);
 
         //check escape
@@ -87,7 +86,6 @@ public class EvacuationBase implements GameModeBase {
     //calculated amount of ticks between landing
     private final Runnable LANDING = () -> {
         score.setScore(timeLeft / 20);
-        //fix cross-world compass
         Engine.getInstance().getOutlaw().getPlayer().setCompassTarget(evacPoint);
 
         boolean free = true;
@@ -226,7 +224,7 @@ public class EvacuationBase implements GameModeBase {
             return;
         }
 
-        Objective objective = sb.registerNewObjective("The Wall", "dummy", "The Wall");
+        Objective objective = sb.registerNewObjective("Evacuation", "dummy", "Evacuation");
         objective.setDisplaySlot(DisplaySlot.PLAYER_LIST);
         score = objective.getScore(e.getOutlaw().getName());
         score.setScore(evaCfg.waitTime);
